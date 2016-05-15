@@ -32,7 +32,7 @@ except:
     sys.exit(102)
     
 # get a Spamalyser object
-sal = spamalyse.Spamalyser(str_mode,['./data/'])
+sal = spamalyse.Spamalyser('../data/',str_mode)
 
 # Handle the emails on the server
 print "Message overview:"
