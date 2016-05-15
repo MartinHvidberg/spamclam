@@ -25,7 +25,7 @@ class Spamalyser(object):
         self._cnfd = conf_dir # Where to look for the .conf files
         self._mode = mode # default mode is 'simple'
         self._wob = wob # White over Black, White-list overrules Black-list... default is True
-        self._rules = dict()
+        self._rules = list()
         
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
@@ -48,15 +48,19 @@ class Spamalyser(object):
                 del str_conf, lst_conf # cleaning ...
                 # Analyse the rule-set and establish rules
                 for rule in lst_rulesets:
+                    print "  rule:",rule
+                    lst_aruleset = list()
                     allany, cond = rule.split(' ',1)
                     lst_cond = cond.strip().strip('{}').strip().split(';')
-                    print "***", allany, lst_cond
                     for con in lst_cond: # Replace each cond. with True or False
                         key_c, oprt, values = con.strip().split(' ',2)
                         lst_values = [v.strip() for v in values.split(',')]
-                        print "  k:", key_c 
-                        print "  o:", oprt
-                        print "  v:", lst_values
+                        lst_aruleset.append({'key':key_c, 'opr':oprt, 'val':lst_values})
+                    self._rules.append([allany,lst_aruleset])
+        print "Rules: ", self._rules
+                        
+    def add_ruleset(self,lst_rs):
+        self._rules.append(lst_rs) 
 
     def is_spam(self, eml_in):
         """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
