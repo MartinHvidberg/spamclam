@@ -50,7 +50,7 @@ for num_msg in range(1):#range(num_tot_msgs):#
     #spamalyse.print_structure(msg_eml)
     
     # The actual Spam analysis
-    if spamalyse.is_spam(msg_eml):
+    if sal.is_spam(msg_eml):
         print "DEL: ******"
         #lst_dele.append(con_pop.dele(mid))
 

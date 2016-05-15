@@ -23,8 +23,9 @@ class Spamalyser(object):
     """ The Spamalyser class """
     def __init__(self, conf_dir, mode='simple', wob=True):
         self._cnfd = conf_dir # Where to look for the .conf files
-        self._mode = mode # default
-        self._wob = wob # White over Black, White-list overrules Black-list... 
+        self._mode = mode # default mode is 'simple'
+        self._wob = wob # White over Black, White-list overrules Black-list... default is True
+        self._rules = dict()
         
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
@@ -42,16 +43,29 @@ class Spamalyser(object):
                     lst_conf[n] = str_tmp # put it back in the list
                 lst_conf = [lin.strip() for lin in lst_conf if len(lin)>0] # remove all the empty lines, and leading and trailing whitespace
                 str_conf = " ".join(lst_conf) # connect all lines to one string
-                print "Star\n", str_conf
+                lst_rulesets = ["if_a"+rs for rs in str_conf.split("if_a") if len(rs)>4] # turn the string into list of rules
+                #print "StarRaw\n", lst_rulesets
+                del str_conf, lst_conf # cleaning ...
+                # Analyse the rule-set and establish rules
+                for rule in lst_rulesets:
+                    allany, cond = rule.split(' ',1)
+                    lst_cond = cond.strip().strip('{}').strip().split(';')
+                    print "***", allany, lst_cond
+                    for con in lst_cond: # Replace each cond. with True or False
+                        key_c, oprt, values = con.strip().split(' ',2)
+                        lst_values = [v.strip() for v in values.split(',')]
+                        print "  k:", key_c 
+                        print "  o:", oprt
+                        print "  v:", lst_values
 
-def is_spam(eml_in, mode_in = 'simple'):
-    """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
-    email message is expected to be a email.message_from_string(s[, _class[, strict]])
-    for details see: https://docs.python.org/2/library/email.message.html#module-email.message
-    """
-    lst_known_modes = ['simple']
-    if mode_in in lst_known_modes:
-        if mode_in == 'simple':
+    def is_spam(self, eml_in):
+        """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
+        email message is expected to be a email.message_from_string(s[, _class[, strict]])
+        for details see: https://docs.python.org/2/library/email.message.html#module-email.message
+        """
+        lst_known_modes = ['simple']
+        if self._mode in lst_known_modes:
+            if self._mode == 'simple':
+                return False
+        else:
             return False
-    else:
-        return False
