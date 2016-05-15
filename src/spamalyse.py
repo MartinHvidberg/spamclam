@@ -29,19 +29,20 @@ class Spamalyser(object):
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
             if fil_cnf.endswith(".conf"):
+                # Crunch the rule file
                 print(fil_cnf)
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
-                print lst_conf
                 for n in range(len(lst_conf)):
-                    str_tmp = lst_conf[n].split("#")[0]
+                    str_tmp = lst_conf[n].split("#")[0] # Get rid of comments
                     while '  ' in str_tmp: # Replace all multi-space with single-space
                         str_tmp.replace('  ',' ')
-                    if str_tmp in [' ', '\n', '\t']: # Remove all whitespace-only
+                    if str_tmp in [' ', '\n', '\t']: # delete all whitespace-only lines
                         str_tmp = ''
-                    lst_conf[n] = str_tmp
-                lst_conf = [lin for lin in lst_conf if len(lin)>0]
-                print lst_conf
+                    lst_conf[n] = str_tmp # put it back in the list
+                lst_conf = [lin.strip() for lin in lst_conf if len(lin)>0] # remove all the empty lines, and leading and trailing whitespace
+                str_conf = " ".join(lst_conf) # connect all lines to one string
+                print "Star\n", str_conf
 
 def is_spam(eml_in, mode_in = 'simple'):
     """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
