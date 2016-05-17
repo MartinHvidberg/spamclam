@@ -37,7 +37,7 @@ sal = spamalyse.Spamalyser('../data/',str_mode)
 # Handle the emails on the server
 print "Message overview:"
 lst_dele = list() # List to cache delete commands feed back from server
-for mid in range(1,3):#range(num_tot_msgs):#
+for mid in range(1,2):#range(num_tot_msgs):#
     msg_raw = con_pop.retr(mid)
     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
     
