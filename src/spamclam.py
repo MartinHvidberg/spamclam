@@ -37,12 +37,12 @@ sal = spamalyse.Spamalyser('../data/',str_mode)
 # Handle the emails on the server
 print "Message overview:"
 lst_dele = list() # List to cache delete commands feed back from server
-for mid in range(1,2):#range(num_tot_msgs):#
+for mid in range(1,num_tot_msgs+1):#range(1,4):#
     msg_raw = con_pop.retr(mid)
     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
     
     # Some nice printout
-    print "\n====== email ====== " + str(mid)
+    print "\n>>>>>> email >>>>>> " + str(mid)
     print con_pop.list(mid)
     spamalyse.print_main_headers(msg_eml)
     #spamalyse.print_keys(msg_eml)
