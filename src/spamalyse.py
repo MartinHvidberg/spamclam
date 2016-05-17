@@ -87,61 +87,61 @@ class Spamalyser(object):
         It will analyse, seperately, if the email can be consisered Black or White.
         The final decision depends on a combination of Black, White and self._wob. """
         print "================================================================"
-        dic_res = dict()
         for str_colour in ['Black', 'White']:
-            print "*** Colour is", str_colour
+            print "*** ", str_colour
             lst_rulesets = self._rules[str_colour]
             lst_res = list()
             for rs in lst_rulesets:
                 anyall = rs[0]
-                print "**  AllAny is", anyall
+                print "**  ", anyall
                 for rul in rs[1]:
-                    print "*   rul is", rul
-                    if eml_in.has_key(rul['key']):
-                        print "    check key", rul['key']
-                        emlval = eml_in.get(rul['key'])
-                        opr = rul['opr']
-                        bol_hit = False # Assume innocent, until proven guilty...
-                        for val in rul['val']: # there can be a one or more values to check for
-                            if not bol_hit: # no need to look further, if we allready have a hit...
-                                print "    for opr, val", opr, val
-                                if opr == '&&': # contains
-                                    if val in emlval:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == '!&': # do_not_contain
-                                    if not val in emlval:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == '==': # is
-                                    if val == emlval:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == '!=': # is_not
-                                    if val != emlval:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == '[=': # begins_with
-                                    if val == emlval[:len(val)]:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == ']=': # ends_with
-                                    if val == emlval[-len(val):]:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == '[!': # not_begins_with
-                                    if not val == emlval[:len(val)]:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                elif opr == ']!': # not_ends_with
-                                    if not val == emlval[-len(val):]:
-                                        bol_hit = True
-                                        print "   !HIT", opr, val
-                                else:
-                                    print "Error: Unknown operator: "+opr
-                                    continue
-                        lst_res.append(bol_hit)
-                    else:
-                        print "email don't seem to have header entry:", rul['key']
+                    if not (any(lst_res) and anyall=='if_any_of'): # No reason to check more rules if we already have a True
+                        print "*rul", rul
+                        if eml_in.has_key(rul['key']):
+                            print "    check key", rul['key']
+                            emlval = eml_in.get(rul['key'])
+                            opr = rul['opr']
+                            bol_hit = False # Assume innocent, until proven guilty...
+                            for val in rul['val']: # there can be a one or more values to check for
+                                if not bol_hit: # no need to look further, if we allready have a hit...
+                                    print "    for opr, val", opr, val
+                                    if opr == '&&': # contains
+                                        if val in emlval:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == '!&': # do_not_contain
+                                        if not val in emlval:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == '==': # is
+                                        if val == emlval:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == '!=': # is_not
+                                        if val != emlval:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == '[=': # begins_with
+                                        if val == emlval[:len(val)]:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == ']=': # ends_with
+                                        if val == emlval[-len(val):]:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == '[!': # not_begins_with
+                                        if not val == emlval[:len(val)]:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    elif opr == ']!': # not_ends_with
+                                        if not val == emlval[-len(val):]:
+                                            bol_hit = True
+                                            print "   !HIT", opr, val
+                                    else:
+                                        print "Error: Unknown operator: "+opr
+                                        continue
+                            lst_res.append(bol_hit)
+                        else:
+                            print "email don't seem to have header entry:", rul['key']
             print "TF?", lst_res
         print "----------------------------------------------------------------"
