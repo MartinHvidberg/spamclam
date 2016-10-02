@@ -20,8 +20,8 @@
 #			[!	not_begins_with
 #			]!	not_ends_with
 # value     = a text string
-#			a csv list of values is always implicit AND
-#			a ; separated list of condition is AND/OR in All_of/Any_of respectively
+# a csv list of values is always implicit OR
+# a ; separated list of condition is AND/OR in All_of/Any_of respectively
 #
 # All values are case-sensitive, but keys are not.
 
