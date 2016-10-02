@@ -225,9 +225,12 @@ class Spamalyser(object):
                     dic_global[lst_i[0]] = dict()
                     dic_global[lst_i[0]]['tot'] = int(lst_i[1].replace('total:','').strip())
                     dic_global[lst_i[0]]['del'] = int(lst_i[2].replace('delete:','').strip())
-        print "Old global"
-        for keyg in dic_global:
-            print "    OLD :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+                    
+        #=======================================================================
+        # print "Old global"
+        # for keyg in dic_global:
+        #     print "    OLD :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+        #=======================================================================
             
         # Turn the recent harvest into concurrent format
         dic_update = dict()
@@ -237,9 +240,11 @@ class Spamalyser(object):
             #print "#\n" + sender + "\n\t" + str_emladd + "\n\t" + str(dic_stat)
             dic_update[str_emladd] = dic_stat
         
-        print "Updates"
-        for keyg in dic_update:
-            print "    UPD :: " + str(keyg) + ' :: ' + str(dic_update[keyg])
+        #=======================================================================
+        # print "Updates"
+        # for keyg in dic_update:
+        #     print "    UPD :: " + str(keyg) + ' :: ' + str(dic_update[keyg])
+        #=======================================================================
             
         # Merge the two dics
         for upd in dic_update.keys():
@@ -252,9 +257,11 @@ class Spamalyser(object):
                 del tmp_tot, tmp_del
         del dic_update
         
-        print "NEW"
-        for keyg in dic_global:
-            print "    NEW :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+        #=======================================================================
+        # print "NEW"
+        # for keyg in dic_global:
+        #     print "    NEW :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+        #=======================================================================
             
         # return the updated collection
         with open(str_filename, 'w') as fil_g:
