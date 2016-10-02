@@ -21,11 +21,13 @@ def print_structure(eml_in):
     
 class Spamalyser(object):
     """ The Spamalyser class """
+    
     def __init__(self, conf_dir, mode='simple', wob=True):
         self._cnfd = conf_dir # Where to look for the .conf files
         self._mode = mode # default mode is 'simple'
         self._wob = wob # White over Black, White-list overrules Black-list... default is True
         self._rules = {'White': list(), 'Black': list()}
+        self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}}
         
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
@@ -38,7 +40,7 @@ class Spamalyser(object):
                 else:
                     str_colour = ""
                     continue
-                print(fil_cnf)
+                print("Config file: " + fil_cnf)
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
                 for n in range(len(lst_conf)):
@@ -51,7 +53,7 @@ class Spamalyser(object):
                 lst_conf = [lin.strip() for lin in lst_conf if len(lin)>0] # remove all the empty lines, and leading and trailing whitespace
                 str_conf = " ".join(lst_conf) # connect all lines to one string
                 lst_rulesets = ["if_a"+rs for rs in str_conf.split("if_a") if len(rs)>4] # turn the string into list of rules
-                #print "StarRaw\n", lst_rulesets
+                #print "StarRaw: ", lst_rulesets
                 del str_conf, lst_conf # cleaning ...
                 # Analyse the rule-set and establish rules
                 for rule in lst_rulesets:
@@ -62,37 +64,58 @@ class Spamalyser(object):
                     for con in lst_cond: # Replace each cond. with True or False
                         key_c, oprt, values = con.strip().split(' ',2)
                         lst_values = [v.strip() for v in values.split(',')]
-                        lst_aruleset.append({'key':key_c, 'opr':oprt, 'val':lst_values})
+                        rul_a = {'key':key_c, 'opr':oprt, 'val':lst_values}
+                        lst_aruleset.append(rul_a)
+                        print "    :", rul_a['key'], rul_a['opr'], rul_a['val'] 
                     self._rules[str_colour].append([allany,lst_aruleset])
-        print "Rules: ", self._rules
+        # Check that rules were filled
+        for colour in ['Black', 'White']:
+            if len(self._rules[colour]) < 1:
+                print "!!! No rules of colour: "+colour
+        
+    # Functions handling 'rules'
                         
     def add_ruleset(self,lst_rs):
         self._rules.append(lst_rs) 
+
+    def load_friendlist(self,str_text):
+        return
+    
+    def lead_spammerlist(self, str_text):
+        return
+    
+    def show_rules(self):
+        
+        return
+    
+    # Functions processing email, checking them for spam...
 
     def is_spam(self, eml_in):
         """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
         email message is expected to be a email.message_from_string(s[, _class[, strict]])
         for details see: https://docs.python.org/2/library/email.message.html#module-email.message
         """
+        bol_return = None
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
-            if self._mode == 'simple':
+            if self._mode == 'simple': # The default 'simple black and white' analyser
                 dic_result = self._simple_bw_spamalyse(eml_in)
                 if self._wob:
                     if any(dic_result['White']):
-                        return False # i.e. Not Spam
+                        bol_return = False # i.e. Not Spam
                     else:
-                        return any(dic_result['Black']) # i.e. Spam if any reason found...
+                        bol_return = any(dic_result['Black']) # i.e. Spam if any reason found...
                 else: # wob is false
-                    return any(dic_result['Black']) # i.e. Spam if any reason found...
+                    bol_return = any(dic_result['Black']) # i.e. Spam if any reason found...
         else:
-            return False # if rule unknown, it's not Spam
+            bol_return = False # if rule unknown, it's not Spam
+        self.stat_count_email(eml_in,bol_return)
+        return bol_return
         
     def _simple_bw_spamalyse(self, eml_in):
-        """ This is the simplest analyse, it is based on black-list and white-list rules, 
-        maintained in separate files... 
-        It will analyse, separately, if the email can be considered Black or White.
-        The final decision depends on a combination of Black, White and self._wob. """
+        """ This is the simplest analyse, it is based on black-list and white-list rules.
+        It will analyse, separately, if the email can be considered Black or considered White.
+        The final decision, outside this function, depends on a combination of Black, White and self._wob. """
         #print ">>>>>> Spamalyse - Simple Black and White"
         dic_res = dict()
         for str_colour in ['Black', 'White']:
@@ -116,37 +139,21 @@ class Spamalyser(object):
                                     if not bol_hit: # no need to look further, if we already have a hit...
                                         #print "    ", emlval, opr, val
                                         if opr == '&&': # contains
-                                            if val in emlval:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = val in emlval
                                         elif opr == '!&': # do_not_contain
-                                            if not val in emlval:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = not val in emlval
                                         elif opr == '==': # is
-                                            if val == emlval:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = val == emlval
                                         elif opr == '!=': # is_not
-                                            if val != emlval:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = val != emlval
                                         elif opr == '[=': # begins_with
-                                            if val == emlval[:len(val)]:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = val == emlval[:len(val)]
                                         elif opr == ']=': # ends_with
-                                            if val == emlval[-len(val):]:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit =  val == emlval[-len(val):]
                                         elif opr == '[!': # not_begins_with
-                                            if not val == emlval[:len(val)]:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = not val == emlval[:len(val)]
                                         elif opr == ']!': # not_ends_with
-                                            if not val == emlval[-len(val):]:
-                                                bol_hit = True
-                                                #print "!!!  HIT", opr, val
+                                            bol_hit = not val == emlval[-len(val):]
                                         else:
                                             print "Error: Unknown operator: "+opr
                                             continue
@@ -156,6 +163,60 @@ class Spamalyser(object):
                 dic_res[str_colour].append(any(lst_res))
         #print "<<<<<< Spamalyse < end", dic_res
         return dic_res
+    
+    # Functions related to: Statistics
+    
+    def stat_count_email(self,eml_in,bol_spam):
+        """ Update _stat with email handled by this spamalyse instance"""
+        # Count 1 mail
+        self._stat['cnt_eml'] += 1
+        # Count 1 mail, _deleted_
+        if bol_spam:
+            self._stat['cnt_del'] += 1
+        # Note the sender, and if his mail was deleted
+        if eml_in.has_key('from'):
+            str_from = eml_in.get('from')
+            if not str_from in self._stat['senders'].keys():
+                self._stat['senders'][str_from] = {'tot':1, 'del':int(bol_spam)}
+            else:
+                dic_sndr = self._stat['senders'][str_from]
+                dic_sndr['tot'] += 1
+                dic_sndr['del'] += int(bol_spam)
+                self._stat['senders'][str_from] = dic_sndr
+        return
+    
+    def get_statistics(self, key):
+        """ Return a named element from stat, if it exists... """
+        if key in self._stat.keys():
+            return self._stat[key]
+        else:
+            return None
+    
+    def show_raw_statistics(self):
+        """ Raw print the stat dicionary """
+        print self._stat
+        
+    def show_pritty_statistics(self):
+        """ Pritty-print the stat """
+        print " ------ Stat ------"
+        print " Total e-mails: "+str(self._stat['cnt_eml'])
+        print " Deleted e-mails: "+str(self._stat['cnt_del'])
+        print "   Senders stat:"
+        lst_sndr = list()
+        for sender in self._stat['senders'].keys():
+            str_sndr = sender.replace('"','')+" total: "+str(self._stat['senders'][sender]['tot'])+" delete: "+str(self._stat['senders'][sender]['del'])
+            if self._stat['senders'][sender]['del'] > 0:
+                str_sndr = " ! "+str_sndr
+            else:
+                str_sndr = "   "+str_sndr
+            lst_sndr.append("  "+str_sndr)
+        lst_sndr.sort()
+        for sndr in lst_sndr:
+            print sndr
+            
+    def report_to_global_stat_file(self,str_filename):
+        return   
+
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...

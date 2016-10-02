@@ -37,43 +37,29 @@ except:
 sal = spamalyse.Spamalyser('../data/',str_mode)
 
 # Handle the emails on the server
-print "Message overview:"
-cnt_tot = 0
-cnt_god = 0
-cnt_bad = 0
-lst_dele = list() # List to cache delete commands feed back from server
+#print "Message overview:"
+lst_dele = list() # List to cache delete commands feed back from server, not really used?
 for mid in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
     msg_raw = con_pop.retr(mid)
     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
-    cnt_tot += 1
-    
-    # Some nice printout
-    print "\n>>>>>> email >>>>>> " + str(mid)
-    print con_pop.list(mid)
-    spamalyse.print_main_headers(msg_eml)
-    #spamalyse.print_keys(msg_eml)
-    #spamalyse.print_structure(msg_eml)
-    
-    # The actual Spam analysis
     if sal.is_spam(msg_eml):
-        print "<<<<<< DELETE SPAM <<<<<<"
         lst_dele.append(con_pop.dele(mid))
-        cnt_bad += 1
-    else:
-        print "<<<<<< Passed filter <<<<<<"
-        cnt_god += 1
 
 # Close connection to email server
 con_pop.quit()
 
-print "\n=============   Results   ======="
+print "\n=============   Spamalyse statistics   ==============================="
+#sal.show_raw_statistics()
+sal.show_pritty_statistics()
+sal.report_to_global_stat_file("spamclm_global.stat")
+
+print "\n=============   Results   ============================================"
 print "Expect :\t"+str(num_tot_msgs)
-print "Handled:\t"+str(cnt_tot)
-print "Lost...:\t"+str(num_tot_msgs-cnt_tot)
-print "Good...:\t"+str(cnt_god)
-print "Deleted:\t"+str(cnt_bad)
+print "Handled:\t"+str(sal.get_statistics('cnt_eml'))
+print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
 print "\nDone..."
 
+del sal
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...
