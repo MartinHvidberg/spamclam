@@ -77,69 +77,76 @@ class Spamalyser(object):
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
             if self._mode == 'simple':
-                return self._simple_bw_spamalyse(eml_in)
+                dic_result = self._simple_bw_spamalyse(eml_in)
+                if self._wob:
+                    if any(dic_result['White']):
+                        return False # i.e. Not Spam
+                    else:
+                        return any(dic_result['Black']) # i.e. Spam if any reason found...
+                else: # wob is false
+                    return any(dic_result['Black']) # i.e. Spam if any reason found...
         else:
-            return False
+            return False # if rule unknown, it's not Spam
         
     def _simple_bw_spamalyse(self, eml_in):
         """ This is the simplest analyse, it is based on black-list and white-list rules, 
         maintained in separate files... 
-        It will analyse, seperately, if the email can be consisered Black or White.
+        It will analyse, separately, if the email can be considered Black or White.
         The final decision depends on a combination of Black, White and self._wob. """
-        print ">>>>>> Spamalyse - Simple Black and White"
+        #print ">>>>>> Spamalyse - Simple Black and White"
         dic_res = dict()
         for str_colour in ['Black', 'White']:
-            print "*** ", str_colour
+            #print "*** ", str_colour
             dic_res[str_colour] = list()
             lst_rulesets = self._rules[str_colour]
             lst_res = list()
             for rs in lst_rulesets:
                 if not any(lst_res): # No reason to check more rule-sets if we already have a True
                     anyall = rs[0]
-                    print "**  ", anyall
+                    #print "**  ", anyall
                     for rul in rs[1]:
                         if not (any(lst_res) and anyall=='if_any_of'): # No reason to check more rules if we already have a True
-                            print "*rul", rul
+                            #print "*rul", rul
                             if eml_in.has_key(rul['key']):
-                                print "    ", rul['key']
+                                #print "    ", rul['key']
                                 emlval = eml_in.get(rul['key'])
                                 opr = rul['opr']
                                 bol_hit = False # Assume innocent, until proven guilty...
                                 for val in rul['val']: # there can be a one or more values to check for
                                     if not bol_hit: # no need to look further, if we already have a hit...
-                                        print "    ", emlval, opr, val
+                                        #print "    ", emlval, opr, val
                                         if opr == '&&': # contains
                                             if val in emlval:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == '!&': # do_not_contain
                                             if not val in emlval:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == '==': # is
                                             if val == emlval:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == '!=': # is_not
                                             if val != emlval:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == '[=': # begins_with
                                             if val == emlval[:len(val)]:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == ']=': # ends_with
                                             if val == emlval[-len(val):]:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == '[!': # not_begins_with
                                             if not val == emlval[:len(val)]:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         elif opr == ']!': # not_ends_with
                                             if not val == emlval[-len(val):]:
                                                 bol_hit = True
-                                                print "!!!  HIT", opr, val
+                                                #print "!!!  HIT", opr, val
                                         else:
                                             print "Error: Unknown operator: "+opr
                                             continue
@@ -147,5 +154,8 @@ class Spamalyser(object):
                             else:
                                 print "email don't seem to have header entry:", rul['key']
                 dic_res[str_colour].append(any(lst_res))
-        print "<<<<<< Spamalyse < end", dic_res
-        return False
+        #print "<<<<<< Spamalyse < end", dic_res
+        return dic_res
+
+# Music that accompanied the coding of this script:
+#   David Bowie - Best of...
