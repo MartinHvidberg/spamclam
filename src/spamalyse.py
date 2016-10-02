@@ -87,6 +87,8 @@ class Spamalyser(object):
     def load_addressbooks(self):
         """ Find and load all .csv files in the conf_dir """
         # Find addressbook files
+        lst_w = list()
+        lst_b = list()
         for fil_cnf in os.listdir(self._cnfd):
             if fil_cnf.endswith(".csv"):
                 print("Addressbook file: " + fil_cnf)
@@ -101,13 +103,14 @@ class Spamalyser(object):
                     continue
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
+                lst_tmp = list()
                 for n in range(len(lst_conf)):
                     str_tmp = lst_conf[n].split("#")[0] # Get rid of comments
                     str_emladd = self.get_email_address_from_string(str_tmp)
                     if len(str_emladd) > 0: # Insert email address in ruleset
                         print " + " + str_colour + ' :: ' + str_emladd
-                    del str_emladd, str_tmp
-                        
+                        lst_tmp.append({'key': 'from', 'opr': '==', 'val': [str_emladd]})
+                    del str_emladd, str_tmp      
         return
     
     def show_rules(self):
