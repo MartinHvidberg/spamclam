@@ -12,6 +12,7 @@ A small Python Spam-deleter, for POP3
 
 * Clone the repo
 * go to ../data/ and ajust the .conf files to match your desired rules
+  have a look into the conf_backup for explanations
 * Call spamclam.py with your email credentials
   e.g. "mail.my_server.net my_name@my_server.net my_password simple"
   replace first three with your own info.
