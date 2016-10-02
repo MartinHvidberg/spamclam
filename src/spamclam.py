@@ -36,7 +36,6 @@ except:
     
 # Create a Spamalyser object
 sal = spamalyse.Spamalyser('../data/',str_mode)
-sal.import_addres_list_as_white()
 
 # Handle the emails on the server
 #print "Message overview:"

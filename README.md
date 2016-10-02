@@ -23,20 +23,20 @@ A small Python Spam-deleter, for POP3
 * The files controlling the behaviour of Spamclam is located in ../data/
 * there are several kinds, all with separate extensions (.conf, .conf_backup, .csv, .stat)
 * .conf
-   This is the configuration files, there can be as many as you like
-   They must have either 'white' or 'black' in the name
-   This _alone_ determines if the rules are defining white-list or black-list definitions
+   This is the configuration files, there can be as many as you like.
+   They must have either 'white' or 'black' in the name.
+   This _alone_ determines if the rules are defining white-list or black-list definitions.
 * .conf_backup
-   Commented examples on how to write a .conf file
+   Commented examples on how to write a .conf file.
    Not used by the program, just for you to learn from.
 * .csv
-   Address books, in comma-seperated-values format
-   But, the program will just look at them as text files, and try to find one email address on each line
+   Address books, in comma-seperated-values format.
+   But, the program will just look at them as text files, and try to find one email address on each line.
    any other text, including the commas, are ignored.
 * .stat
    When run, the program will create a stat file.
    It's a csv fil, with a line for each found sender.
-   For each sender is noted, number of emails (total) and number of spam-mails (delete)
+   For each sender is noted, number of emails (total) and number of spam-mails (delete).
    The number accumulates, each time you run Spamclam, until you delete the file.
    i.e. the same good emails are counted over and over again, until you delete them from the server, with other software.
    

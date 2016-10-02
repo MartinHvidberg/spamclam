@@ -30,9 +30,22 @@ class Spamalyser(object):
         self._rules = {'White': list(), 'Black': list()}
         self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}}
         
+        self.load_rulesfiles()
+        self.load_addressbooks()
+        
+        # Check that rules were filled
+        for colour in ['Black', 'White']:
+            if len(self._rules[colour]) < 1:
+                print "!!! No rules of colour: "+colour
+        
+    # Functions handling 'rules'
+    
+    def load_rulesfiles(self):
+        """ Find and load all .conf files in the conf_dir """
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
             if fil_cnf.endswith(".conf"):
+                print("Config file: " + fil_cnf)
                 # Crunch the rule file
                 if "white" in fil_cnf.lower():
                     str_colour = 'White'
@@ -40,8 +53,8 @@ class Spamalyser(object):
                     str_colour = "Black"
                 else:
                     str_colour = ""
+                    print "!!! file name contained neither 'white' nor 'black'... I'm confused."
                     continue
-                print("Config file: " + fil_cnf)
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
                 for n in range(len(lst_conf)):
@@ -69,20 +82,32 @@ class Spamalyser(object):
                         lst_aruleset.append(rul_a)
                         print "    :", rul_a['key'], rul_a['opr'], rul_a['val'] 
                     self._rules[str_colour].append([allany,lst_aruleset])
-        # Check that rules were filled
-        for colour in ['Black', 'White']:
-            if len(self._rules[colour]) < 1:
-                print "!!! No rules of colour: "+colour
-        
-    # Functions handling 'rules'
-                        
-    def add_ruleset(self,lst_rs):
-        self._rules.append(lst_rs) 
-
-    def load_friendlist(self,str_text):
         return
     
-    def lead_spammerlist(self, str_text):
+    def load_addressbooks(self):
+        """ Find and load all .csv files in the conf_dir """
+        # Find addressbook files
+        for fil_cnf in os.listdir(self._cnfd):
+            if fil_cnf.endswith(".csv"):
+                print("Addressbook file: " + fil_cnf)
+                # Crunch the addressbook file
+                if "white" in fil_cnf.lower():
+                    str_colour = 'White'
+                elif "black" in fil_cnf.lower():
+                    str_colour = "Black"
+                else:
+                    str_colour = ""
+                    print "!!! file name contained neither 'white' nor 'black'... I'm confused."
+                    continue
+                with open(self._cnfd+fil_cnf) as f:
+                    lst_conf = f.readlines()
+                for n in range(len(lst_conf)):
+                    str_tmp = lst_conf[n].split("#")[0] # Get rid of comments
+                    str_emladd = self.get_email_address_from_string(str_tmp)
+                    if len(str_emladd) > 0: # Insert email address in ruleset
+                        print " + " + str_colour + ' :: ' + str_emladd
+                    del str_emladd, str_tmp
+                        
         return
     
     def show_rules(self):
