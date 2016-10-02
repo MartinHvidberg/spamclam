@@ -6,7 +6,7 @@ A small Python Spam-deleter, for POP3
 
 * You have a POP3 e-mail account. You would like to simply delete a lot of spam emails direketely on the server, following a simple rule-set, like "from contains annoying@sales.com" or "subject start with 'loan offer'".
 * about 0.9x (it works, but I'm still working on it...)
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* to be added later ...[Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ### How do I get set up? ###
 
