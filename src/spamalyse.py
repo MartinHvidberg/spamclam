@@ -1,4 +1,5 @@
 import os, email
+import re # for helper function
 
 def print_main_headers(eml_in):
     """ Just print the interesting headers """
@@ -204,7 +205,7 @@ class Spamalyser(object):
         print "   Senders stat:"
         lst_sndr = list()
         for sender in self._stat['senders'].keys():
-            str_sndr = sender.replace('"','')+" total: "+str(self._stat['senders'][sender]['tot'])+" delete: "+str(self._stat['senders'][sender]['del'])
+            str_sndr = sender.replace('"','').replace(',',';')+", total: "+str(self._stat['senders'][sender]['tot'])+", delete: "+str(self._stat['senders'][sender]['del'])
             if self._stat['senders'][sender]['del'] > 0:
                 str_sndr = " ! "+str_sndr
             else:
@@ -215,8 +216,67 @@ class Spamalyser(object):
             print sndr
             
     def report_to_global_stat_file(self,str_filename):
+        # load existing, if exists...
+        dic_global = dict()
+        if os.path.isfile(str_filename):
+            with open(str_filename) as fil_g:
+                for line_i in fil_g.readlines():
+                    lst_i = line_i.lower().split(',')
+                    dic_global[lst_i[0]] = dict()
+                    dic_global[lst_i[0]]['tot'] = int(lst_i[1].replace('total:','').strip())
+                    dic_global[lst_i[0]]['del'] = int(lst_i[2].replace('delete:','').strip())
+        print "Old global"
+        for keyg in dic_global:
+            print "    OLD :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+            
+        # Turn the recent harvest into concurrent format
+        dic_update = dict()
+        for sender in self._stat['senders'].keys():
+            str_emladd = self.get_email_address_from_string(sender)
+            dic_stat = self._stat['senders'][sender]
+            #print "#\n" + sender + "\n\t" + str_emladd + "\n\t" + str(dic_stat)
+            dic_update[str_emladd] = dic_stat
+        
+        print "Updates"
+        for keyg in dic_update:
+            print "    UPD :: " + str(keyg) + ' :: ' + str(dic_update[keyg])
+            
+        # Merge the two dics
+        for upd in dic_update.keys():
+            if not upd in dic_global.keys():
+                dic_global[upd] = dic_update[upd]
+            else:
+                tmp_tot = dic_global[upd]['tot'] + dic_update[upd]['tot']
+                tmp_del = dic_global[upd]['del'] + dic_update[upd]['del']
+                dic_global[upd] = {'tot': tmp_tot, 'del': tmp_del}
+                del tmp_tot, tmp_del
+        del dic_update
+        
+        print "NEW"
+        for keyg in dic_global:
+            print "    NEW :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
+            
+        # return the updated collection
+        with open(str_filename, 'w') as fil_g:
+            for sender in dic_global.keys():
+                str_tot = str(dic_global[sender]['tot'])
+                str_del = str(dic_global[sender]['del'])
+                str_ret = sender + ', total: '+ str_tot + ', delete: ' + str_del + '\n'
+                fil_g.write(str_ret)
+        
         return   
 
-
+    # helper functions
+    
+    def get_email_address_from_string(self,str_in):
+        #print '<<<',str_in
+        if '@' in str_in:
+            match = re.search(r'[\w\.-]+@[\w\.-]+', str_in)
+            str_return = match.group(0).lower()
+            #print '>>>', str_return
+            return str_return
+        else:
+            return ""
+    
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...

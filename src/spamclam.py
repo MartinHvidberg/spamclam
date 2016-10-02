@@ -19,6 +19,7 @@ try:
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
     print "\nUsage: spamclam.py <server> <user> <password> [mode]"
+    print "\ne.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
     sys.exit(101)
     
 # Open connection to email (POP) server
@@ -51,7 +52,7 @@ con_pop.quit()
 print "\n=============   Spamalyse statistics   ==============================="
 #sal.show_raw_statistics()
 sal.show_pritty_statistics()
-sal.report_to_global_stat_file("spamclm_global.stat")
+sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 print "\n=============   Results   ============================================"
 print "Expect :\t"+str(num_tot_msgs)
