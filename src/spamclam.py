@@ -57,7 +57,7 @@ for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 
     msg_raw = con_pop.retr(mail_number)
     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
     if sal.is_spam(msg_eml):
-        lst_dele.append(con_pop.dele(mail_number))
+        lst_dele.append(con_pop.dele(mail_number))  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
 
 # Close connection to email server
 con_pop.quit()
@@ -72,6 +72,12 @@ print "Expect :\t"+str(num_tot_msgs)
 print "Handled:\t"+str(sal.get_statistics('cnt_eml'))
 print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
 print "\nDone..."
+
+print " ------ before clean ------"
+sal.show_rules()
+sal.rule_cleaner()
+#print " ------ after clean ------"
+#sal.show_rules()
 
 del sal
 

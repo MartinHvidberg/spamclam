@@ -1,5 +1,12 @@
+
+### History
+# ver. 0.1.x Early running stages
+# ver. 0.2   Experimenting with Object Rule-set
+
 import os, email
 import re # for helper function
+
+
 
 def print_main_headers(eml_in):
     """ Just print the interesting headers """
@@ -28,7 +35,7 @@ class Spamalyser(object):
         self._mode = mode # default mode is 'simple'
         self._wob = wob # White over Black, White-list overrules Black-list... default is True
         self._rules = {'White': list(), 'Black': list()}
-        self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}}
+        self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (White, Grey, Black)
         
         self.load_rulesfiles()
         self.load_addressbooks()
@@ -112,9 +119,35 @@ class Spamalyser(object):
                         lst_tmp.append({'key': 'from', 'opr': '==', 'val': [str_emladd]})
                     del str_emladd, str_tmp      
         return
+
+    def rule_cleaner(self):
+        print " <<<<<< Cleaner <<<<<<"
+        #print self._rules
+        self._rules_backup = self._rules
+        for colour in self._rules.keys():
+            print "\n * ", colour
+            lst_new_any = list()
+            lst_new_all = list()
+            for lst_old_rule in self._rules[colour]:
+                print "<<<", lst_old_rule
+                if lst_old_rule[0] == 'if_any_of':
+                    lst_new_any.extend(lst_old_rule)  # Note: Extend
+                elif lst_old_rule[0] == 'if_all_of':
+                    lst_new_all.append(lst_old_rule)  # Note: Append
+            print ">>>", lst_new_all
+            print ">>>", lst_new_any
+        print ">>>>>> Cleaner >>>>>>"
     
     def show_rules(self):
-        
+        print "\n * Pritty print the rules..."
+        for key1 in sorted(self._rules.keys()):
+            itm1 = self._rules[key1]
+            print "\n + Colour: {} ({})".format(key1, str(len(itm1)))
+            for itm2 in itm1:
+                print "   + RulL:"
+                print "     + type: {}".format(itm2[0])
+                for itm3 in itm2[1]:
+                    print "           : {} {} {}".format(itm3['key'], itm3['opr'], itm3['val'])
         return
     
     # Functions processing email, checking them for spam...
@@ -253,12 +286,6 @@ class Spamalyser(object):
                     dic_global[lst_i[0]] = dict()
                     dic_global[lst_i[0]]['tot'] = int(lst_i[1].replace('total:','').strip())
                     dic_global[lst_i[0]]['del'] = int(lst_i[2].replace('delete:','').strip())
-                    
-        #=======================================================================
-        # print "Old global"
-        # for keyg in dic_global:
-        #     print "    OLD :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
-        #=======================================================================
             
         # Turn the recent harvest into concurrent format
         dic_update = dict()
@@ -267,12 +294,6 @@ class Spamalyser(object):
             dic_stat = self._stat['senders'][sender]
             #print "#\n" + sender + "\n\t" + str_emladd + "\n\t" + str(dic_stat)
             dic_update[str_emladd] = dic_stat
-        
-        #=======================================================================
-        # print "Updates"
-        # for keyg in dic_update:
-        #     print "    UPD :: " + str(keyg) + ' :: ' + str(dic_update[keyg])
-        #=======================================================================
             
         # Merge the two dics
         for upd in dic_update.keys():
@@ -284,12 +305,6 @@ class Spamalyser(object):
                 dic_global[upd] = {'tot': tmp_tot, 'del': tmp_del}
                 del tmp_tot, tmp_del
         del dic_update
-        
-        #=======================================================================
-        # print "NEW"
-        # for keyg in dic_global:
-        #     print "    NEW :: " + str(keyg) + ' :: ' + str(dic_global[keyg])
-        #=======================================================================
             
         # return the updated collection
         with open(str_filename, 'w') as fil_g:
