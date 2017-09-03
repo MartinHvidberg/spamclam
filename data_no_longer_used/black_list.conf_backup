@@ -9,7 +9,7 @@
 # Anything else should be rule sets...
 # rule set  = if_any_of | if_all_of { <condition> [; <condition>] }
 # condition = <key> <xx> <value> [, <value>]
-# key       = subject | from | body | to | cc | bcc | tocc | toccbcc | size
+# key       = subject | from | body | to | cc | bcc | size
 # xx        = 
 #			&&	contains
 #			!&	do_not_contain

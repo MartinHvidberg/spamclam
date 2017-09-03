@@ -40,19 +40,30 @@ def print_structure(eml_in):
 
 class Ruleset(object):
     """ Rule-set to be used with Spamalyser.
-    A dictionary of (2) lists of lists of dictionaries.
-    in pseudocode looking like this
+    A 'rule-set' is a dictionary of (2) lists of 'rules'.
+        The only valid keys in this dictionary are 'Black' and 'White'.
+    A 'rule' is a lists of conditions.
+        A 'simple rule' have one condition.
+        A 'complex rule' have several conditions.
+        There are implicit AND between the conditions in a complex rule.
+    A 'condition' is a dictionaries. It has entries 'key', 'opr' and 'val'
+        'opr' is a string
+        'key' and 'val' are lists. In simple cases the lists only has one element each.
+        in 'packed conditions' the lists can have multiple elements
+        There are implicit OR between the elements in a packed condition list.
+
+    In code it all looks like this:
     _data {'White':
             [
-                [{from == 'dave@mygrocer.com'}],
-                [{subject && 'spamalyser'}],
-                [{from ]= 'python.org'}, {subject !& 'python in greek'}]
+                [{[from] == ['dave@mygrocer.com']}],
+                [{[subject] && ['spamalyser']}],
+                [{[from] ]= ['python.org', 'python.net']}, {[subject] !& ['python in greek']}]
             ],
            'Black:
             [
-                [{from == 'spammer_dude@highprice.com}],
-                [{to !& 'myemail@home.net'}],
-                [{from ]= microsoft.com}, {subject && 'open source'}]
+                [{[from] == ['spammer_dude@highprice.com']}],
+                [{[to] !& ['myemail@home.net']}],
+                [{[from] ]= [microsoft.com]}, {[subject] !& ['open source', 'free license']}]
             ]
           }
     """
@@ -62,34 +73,66 @@ class Ruleset(object):
         self._data = {'White': list(), 'Black': list()}
 
     def add_rule(self, colour, rul_in):
-        # validate
-        if colour in ['White', 'Black']:
-            if aoa.lower() in ['any', 'all']:
-                if isinstance(rul_in, dict):
-                    pass
-                    # {'key': 'from', 'opr': '==', 'val': [str_emladd]}
-                    lst_expected_keys = ['key', 'opr', 'val']
-                    lst_keys_in = rul_in.keys()
-                    if all(key in lst_keys_in for key in lst_expected_keys):
-                        pass
-                        #XXX add check that key is in [,,,]
-                        #XXX add check that opr is in [,,,]
-                    else:
-                        logging.warning("address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
-                        return 996
+        """
+        Receives, validates and (if valid) adds the 'rule' to the main rule-set.
+        :param colour: 'Black' or 'White'
+        :param rul_in: A 'rule'
+        :return: TBD
+        """
+
+        def rule_check_packeage(colour, rul_pk):
+            if colour in ['White', 'Black']:  # Rule must be White or Black
+                if isinstance(rul_pk, list):  # a 'rule'
+                    for rule in rul_pk:
+                        if isinstance(rule, dict):  # a 'condition'
+                            # {'key': ['from'], 'opr': '==', 'val': ['someone@work.com']}
+                            if all(key in rule.keys() for key in ['key', 'opr', 'val']):
+                                logging.debug(" add_rule() (packed): {}, {}".format(colour, rule))
+                                pass  # All seems Okay, ready to be exploded
+                            else:
+                                logging.warning("address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
+                                return 996
+                        else:
+                            logging.warning("address rule rul_in. 'condition' is not type dict")
+                            return 997
                 else:
-                    logging.warning("address rule rul_in is not type dictionary")
-                    return 997
+                    logging.warning("address rule rul_in. 'rule' is not type list")
+                    return 998
             else:
-                logging.warning("illegal AOA in added rule: {}".format(str(aoa)))
-                return 998
-        else:
-            logging.warning("illegal Colour in added rule: {}".format(str(colour)))
-            return 999
-        # check if exist
-        #  XXX add some check here...
-        # add
-        self._data[colour][aoa].append(rul_in)
+                logging.warning("illegal colour in added rule: {}".format(str(colour)))
+                return 999
+
+        def rule_explode(rul_in):
+            """ Explode rule into several rules,
+                eliminating lists in fields 'key' and 'val'.
+                The exploder makes no checks, the result should be checked with the appropriate function.
+            """
+            lst_ret = list
+
+        def rule_check_exploded(lst_rules):
+            for rule in lst_rules:
+                # 'key'
+                if all(key in ['subject', 'from', 'body', 'to', 'cc', 'bcc', 'size'] for key in
+                       rule['key']):
+                    pass
+                else:
+                    logging.warning("address rule rul_in has a bad 'key': {}".format(str(rule)))
+                    return 996
+                    # XXX add check that key is in [,,,]
+                    # XXX add check that dic[key] is list of valid e-mail header fields
+                    # XXX add check that opr is in [,,,]
+                    # XXX add check that dic[val] is list of valid text strings
+
+
+        logging.debug(" add_rule() received: {}, {}".format(colour, rul_in))
+        # validate and explode
+        if rule_check_packeage(colour, rul_in):
+            lst_rules = rule_explode(rul_in)
+            if rule_check_exploded(lst_rules):
+                # check if exist
+                #     XXX add some check here...
+                # add
+                self._data[colour].append(rul_in)
         return
 
     def get_rules_as_list(self, colour):
@@ -122,10 +165,10 @@ class Spamalyser(object):
         #self.load_rulesfiles()
         self.load_addressbooks()
         
-        # Check that rules were filled
-        for colour in ['Black', 'White']:
-            if len(self._rules[colour]) < 1:
-                print "!!! No rules of colour: "+colour
+        # # Check that rules were filled
+        # for colour in ['Black', 'White']:
+        #     if len(self._rules[colour]) < 1:
+        #         print "!!! No rules of colour: "+colour
 
         # Experiment w. Rules
         #rus = Ruleset()
@@ -199,9 +242,10 @@ class Spamalyser(object):
                         str_tmp = line.split("#")[0] # Get rid of comments
                         str_emladd = self.get_email_address_from_string(str_tmp)
                         if len(str_emladd) > 0: # Insert email address in ruleset
-                            logging.debug("<addr. {} = {}".format(str_colour, str_emladd))
-                            dic_rul = {'key': 'from', 'opr': '==', 'val': [str_emladd]}
-                            self._rulob.add_rule(str_colour, 'any', dic_rul)
+                            logging.debug("{} <addr {}".format(str_colour, str_emladd))
+                            dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
+                            rule_a = [dic_rul] # 'A rule' is a list dics, so we need to wrap it...
+                            self._rulob.add_rule(str_colour, rule_a)
                         del str_emladd, str_tmp
         return
 
@@ -223,18 +267,16 @@ class Spamalyser(object):
             print ">>>", lst_new_all
             print ">>>", lst_new_any
 
-    def show_rules(self):
+    def show_rules_back(self):
         """ Show the rules """
         logging.debug(" func. show_rules.")
-        print "\n * Pritty print the rules..."
-        for key1 in sorted(self._rules.keys()):
-            itm1 = self._rules[key1]
-            print "\n + Colour: {} ({})".format(key1, str(len(itm1)))
-            for itm2 in itm1:
-                print "   + RulL:"
-                print "     + type: {}".format(itm2[0])
-                for itm3 in itm2[1]:
-                    print "           : {} {} {}".format(itm3['key'], itm3['opr'], itm3['val'])
+        print "\n * Pritty print the rules, via the back door..."
+        for key_colour in sorted(self._rules.keys()):
+            itm_colour = self._rules[key_colour]
+            print "\n + Colour: {} ({})".format(key_colour, str(len(itm_colour)))
+            for lst_rule_a in itm_colour:
+                print "     + type: {}".format(str(type(lst_rule_a)))
+                #print "           : {} {} {}".format(itm3['key'], itm3['opr'], itm3['val'])
         return
     
     # Functions processing email, checking them for spam...
