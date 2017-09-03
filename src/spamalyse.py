@@ -39,29 +39,29 @@ def print_structure(eml_in):
 
 
 class Ruleset(object):
-    """ Rule-set to be used with Spamalyser
-    _data {
-     White:
-      {any:
-        [
-         (aa,bb,cc)
-         (aa,bb,cc)
-        ],
-       all: [
-        [(aa,bb,cc), (dd,ee,ff)],
-        [(aa,bb,cc), (dd,ee,ff)]
-        ]
-      }
-     Black:
-      {any: [(aa,bb,cc), (aa,bb,cc)]
-       all: [[(aa,bb,cc), (dd,ee,ff)], [(aa,bb,cc), (dd,ee,ff)] }
+    """ Rule-set to be used with Spamalyser.
+    A dictionary of (2) lists of lists of dictionaries.
+    in pseudocode looking like this
+    _data {'White':
+            [
+                [{from == 'dave@mygrocer.com'}],
+                [{subject && 'spamalyser'}],
+                [{from ]= 'python.org'}, {subject !& 'python in greek'}]
+            ],
+           'Black:
+            [
+                [{from == 'spammer_dude@highprice.com}],
+                [{to !& 'myemail@home.net'}],
+                [{from ]= microsoft.com}, {subject && 'open source'}]
+            ]
+          }
     """
 
     def __init__(self):
         logging.debug("class init. Ruleset")
-        self._data = {'White': {'any': list(), 'all': list()}, 'Black': {'any': list(), 'all': list()}}
+        self._data = {'White': list(), 'Black': list()}
 
-    def add_rule(self, colour, aoa, rul_in):
+    def add_rule(self, colour, rul_in):
         # validate
         if colour in ['White', 'Black']:
             if aoa.lower() in ['any', 'all']:
