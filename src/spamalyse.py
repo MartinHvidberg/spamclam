@@ -5,7 +5,15 @@
 
 import os, email
 import re # for helper function
+import logging
 
+# Setup logging
+logging.basicConfig(filename='spamalyse.log',
+                    filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)7s %(message)s')
+                    # %(funcName)s
+logging.info("====== Start ======")
 
 
 def print_main_headers(eml_in):
@@ -18,40 +26,119 @@ def print_main_headers(eml_in):
     print "To_d : " + str(eml_in['Delivered-To'])
     print "To_o : " + str(eml_in['X-Original-To'])
     #print "multi: " + str(eml_in.is_multipart())
-    
+
+
 def print_keys(eml_in):
     print ">>>>>> Keys"
     print eml_in.keys()
-    
+
+
 def print_structure(eml_in):
     print ">>>>>> Structure"
     print email.Iterators._structure(eml_in)
-    
+
+
+class Ruleset(object):
+    """ Rule-set to be used with Spamalyser
+    _data {
+     White:
+      {any:
+        [
+         (aa,bb,cc)
+         (aa,bb,cc)
+        ],
+       all: [
+        [(aa,bb,cc), (dd,ee,ff)],
+        [(aa,bb,cc), (dd,ee,ff)]
+        ]
+      }
+     Black:
+      {any: [(aa,bb,cc), (aa,bb,cc)]
+       all: [[(aa,bb,cc), (dd,ee,ff)], [(aa,bb,cc), (dd,ee,ff)] }
+    """
+
+    def __init__(self):
+        logging.debug("class init. Ruleset")
+        self._data = {'White': {'any': list(), 'all': list()}, 'Black': {'any': list(), 'all': list()}}
+
+    def add_rule(self, colour, aoa, rul_in):
+        # validate
+        if colour in ['White', 'Black']:
+            if aoa.lower() in ['any', 'all']:
+                if isinstance(rul_in, dict):
+                    pass
+                    # {'key': 'from', 'opr': '==', 'val': [str_emladd]}
+                    lst_expected_keys = ['key', 'opr', 'val']
+                    lst_keys_in = rul_in.keys()
+                    if all(key in lst_keys_in for key in lst_expected_keys):
+                        pass
+                        #XXX add check that key is in [,,,]
+                        #XXX add check that opr is in [,,,]
+                    else:
+                        logging.warning("address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
+                        return 996
+                else:
+                    logging.warning("address rule rul_in is not type dictionary")
+                    return 997
+            else:
+                logging.warning("illegal AOA in added rule: {}".format(str(aoa)))
+                return 998
+        else:
+            logging.warning("illegal Colour in added rule: {}".format(str(colour)))
+            return 999
+        # check if exist
+        #  XXX add some check here...
+        # add
+        self._data[colour][aoa].append(rul_in)
+        return
+
+    def get_rules_as_list(self, colour):
+        return
+
+    def show_rules(self):
+        print "\n * Rules object..."
+        for colour in sorted(self._data.keys()):
+            col_set = self._data[colour]
+            print "\n + Colour: {} ({})".format(colour, str(len(col_set)))
+            for aoa in sorted(col_set.keys()):
+                print "   + AoA: ".format(aoa)
+                print "     + type: {} length: {}".format(aoa, len(aoa))
+
+        return
+
+
 class Spamalyser(object):
     """ The Spamalyser class """
     
     def __init__(self, conf_dir, mode='simple', wob=True):
+        logging.debug("class init. Spamalyser")
         self._cnfd = conf_dir # Where to look for the .conf files
         self._mode = mode # default mode is 'simple'
         self._wob = wob # White over Black, White-list overrules Black-list... default is True
-        self._rules = {'White': list(), 'Black': list()}
+        self._rules = {'White': list(), 'Black': list()}  # XXX Should diapear as _rulob works
+        self._rulob = Ruleset()  # The rules object
         self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (White, Grey, Black)
-        
-        self.load_rulesfiles()
+
+        #self.load_rulesfiles()
         self.load_addressbooks()
         
         # Check that rules were filled
         for colour in ['Black', 'White']:
             if len(self._rules[colour]) < 1:
                 print "!!! No rules of colour: "+colour
+
+        # Experiment w. Rules
+        #rus = Ruleset()
+        #rus.show_rules()
         
     # Functions handling 'rules'
     
     def load_rulesfiles(self):
         """ Find and load all .conf files in the conf_dir """
+        logging.debug(" func. load_rulesfiles.")
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
-            if fil_cnf.endswith(".conf"):
+            if fil_cnf.endswith(".scrule"):
                 print("Config file: " + fil_cnf)
                 # Crunch the rule file
                 if "white" in fil_cnf.lower():
@@ -92,13 +179,11 @@ class Spamalyser(object):
         return
     
     def load_addressbooks(self):
-        """ Find and load all .csv files in the conf_dir """
+        """ Find and load all address (.scaddr) files in the conf_dir """
+        logging.debug(" func. load_addressbooks.")
         # Find addressbook files
-        lst_w = list()
-        lst_b = list()
         for fil_cnf in os.listdir(self._cnfd):
-            if fil_cnf.endswith(".csv"):
-                print("Addressbook file: " + fil_cnf)
+            if fil_cnf.endswith(".scaddr"):
                 # Crunch the addressbook file
                 if "white" in fil_cnf.lower():
                     str_colour = 'White'
@@ -108,20 +193,21 @@ class Spamalyser(object):
                     str_colour = ""
                     print "!!! file name contained neither 'white' nor 'black'... I'm confused."
                     continue
-                with open(self._cnfd+fil_cnf) as f:
-                    lst_conf = f.readlines()
-                lst_tmp = list()
-                for n in range(len(lst_conf)):
-                    str_tmp = lst_conf[n].split("#")[0] # Get rid of comments
-                    str_emladd = self.get_email_address_from_string(str_tmp)
-                    if len(str_emladd) > 0: # Insert email address in ruleset
-                        print " + " + str_colour + ' :: ' + str_emladd
-                        lst_tmp.append({'key': 'from', 'opr': '==', 'val': [str_emladd]})
-                    del str_emladd, str_tmp      
+                logging.info("Addressbook {}: {}".format(str_colour, fil_cnf))
+                with open(self._cnfd+fil_cnf, 'r') as f:
+                    for line in f:
+                        str_tmp = line.split("#")[0] # Get rid of comments
+                        str_emladd = self.get_email_address_from_string(str_tmp)
+                        if len(str_emladd) > 0: # Insert email address in ruleset
+                            logging.debug("<addr. {} = {}".format(str_colour, str_emladd))
+                            dic_rul = {'key': 'from', 'opr': '==', 'val': [str_emladd]}
+                            self._rulob.add_rule(str_colour, 'any', dic_rul)
+                        del str_emladd, str_tmp
         return
 
     def rule_cleaner(self):
-        print " <<<<<< Cleaner <<<<<<"
+        """ Clean the rules """
+        logging.debug(" func. rule_cleaner.")
         #print self._rules
         self._rules_backup = self._rules
         for colour in self._rules.keys():
@@ -136,9 +222,10 @@ class Spamalyser(object):
                     lst_new_all.append(lst_old_rule)  # Note: Append
             print ">>>", lst_new_all
             print ">>>", lst_new_any
-        print ">>>>>> Cleaner >>>>>>"
-    
+
     def show_rules(self):
+        """ Show the rules """
+        logging.debug(" func. show_rules.")
         print "\n * Pritty print the rules..."
         for key1 in sorted(self._rules.keys()):
             itm1 = self._rules[key1]
@@ -157,6 +244,7 @@ class Spamalyser(object):
         email message is expected to be a email.message_from_string(s[, _class[, strict]])
         for details see: https://docs.python.org/2/library/email.message.html#module-email.message
         """
+        logging.debug(" func. is_spam.")
         bol_return = None
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
@@ -178,6 +266,7 @@ class Spamalyser(object):
         """ This is the simplest analyse, it is based on black-list and white-list rules.
         It will analyse, separately, if the email can be considered Black or considered White.
         The final decision, outside this function, depends on a combination of Black, White and self._wob. """
+        logging.debug(" func. _simple_bw_spamalyser.")
         #print ">>>>>> Spamalyse - Simple Black and White"
         dic_res = dict()
         for str_colour in ['Black', 'White']:
@@ -229,7 +318,8 @@ class Spamalyser(object):
     # Functions related to: Statistics
     
     def stat_count_email(self,eml_in,bol_spam):
-        """ Update _stat with email handled by this spamalyse instance"""
+        """ Update _stat with email handled by this spamalyse instance """
+        logging.debug(" func. stat_count_email.")
         # Count 1 mail
         self._stat['cnt_eml'] += 1
         # Count 1 mail, _deleted_
@@ -249,6 +339,7 @@ class Spamalyser(object):
     
     def get_statistics(self, key):
         """ Return a named element from stat, if it exists... """
+        logging.debug(" func. get_statistics.")
         if key in self._stat.keys():
             return self._stat[key]
         else:
@@ -256,10 +347,12 @@ class Spamalyser(object):
     
     def show_raw_statistics(self):
         """ Raw print the stat dicionary """
+        logging.debug(" func. show_raw_statistics.")
         print self._stat
         
     def show_pritty_statistics(self):
         """ Pritty-print the stat """
+        logging.debug(" func. show_pritty_statistics.")
         print " ------ Stat ------"
         print " Total e-mails: "+str(self._stat['cnt_eml'])
         print " Deleted e-mails: "+str(self._stat['cnt_del'])
@@ -277,6 +370,8 @@ class Spamalyser(object):
             print sndr
             
     def report_to_global_stat_file(self,str_filename):
+        """ report to global statistics file """
+        logging.debug(" func. report_to_global_stat_file.")
         # load existing, if exists...
         dic_global = dict()
         if os.path.isfile(str_filename):

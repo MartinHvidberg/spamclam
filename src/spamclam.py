@@ -5,7 +5,6 @@
 # make header print uft-8 eller noget...
 
 
-
 print "\n=============   Spamclam   ==========================================="
 
 
@@ -34,50 +33,52 @@ except:
 
 print "\n=============   Connect to POP3 server   ============================="    
     
-# Open connection to email (POP) server
-try:
-    con_pop = poplib.POP3(str_srvr)
-    con_pop.user(str_user)
-    con_pop.pass_(str_pass)
-    print "Server says:  "+con_pop.getwelcome()
-    num_tot_msgs, num_tot_bytes = con_pop.stat()
-    print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
-except:
-    print "\nSeems to be unable to access the e-mail server..."
-    sys.exit(102)
+# # Open connection to email (POP) server
+# try:
+#     con_pop = poplib.POP3(str_srvr)
+#     con_pop.user(str_user)
+#     con_pop.pass_(str_pass)
+#     print "Server says:  "+con_pop.getwelcome()
+#     num_tot_msgs, num_tot_bytes = con_pop.stat()
+#     print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
+# except:
+#     print "\nSeems to be unable to access the e-mail server..."
+#     sys.exit(102)
     
 print "\n=============   Spamalyse   =========================================="
     
 # Create a Spamalyser object
 sal = spamalyse.Spamalyser('../data/',str_mode)
 
-# Handle the emails on the server
-lst_dele = list() # List to cache delete commands feed back from server, not really used?
-for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
-    msg_raw = con_pop.retr(mail_number)
-    msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
-    if sal.is_spam(msg_eml):
-        lst_dele.append(con_pop.dele(mail_number))  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
+print "\n=============   Run   ================================================"
 
-# Close connection to email server
-con_pop.quit()
+# # Handle the emails on the server
+# lst_dele = list() # List to cache delete commands feed back from server, not really used?
+# for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
+#     msg_raw = con_pop.retr(mail_number)
+#     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
+#     if sal.is_spam(msg_eml):
+#         lst_dele.append(con_pop.dele(mail_number))  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
 
-print "\n=============   Spamalyse statistics   ==============================="
-#sal.show_raw_statistics()
-sal.show_pritty_statistics()
-sal.report_to_global_stat_file("../data/spamclam_global.stat")
+# # Close connection to email server
+# con_pop.quit()
 
-print "\n=============   Results   ============================================"
-print "Expect :\t"+str(num_tot_msgs)
-print "Handled:\t"+str(sal.get_statistics('cnt_eml'))
-print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
-print "\nDone..."
+# print "\n=============   Spamalyse statistics   ==============================="
+# #sal.show_raw_statistics()
+# sal.show_pritty_statistics()
+# sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
-print " ------ before clean ------"
-sal.show_rules()
-sal.rule_cleaner()
-#print " ------ after clean ------"
-#sal.show_rules()
+# print "\n=============   Results   ============================================"
+# print "Expect :\t"+str(num_tot_msgs)
+# print "Handled:\t"+str(sal.get_statistics('cnt_eml'))
+# print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
+# print "\nDone..."
+
+# print " ------ before clean ------"
+# sal.show_rules()
+# sal.rule_cleaner()
+# #print " ------ after clean ------"
+# #sal.show_rules()
 
 del sal
 
