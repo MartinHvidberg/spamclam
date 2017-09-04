@@ -6,6 +6,7 @@
 import os, email
 import re # for helper function
 import logging
+import json
 
 # Setup logging
 logging.basicConfig(filename='spamalyse.log',
@@ -88,66 +89,86 @@ class Ruleset(object):
                             # {'key': ['from'], 'opr': '==', 'val': ['someone@work.com']}
                             if all(key in rule.keys() for key in ['key', 'opr', 'val']):
                                 logging.debug(" add_rule() (packed): {}, {}".format(colour, rule))
-                                pass  # All seems Okay, ready to be exploded
+                                pass  # All seems okay, ready to be exploded
                             else:
                                 logging.warning("address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
-                                return 996
+                                return False
                         else:
                             logging.warning("address rule rul_in. 'condition' is not type dict")
-                            return 997
+                            return False
                 else:
                     logging.warning("address rule rul_in. 'rule' is not type list")
-                    return 998
+                    return False
             else:
                 logging.warning("illegal colour in added rule: {}".format(str(colour)))
-                return 999
+                return False
+            return True
 
-        def rule_explode(rul_in):
-            """ Explode rule into several rules,
+        def unpack_conditions(rul_pk):
+            """ Unpack all packed condition, in a 'rule', into several unpacked conditions,
                 eliminating lists in fields 'key' and 'val'.
-                The exploder makes no checks, the result should be checked with the appropriate function.
+                The unpacker makes no checks, the result should be checked with the appropriate function.
             """
-            lst_ret = list
+            logging.debug("rul_pk1: {}".format(json.dumps(rul_pk)))
+            for cond in rul_pk:
+                if len(cond['key']) > 1:
+                    lst_singlekey_conds = list()
+                    for key_a in cond['key']:
+                        lst_singlekey_conds.append({'key': key_a, 'opr': cond['opr'], 'val': cond['val']})
+                else:
+                    lst_singlekey_conds = rul_pk
+            del cond
+            logging.debug("rul_pk2: {}".format(json.dumps(lst_singlekey_conds)))
+            for cond in lst_singlekey_conds:
+                if len(cond['val']) > 1:
+                    lst_singleval_conds = list()
+                    for val_a in cond['val']:
+                        lst_singleval_conds.append({'key': cond['key'],'opr': cond['opr'], 'val': val_a})
+                else:
+                    lst_singleval_conds = lst_singlekey_conds
+            logging.debug("rul_pk3: {}".format(json.dumps(lst_singleval_conds)))
+            return lst_singleval_conds
 
-        def rule_check_exploded(lst_rules):
+        def rule_check_unpacked(lst_rules):
             for rule in lst_rules:
                 # 'key'
                 if all(key in ['subject', 'from', 'body', 'to', 'cc', 'bcc', 'size'] for key in
                        rule['key']):
                     pass
                 else:
-                    logging.warning("address rule rul_in has a bad 'key': {}".format(str(rule)))
-                    return 996
+                    logging.warning("address rule rul_pk has a bad 'key': {}".format(str(rule)))
+                    return False
                     # XXX add check that key is in [,,,]
                     # XXX add check that dic[key] is list of valid e-mail header fields
                     # XXX add check that opr is in [,,,]
                     # XXX add check that dic[val] is list of valid text strings
-
+            return True
 
         logging.debug(" add_rule() received: {}, {}".format(colour, rul_in))
+        logging.debug("rul_in0: {}".format(json.dumps(rul_in)))
         # validate and explode
         if rule_check_packeage(colour, rul_in):
-            lst_rules = rule_explode(rul_in)
-            if rule_check_exploded(lst_rules):
+            rul_a = unpack_conditions(rul_in)
+            if rule_check_unpacked(rul_a):
                 # check if exist
                 #     XXX add some check here...
                 # add
-                self._data[colour].append(rul_in)
+                self._data[colour].append(rul_a)
+            else:
+                logging.warning("add_rule: rule_check_unpacked() returned False")
+        else:
+            logging.warning("add_rule: rule_check_packeage() returned False")
         return
 
     def get_rules_as_list(self, colour):
         return
 
-    def show_rules(self):
-        print "\n * Rules object..."
-        for colour in sorted(self._data.keys()):
-            col_set = self._data[colour]
-            print "\n + Colour: {} ({})".format(colour, str(len(col_set)))
-            for aoa in sorted(col_set.keys()):
-                print "   + AoA: ".format(aoa)
-                print "     + type: {} length: {}".format(aoa, len(aoa))
+    def rules_as_json(self):
+        return json.dumps(self._data)
 
-        return
+    def rules_as_text(self):
+        """ Simply make a nice, multi-line, text version of a rule-set """
+        return json.dumps(self._data, sort_keys=True, indent=2, separators=(',', ': '))
 
 
 class Spamalyser(object):
@@ -173,6 +194,8 @@ class Spamalyser(object):
         # Experiment w. Rules
         #rus = Ruleset()
         #rus.show_rules()
+        print self._rulob.rules_as_json()
+        print self._rulob.rules_as_text()
         
     # Functions handling 'rules'
     
