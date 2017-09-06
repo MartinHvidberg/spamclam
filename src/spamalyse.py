@@ -183,8 +183,8 @@ class Spamalyser(object):
         self._rulob = Ruleset()  # The rules object
         self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (White, Grey, Black)
 
-        #self.load_rulesfiles()
-        self.load_addressbooks()
+        self.load_rulesfiles()
+        #self.load_addressbooks()
         
         # # Check that rules were filled
         # for colour in ['Black', 'White']:
@@ -201,12 +201,11 @@ class Spamalyser(object):
     
     def load_rulesfiles(self):
         """ Find and load all .conf files in the conf_dir """
-        logging.debug(" func. load_rulesfiles.")
+        logging.debug("func. load_rulesfiles.")
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
             if fil_cnf.endswith(".scrule"):
-                print("Config file: " + fil_cnf)
-                # Crunch the rule file
+                logging.debug("Config file: {}".format(fil_cnf))
                 if "white" in fil_cnf.lower():
                     str_colour = 'White'
                 elif "black" in fil_cnf.lower():
@@ -214,34 +213,15 @@ class Spamalyser(object):
                 else:
                     str_colour = ""
                     print "!!! file name contained neither 'white' nor 'black'... I'm confused."
+                    logging.debug("!!! file name contained neither 'white' nor 'black'... I'm confused.")
                     continue
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
-                for n in range(len(lst_conf)):
-                    str_tmp = lst_conf[n].split("#")[0] # Get rid of comments
-                    while '  ' in str_tmp: # Replace all multi-space with single-space
-                        str_tmp.replace('  ',' ')
-                    if str_tmp in [' ', '\n', '\t']: # delete all whitespace-only lines
-                        str_tmp = ''
-                    lst_conf[n] = str_tmp # put it back in the list
-                lst_conf = [lin.strip() for lin in lst_conf if len(lin)>0] # remove all the empty lines, and leading and trailing whitespace
-                str_conf = " ".join(lst_conf) # connect all lines to one string
-                lst_rulesets = ["if_a"+rs for rs in str_conf.split("if_a") if len(rs)>4] # turn the string into list of rules
-                #print "StarRaw: ", lst_rulesets
-                del str_conf, lst_conf # cleaning ...
-                # Analyse the rule-set and establish rules
-                for rule in lst_rulesets:
-                    print "  rule:",rule
-                    lst_aruleset = list()
-                    allany, cond = rule.split(' ',1)
-                    lst_cond = cond.strip().strip('{}').strip().split(';')
-                    for con in lst_cond: # Replace each cond. with True or False
-                        key_c, oprt, values = con.strip().split(' ',2)
-                        lst_values = [v.strip() for v in values.split(',')]
-                        rul_a = {'key':key_c, 'opr':oprt, 'val':lst_values}
-                        lst_aruleset.append(rul_a)
-                        print "    :", rul_a['key'], rul_a['opr'], rul_a['val'] 
-                    self._rules[str_colour].append([allany,lst_aruleset])
+                logging.debug("lst_cnf1: {}".format(lst_conf))
+                lst_conf = [conf.split("#")[0].strip() for conf in lst_conf] # Get rid of comments
+                lst_conf = [conf for conf in lst_conf if conf != '']
+                logging.debug("lst_cnf2: {}".format(lst_conf))
+
         return
     
     def load_addressbooks(self):
