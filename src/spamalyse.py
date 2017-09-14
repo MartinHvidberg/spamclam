@@ -42,7 +42,7 @@ def print_structure(eml_in):
 class Ruleset(object):
     """ Rule-set to be used with Spamalyser.
     A 'rule-set' is a dictionary of (2) lists of 'rules'.
-        The only valid keys in this dictionary are 'Black' and 'White'.
+        The only valid keys in this dictionary are 'black' and 'white'.
     A 'rule' is a lists of conditions.
         A 'simple rule' have one condition.
         A 'complex rule' have several conditions.
@@ -54,13 +54,13 @@ class Ruleset(object):
         There are implicit OR between the elements in a packed condition list.
 
     In code it all looks like this:
-    _data {'White':
+    _data {'white':
             [
                 [{[from] == ['dave@mygrocer.com']}],
                 [{[subject] && ['spamalyser']}],
                 [{[from] ]= ['python.org', 'python.net']}, {[subject] !& ['python in greek']}]
             ],
-           'Black:
+           'black:
             [
                 [{[from] == ['spammer_dude@highprice.com']}],
                 [{[to] !& ['myemail@home.net']}],
@@ -71,18 +71,18 @@ class Ruleset(object):
 
     def __init__(self):
         logging.debug("class init. Ruleset")
-        self._data = {'White': list(), 'Black': list()}
+        self._data = {'white': list(), 'black': list()}
 
     def add_rule(self, colour, rul_in):
         """
         Receives, validates and (if valid) adds the 'rule' to the main rule-set.
-        :param colour: 'Black' or 'White'
+        :param colour: 'black' or 'white'
         :param rul_in: A 'rule'
         :return: TBD
         """
 
         def rule_check_packeage(colour, rul_pk):
-            if colour in ['White', 'Black']:  # Rule must be White or Black
+            if colour in ['white', 'black']:  # Rule must be white or black
                 if isinstance(rul_pk, list):  # a 'rule'
                     for rule in rul_pk:
                         if isinstance(rule, dict):  # a 'condition'
@@ -170,6 +170,7 @@ class Ruleset(object):
         """ Simply make a nice, multi-line, text version of a rule-set """
         return json.dumps(self._data, sort_keys=True, indent=2, separators=(',', ': '))
 
+# End class - Ruleset
 
 class Spamalyser(object):
     """ The Spamalyser class """
@@ -178,48 +179,38 @@ class Spamalyser(object):
         logging.debug("class init. Spamalyser")
         self._cnfd = conf_dir # Where to look for the .conf files
         self._mode = mode # default mode is 'simple'
-        self._wob = wob # White over Black, White-list overrules Black-list... default is True
-        self._rules = {'White': list(), 'Black': list()}  # XXX Should diapear as _rulob works
+        self._wob = wob # white over black, white-list overrules black-list... default is True
+        ##self._rules = {'white': list(), 'black': list()}  # XXX Should diapear as _rulob works
         self._rulob = Ruleset()  # The rules object
-        self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (White, Grey, Black)
+        self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
 
         self.load_rulesfiles()
         #self.load_addressbooks()
-        
-        # # Check that rules were filled
-        # for colour in ['Black', 'White']:
-        #     if len(self._rules[colour]) < 1:
-        #         print "!!! No rules of colour: "+colour
 
-        # Experiment w. Rules
-        #rus = Ruleset()
-        #rus.show_rules()
-        print self._rulob.rules_as_json()
-        print self._rulob.rules_as_text()
-        
     # Functions handling 'rules'
     
     def load_rulesfiles(self):
-        """ Find and load all .conf files in the conf_dir """
+        """ Find and load all .scrule files in the conf_dir """
         logging.debug("func. load_rulesfiles.")
         # Find rule files
         for fil_cnf in os.listdir(self._cnfd):
             if fil_cnf.endswith(".scrule"):
-                logging.debug("Config file: {}".format(fil_cnf))
+                logging.debug(".scrule file: {}".format(fil_cnf))
                 if "white" in fil_cnf.lower():
-                    str_colour = 'White'
+                    str_colour = 'white'
                 elif "black" in fil_cnf.lower():
-                    str_colour = "Black"
+                    str_colour = "black"
                 else:
                     str_colour = ""
-                    print "!!! file name contained neither 'white' nor 'black'... I'm confused."
-                    logging.debug("!!! file name contained neither 'white' nor 'black'... I'm confused.")
+                    str_report = "!!! file name contained neither 'white' nor 'black'... I'm confused."
+                    print str_report
+                    logging.debug(str_report)
                     continue
                 with open(self._cnfd+fil_cnf) as f:
                     lst_conf = f.readlines()
                 logging.debug("lst_cnf1: {}".format(lst_conf))
                 lst_conf = [conf.split("#")[0].strip() for conf in lst_conf] # Get rid of comments
-                lst_conf = [conf for conf in lst_conf if conf != '']
+                lst_conf = [conf for conf in lst_conf if conf != ''] # Get rid of empty lines
                 logging.debug("lst_cnf2: {}".format(lst_conf))
 
         return
@@ -232,9 +223,9 @@ class Spamalyser(object):
             if fil_cnf.endswith(".scaddr"):
                 # Crunch the addressbook file
                 if "white" in fil_cnf.lower():
-                    str_colour = 'White'
+                    str_colour = 'white'
                 elif "black" in fil_cnf.lower():
-                    str_colour = "Black"
+                    str_colour = "black"
                 else:
                     str_colour = ""
                     print "!!! file name contained neither 'white' nor 'black'... I'm confused."
@@ -296,12 +287,12 @@ class Spamalyser(object):
             if self._mode == 'simple': # The default 'simple black and white' analyser
                 dic_result = self._simple_bw_spamalyse(eml_in)
                 if self._wob:
-                    if any(dic_result['White']):
+                    if any(dic_result['white']):
                         bol_return = False # i.e. Not Spam
                     else:
-                        bol_return = any(dic_result['Black']) # i.e. Spam if any reason found...
+                        bol_return = any(dic_result['black']) # i.e. Spam if any reason found...
                 else: # wob is false
-                    bol_return = any(dic_result['Black']) # i.e. Spam if any reason found...
+                    bol_return = any(dic_result['black']) # i.e. Spam if any reason found...
         else:
             bol_return = False # if rule unknown, it's not Spam
         self.stat_count_email(eml_in,bol_return)
@@ -309,12 +300,12 @@ class Spamalyser(object):
         
     def _simple_bw_spamalyse(self, eml_in):
         """ This is the simplest analyse, it is based on black-list and white-list rules.
-        It will analyse, separately, if the email can be considered Black or considered White.
-        The final decision, outside this function, depends on a combination of Black, White and self._wob. """
+        It will analyse, separately, if the email can be considered black or considered white.
+        The final decision, outside this function, depends on a combination of black, white and self._wob. """
         logging.debug(" func. _simple_bw_spamalyser.")
-        #print ">>>>>> Spamalyse - Simple Black and White"
+        #print ">>>>>> Spamalyse - Simple black and white"
         dic_res = dict()
-        for str_colour in ['Black', 'White']:
+        for str_colour in ['black', 'white']:
             #print "*** ", str_colour
             dic_res[str_colour] = list()
             lst_rulesets = self._rules[str_colour]
@@ -470,3 +461,5 @@ class Spamalyser(object):
     
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...
+
+# End class - Spamalyser
