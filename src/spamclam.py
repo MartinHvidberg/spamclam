@@ -3,6 +3,7 @@
 # Address book 2 white/black lists
 # Sanitise the rule complex, before applying
 # make header print uft-8 eller noget...
+# introduce prof command line parameters
 
 
 print "\n=============   Spamclam   ==========================================="
@@ -50,7 +51,17 @@ print "\n=============   Spamalyse   =========================================="
 # Create a Spamalyser object
 sal = spamalyse.Spamalyser('../data/',str_mode)
 
+sal.import_addressfile('filename', 'white')
+sal.import_rulefile('filename', 'black')
+sal.export_2json('filename')
+
 print "\n=============   Run   ================================================"
+
+sal.stats_generate_pop3(con_pop)
+print sal.stats_show()
+sal.apply_rules_pop3(con_pop)
+sal.report_to_global_stat_file("../data/spamclam_global.stat")
+
 
 # # Handle the emails on the server
 # lst_dele = list() # List to cache delete commands feed back from server, not really used?
@@ -74,13 +85,8 @@ print "\n=============   Run   ================================================"
 # print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
 # print "\nDone..."
 
-# print " ------ before clean ------"
-# sal.show_rules()
-# sal.rule_cleaner()
-# #print " ------ after clean ------"
-# #sal.show_rules()
-
 del sal
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...
+#   Buena Vista Social Club - Buena Vista Social Club

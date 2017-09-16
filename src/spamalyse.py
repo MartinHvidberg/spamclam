@@ -47,7 +47,7 @@ class Ruleset(object):
         A 'simple rule' have one condition.
         A 'complex rule' have several conditions.
         There are implicit AND between the conditions in a complex rule.
-    A 'condition' is a dictionaries. It has entries 'key', 'opr' and 'val'
+    A 'condition' is a dictionary. It has entries 'key', 'opr' and 'val'
         'opr' is a string
         'key' and 'val' are lists. In simple cases the lists only has one element each.
         in 'packed conditions' the lists can have multiple elements
@@ -72,6 +72,7 @@ class Ruleset(object):
     def __init__(self):
         logging.debug("class init. Ruleset")
         self._data = {'white': list(), 'black': list()}
+        self._rank = 'white'  # Default 'white', meaning white overrules black.
 
     def add_rule(self, colour, rul_in):
         """
