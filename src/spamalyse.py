@@ -17,28 +17,6 @@ logging.basicConfig(filename='spamalyse.log',
 logging.info("====== Start ======")
 
 
-def print_main_headers(eml_in):
-    """ Just print the interesting headers """
-    print ">>>>>> Headers"
-    print "Subj.: " + str(eml_in['Subject'])
-    print "Date : " + str(eml_in['Date'])
-    print "From : " + str(eml_in['From'])
-    print "Rtrn : " + str(eml_in['Return-Path'])
-    print "To_d : " + str(eml_in['Delivered-To'])
-    print "To_o : " + str(eml_in['X-Original-To'])
-    #print "multi: " + str(eml_in.is_multipart())
-
-
-def print_keys(eml_in):
-    print ">>>>>> Keys"
-    print eml_in.keys()
-
-
-def print_structure(eml_in):
-    print ">>>>>> Structure"
-    print email.Iterators._structure(eml_in)
-
-
 class Ruleset(object):
     """ Rule-set to be used with Spamalyser.
     A 'rule-set' is a dictionary of (2) lists of 'rules'.
@@ -110,15 +88,14 @@ class Ruleset(object):
                 eliminating lists in fields 'key' and 'val'.
                 The unpacker makes no checks, the result should be checked with the appropriate function.
             """
+            lst_singlekey_conds = list()
             logging.debug("rul_pk1: {}".format(json.dumps(rul_pk)))
             for cond in rul_pk:
                 if len(cond['key']) > 1:
-                    lst_singlekey_conds = list()
                     for key_a in cond['key']:
                         lst_singlekey_conds.append({'key': key_a, 'opr': cond['opr'], 'val': cond['val']})
                 else:
                     lst_singlekey_conds = rul_pk
-            del cond
             logging.debug("rul_pk2: {}".format(json.dumps(lst_singlekey_conds)))
             for cond in lst_singlekey_conds:
                 if len(cond['val']) > 1:
@@ -176,12 +153,14 @@ class Ruleset(object):
 class Spamalyser(object):
     """ The Spamalyser class """
     
-    def __init__(self, conf_dir, mode='simple', wob=True):
+    def __init__(self, conf_dir, mode='simple', wob='True'):
         logging.debug("class init. Spamalyser")
         self._cnfd = conf_dir # Where to look for the .conf files
         self._mode = mode # default mode is 'simple'
-        self._wob = wob # white over black, white-list overrules black-list... default is True
-        ##self._rules = {'white': list(), 'black': list()}  # XXX Should diapear as _rulob works
+        if wob.lower() == 'true': # white over black, white-list overrules black-list... default is True
+            self._wob = True # cast from string to boolean
+        else:
+            self._wob = False
         self._rulob = Ruleset()  # The rules object
         self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
 
@@ -451,11 +430,9 @@ class Spamalyser(object):
     # helper functions
     
     def get_email_address_from_string(self,str_in):
-        #print '<<<',str_in
         if '@' in str_in:
             match = re.search(r'[\w\.-]+@[\w\.-]+', str_in)
             str_return = match.group(0).lower()
-            #print '>>>', str_return
             return str_return
         else:
             return ""

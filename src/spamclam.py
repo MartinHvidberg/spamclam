@@ -1,4 +1,8 @@
 
+__verion__ = '0.2.1'
+__build__ = '201709162000seq'
+
+
 ### ToDo ###
 # Address book 2 white/black lists
 # Sanitise the rule complex, before applying
@@ -14,6 +18,7 @@ import poplib, email
 
 import spamalyse
 
+print "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
 
 # Read the command line input
 try:
@@ -24,6 +29,10 @@ try:
         str_mode = sys.argv[4]
     else:
         str_mode = "simple" # Default mode is 'simple black and white (lists)'
+    if len(sys.argv) > 4:
+        str_wob = sys.argv[5]
+    else:
+        str_wob = 'True'
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
     print "\nUsage: spamclam.py <server> <user> <password> [mode]"
@@ -49,18 +58,18 @@ print "\n=============   Connect to POP3 server   ============================="
 print "\n=============   Spamalyse   =========================================="
     
 # Create a Spamalyser object
-sal = spamalyse.Spamalyser('../data/',str_mode)
+sal = spamalyse.Spamalyser('../data/',str_mode, str_wob)
 
-sal.import_addressfile('filename', 'white')
-sal.import_rulefile('filename', 'black')
-sal.export_2json('filename')
+#sal.import_addressfile('filename', 'white')
+#sal.import_rulefile('filename', 'black')
+#sal.export_2json('filename')
 
 print "\n=============   Run   ================================================"
 
-sal.stats_generate_pop3(con_pop)
-print sal.stats_show()
-sal.apply_rules_pop3(con_pop)
-sal.report_to_global_stat_file("../data/spamclam_global.stat")
+#sal.stats_generate_pop3(con_pop)
+#print sal.stats_show()
+#sal.apply_rules_pop3(con_pop)
+#sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 
 # # Handle the emails on the server
@@ -73,17 +82,6 @@ sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 # # Close connection to email server
 # con_pop.quit()
-
-# print "\n=============   Spamalyse statistics   ==============================="
-# #sal.show_raw_statistics()
-# sal.show_pritty_statistics()
-# sal.report_to_global_stat_file("../data/spamclam_global.stat")
-
-# print "\n=============   Results   ============================================"
-# print "Expect :\t"+str(num_tot_msgs)
-# print "Handled:\t"+str(sal.get_statistics('cnt_eml'))
-# print "Deleted:\t"+str(sal.get_statistics('cnt_del'))
-# print "\nDone..."
 
 del sal
 
