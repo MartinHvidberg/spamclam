@@ -1,45 +1,56 @@
 
-__verion__ = '0.2.1'
-__build__ = '201709162000seq'
+"""
+Dealing with spam e-mails
+"""
 
+### Versions ###
+# 0.1 - The initial tries, that worked :-)
+# 0.2 - Trying to make it OOP and insisting on modularizing
 
-### ToDo ###
-# Address book 2 white/black lists
-# Sanitise the rule complex, before applying
+### To do ###
 # make header print uft-8 eller noget...
 # introduce prof command line parameters
 
-
-print "\n=============   Spamclam   ==========================================="
-
+__verion__ = '0.2.2'
+__build__ = '201709117seq'
 
 import sys
+import logging
 import poplib, email
 
 import spamalyse
 
 print "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
 
+print "\n=============   Spamclam   ==========================================="
+
+# Setup logging
+logging.basicConfig(filename='spamalyse.log',
+                    filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)7s %(message)s')
+                    # %(funcName)s
+logging.info("====== Start ======")
+
 # Read the command line input
 try:
     str_srvr = sys.argv[1]
     str_user = sys.argv[2]
     str_pass = sys.argv[3]
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 4:
         str_mode = sys.argv[4]
     else:
         str_mode = "simple" # Default mode is 'simple black and white (lists)'
-    if len(sys.argv) > 4:
+    if len(sys.argv) > 5:
         str_wob = sys.argv[5]
     else:
-        str_wob = 'True'
+        str_wob = 'True' # Default wob=true, i.e. white overrules black
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
-    print "\nUsage: spamclam.py <server> <user> <password> [mode]"
-    print "\ne.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
-    print "\nNote:  All other settings are controlled by the files in ../data/"
+    print "Usage: spamclam.py <server> <user> <password> [mode]"
+    print "e.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
+    print "Note:  All other settings are controlled by the files in ../data/"
     sys.exit(101)
-    
 
 print "\n=============   Connect to POP3 server   ============================="    
     
@@ -59,10 +70,6 @@ print "\n=============   Spamalyse   =========================================="
     
 # Create a Spamalyser object
 sal = spamalyse.Spamalyser('../data/',str_mode, str_wob)
-
-#sal.import_addressfile('filename', 'white')
-#sal.import_rulefile('filename', 'black')
-#sal.export_2json('filename')
 
 print "\n=============   Run   ================================================"
 
