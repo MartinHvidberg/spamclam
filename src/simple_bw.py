@@ -48,17 +48,17 @@ class Ruleset(object):
     """
 
 
-    def __init__(self, conf_dir):
+    def __init__(self, rule_dir):
         logging.debug("class init. Ruleset")
-        self._cnfd = conf_dir  # Where to look for the .conf files
+        self._rldr = rule_dir  # Where to look for the rule files
         self._data = {'white': list(), 'black': list()}
         self._rank = 'white'  # Default 'white', meaning white overrules black.
 
 
     def load_rulesfiles(self):
-        """ Find and load all .scrule files in the conf_dir """
+        """ Find and load all .scrule files in the rule_dir """
         logging.debug("func. load_rulesfiles.")
-        for fil_cnf in os.listdir(self._cnfd):
+        for fil_cnf in os.listdir(self._rldr):
             if fil_cnf.endswith(".scrule"):
                 logging.debug(".scrule file: {}".format(fil_cnf))
                 if "white" in fil_cnf.lower():
@@ -71,7 +71,7 @@ class Ruleset(object):
                     print str_report
                     logging.debug(str_report)
                     continue
-                with open(self._cnfd+fil_cnf) as f:
+                with open(self._rldr+fil_cnf) as f:
                     lst_conf = f.readlines()
                 logging.debug("lst_cnf1: {}".format(lst_conf))
                 lst_conf = [conf.split("#")[0].strip() for conf in lst_conf] # Get rid of comments
@@ -82,10 +82,10 @@ class Ruleset(object):
 
 
     def load_addressbooks(self):
-        """ Find and load all address (.scaddr) files in the conf_dir """
-        logging.debug(" func. load_addressbooks.")
+        """ Find and load all address (.scaddr) files in the rule_dir """
+        logging.debug("func. load_addressbooks.")
         # Find addressbook files
-        for fil_cnf in os.listdir(self._cnfd):
+        for fil_cnf in os.listdir(self._rldr):
             if fil_cnf.endswith(".scaddr"):
                 # Crunch the addressbook file
                 if "white" in fil_cnf.lower():
@@ -97,7 +97,7 @@ class Ruleset(object):
                     print "!!! file name contained neither 'white' nor 'black'... I'm confused."
                     continue
                 logging.info("Addressbook {}: {}".format(str_colour, fil_cnf))
-                with open(self._cnfd+fil_cnf, 'r') as f:
+                with open(self._rldr+fil_cnf, 'r') as f:
                     for line in f:
                         str_tmp = line.split("#")[0] # Get rid of comments
                         str_emladd = self.get_email_address_from_string(str_tmp)

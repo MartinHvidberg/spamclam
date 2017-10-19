@@ -31,7 +31,9 @@ class Spamalyser(object):
             # sal.import_rulefile('filename', 'black')
             # sal.export_2json('filename')
 
+            print "Show rules backdoor Begin:"
             self._rulob.show_rules_backdoor()
+            print "Show rules backdoor End..."
 
     # Functions handling 'rules'
     # Functions processing email, checking them for spam...
