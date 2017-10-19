@@ -1,0 +1,37 @@
+# """ Any mail meeting any 'rule set' in the file is considered White.
+#
+#     Spam mail is detected by combining Black-list and White-list rules,
+#     with respect to the WOB (White over Black) True or False setting. """
+#
+# Anything after a hash (#) are considered a comment and ignored.
+# All empty lines are ignored.
+#
+# Anything else should be rule sets...
+# rule set  = { <condition> [; <condition>] }
+# condition = <key> <xx> <value> [, <value>]
+# key       = subject | from | body | to | cc | bcc | size
+# xx        =
+#			&&	contains
+#			!&	do_not_contain
+#			==	is
+#			!=	is_not
+#			[=	begins_with
+#			]=	ends_with
+#			[!	not_begins_with
+#			]!	not_ends_with
+# value     = a text string
+# a csv list of values is always implicit OR
+# a ; separated list of condition is AND/OR in All_of/Any_of respectively
+#
+# All values are case-sensitive, but keys are not.
+
+# Example 1. will white-list any mail 'from' any of the sites, or 'to', 'cc', or 'bcc' any of the listed receivers.
+
+	from && nicesite.com, anothernicesite.com
+	to, cc, bcc [= mail_list_on_Python, daily_letter_from_your_groser
+
+# Example 2. will white-list any mail 'from' python.org except if 'subject' contains any of the listed strings.
+
+	from && python.org
+	+ subject !& python_in_greek, python_on_windows
+
