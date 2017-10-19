@@ -46,6 +46,8 @@ class Ruleset(object):
           }
     """
 
+    # Some class 'constants'
+    VALID_OPR = ('&&', '!&', '==', '!=', '[=', ']=', '[!', ']!')
 
     def __init__(self, rule_dir):
         logging.debug("class init. Ruleset")
@@ -61,24 +63,24 @@ class Ruleset(object):
             print " raw:  {}".format(raw)
         # assume one (complex) condition per line, except lines starting with +
         lst_cond = [[str(raw)] for raw in los_raw]
-
-        for cond in lst_cond:
-            print " rcn:  {}".format(cond)
-
-        del cond, raw, los_raw
         # XXX This is ugly - make it nicer...
         num_iter = len(lst_cond)
         for cnt in range(num_iter):
             for num_con in range(len(lst_cond)):
-                ##chr_flip = lst_cond[num_con][0][0]
                 if lst_cond[num_con][0][0] == '+':
                     lst_cond[num_con-1].append(lst_cond[num_con][0].lstrip('+').strip())
                     del lst_cond[num_con]
                     continue
-
         for cond in lst_cond:
             print " cond: {}".format(cond)
-
+        # list of strings 2 list of rules
+        for lo_cond in lst_cond:
+            rule = list()
+            for cond in lo_cond:
+                if any(opr in cond for opr in self.VALID_OPR):
+                    print "good:", cond
+                else:
+                    logging.warning("! Condition have no valid OPR: {}".format(cond))
 
         return lst_ret
 
