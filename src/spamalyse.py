@@ -35,24 +35,22 @@ class Spamalyser(object):
             #self._rulob.show_rules_backdoor()
             #print "Show rules backdoor End..."
 
-            print "Show rules PP Begin:"
+            #print "Show rules PP Begin:"
             self._rulob.show_rules_pp()
-            print "Show rules PP End..."
+            #print "Show rules PP End..."
 
-    # Functions handling 'rules'
-    # Functions processing email, checking them for spam...
 
-    def x_is_spam(self, eml_in):
+    def is_spam(self, eml_in):
         """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
         email message is expected to be a email.message_from_string(s[, _class[, strict]])
         for details see: https://docs.python.org/2/library/email.message.html#module-email.message
         """
-        logging.debug(" func. is_spam.")
+        logging.debug("func. is_spam.")
         bol_return = None
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
             if self._mode == 'simple': # The default 'simple black and white' analyser
-                dic_result = simple_bw.spamalyse(eml_in)
+                dic_result = self._rulob.spamalyse(eml_in)
                 if self._wob:
                     if any(dic_result['white']):
                         bol_return = False # i.e. Not Spam

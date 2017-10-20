@@ -12,7 +12,7 @@ Dealing with spam e-mails
 # introduce prof command line parameters
 
 __verion__ = '0.2.2'
-__build__ = '201709117seq'
+__build__ = '20171020.'
 
 import sys
 import logging
@@ -20,7 +20,8 @@ import poplib, email
 
 import spamalyse
 
-print "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
+str_start = "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
+print str_start
 
 print "\n=============   Spamclam   ==========================================="
 
@@ -28,9 +29,9 @@ print "\n=============   Spamclam   ==========================================="
 logging.basicConfig(filename='spamalyse.log',
                     filemode='w',
                     level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)7s %(message)s')
+                    format='%(asctime)s %(levelname)7s : %(message)s')
                     # %(funcName)s
-logging.info("====== Start ======")
+logging.info(str_start)
 
 # Read the command line input
 try:
@@ -54,17 +55,29 @@ except:
 
 print "\n=============   Connect to POP3 server   ============================="    
     
-# # Open connection to email (POP) server
-# try:
-#     con_pop = poplib.POP3(str_srvr)
-#     con_pop.user(str_user)
-#     con_pop.pass_(str_pass)
-#     print "Server says:  "+con_pop.getwelcome()
-#     num_tot_msgs, num_tot_bytes = con_pop.stat()
-#     print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
-# except:
-#     print "\nSeems to be unable to access the e-mail server..."
-#     sys.exit(102)
+# Open connection to email (POP) server
+try:
+    con_pop = poplib.POP3(str_srvr)
+    con_pop.user(str_user)
+    con_pop.pass_(str_pass)
+    print "Server says:  "+con_pop.getwelcome()
+    num_tot_msgs, num_tot_bytes = con_pop.stat()
+    print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
+except:
+    print "\nSeems to be unable to access the e-mail server..."
+    sys.exit(102)
+
+print "LIST:\n",con_pop.list()
+
+(server_msg, body, octets) = con_pop.retr(11)
+print "RETR:\n{} \n\tBytes: {}".format(server_msg, octets)
+#for line in [lin.replace("\\t","\t") for lin in body]:
+#    print "   {}".format(line)
+print "PARS:\n"
+raw_email  = b"\n".join(body)
+email_msg = email.message_from_string(raw_email)
+print email_msg.keys()
+print email_msg.items()
     
 print "\n=============   Spamalyse   =========================================="
     
@@ -73,24 +86,32 @@ sal = spamalyse.Spamalyser('../data/',str_mode, str_wob)
 
 print "\n=============   Run   ================================================"
 
+# Generate Stat for the e-mails on the pop3 server.
+
+#lst_dele = list() # List to cache delete commands feed back from server, not really used?
+#for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
+#    msg_raw = con_pop.retr(mail_number)
+#    msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
+#    if sal.is_spam(msg_eml):
+#        lst_dele.append(mail_number)  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
+
+
+# Actually delete the e-mails on the server
+# con_pop.dele(mail_number
+
 #sal.stats_generate_pop3(con_pop)
 #print sal.stats_show()
 #sal.apply_rules_pop3(con_pop)
 #sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 
-# # Handle the emails on the server
-# lst_dele = list() # List to cache delete commands feed back from server, not really used?
-# for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
-#     msg_raw = con_pop.retr(mail_number)
-#     msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
-#     if sal.is_spam(msg_eml):
-#         lst_dele.append(con_pop.dele(mail_number))  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
+print "\n=============   Closing up   ========================================="
 
-# # Close connection to email server
-# con_pop.quit()
-
+# Close connection to email server
+con_pop.quit()
 del sal
+
+print "\n=============   Done...   ============================================"
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...

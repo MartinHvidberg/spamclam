@@ -48,6 +48,8 @@ class Ruleset(object):
 
     # Some class 'constants'
     VALID_OPR = ('&&', '!&', '==', '!=', '[=', ']=', '[!', ']!')
+    VALID_EMAIL_HEADERS = ('subject', 'from', 'body', 'to', 'cc', 'bcc', 'size')
+    VALID_RULE_KEYS = ['key', 'opr', 'val']
 
     def __init__(self, rule_dir):
         logging.debug("class init. Ruleset")
@@ -59,29 +61,48 @@ class Ruleset(object):
     def rules_from_strings(self, los_raw):
         """ Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file """
         lst_ret = list()
-        for raw in los_raw:
-            print " raw:  {}".format(raw)
-        # assume one (complex) condition per line, except lines starting with +
-        lst_cond = [[str(raw)] for raw in los_raw]
+        # assume one (complex) condition-string per line, except lines starting with +
+        lst_conds = [[str(raw)] for raw in los_raw]
         # XXX This is ugly - make it nicer...
-        num_iter = len(lst_cond)
+        num_iter = len(lst_conds)
         for cnt in range(num_iter):
-            for num_con in range(len(lst_cond)):
-                if lst_cond[num_con][0][0] == '+':
-                    lst_cond[num_con-1].append(lst_cond[num_con][0].lstrip('+').strip())
-                    del lst_cond[num_con]
+            for num_con in range(len(lst_conds)):
+                if lst_conds[num_con][0][0] == '+':
+                    lst_conds[num_con-1].append(lst_conds[num_con][0].lstrip('+').strip())
+                    del lst_conds[num_con]
                     continue
-        for cond in lst_cond:
-            print " cond: {}".format(cond)
+        ##for conds in lst_conds:
+        ##    print " cond: {}".format(conds)
         # list of strings 2 list of rules
-        for lo_cond in lst_cond:
+        for lo_conds in lst_conds:
             rule = list()
-            for cond in lo_cond:
-                if any(opr in cond for opr in self.VALID_OPR):
-                    print "good:", cond
+            for conds in lo_conds:
+                if any(opr in conds for opr in self.VALID_OPR):
+                    # Check only 1 opr in condition-string
+                    num_opr = 0
+                    for str_valopr in self.VALID_OPR:
+                        if " {} ".format(str_valopr) in conds:
+                            num_opr += 1
+                            lst_cnd = conds.split(" {} ".format(str_valopr), 1)
+                            lst_cnd = [tok.split(',') for tok in lst_cnd] # conveniently also turns simple conditions into lists
+                            dic_cnd = dict()
+                            dic_cnd['opr'] = str_valopr
+                            dic_cnd['key'] = lst_cnd[0]
+                            dic_cnd['val'] = lst_cnd[1]
+                    if num_opr == 1:
+                        # strip all strings - XXX this is ugly, try fix that...
+                        for keyval in ('key', 'val'):
+                            dic_cnd[keyval] = [tok.strip() for tok in dic_cnd[keyval]]
+                        # fanally add the condition
+                        ##print "good:", conds, str(dic_cnd)
+                        rule.append(dic_cnd)
+                        ##print " ^rule:", rule
+                    else:
+                        logging.warning("! Condition have more that one OPR: {}".format(conds))
                 else:
-                    logging.warning("! Condition have no valid OPR: {}".format(cond))
-
+                    logging.warning("! Condition have no valid OPR: {}".format(conds))
+            lst_ret.append(rule)
+        ##print "^^lor_rules:",lst_ret
         return lst_ret
 
     def load_rulesfiles(self):
@@ -109,6 +130,7 @@ class Ruleset(object):
 
                 # Converting text strings to rule-set object
                 lor_in = self.rules_from_strings(lst_rulelines)
+                logging.debug("lst_cnf3: {}".format(lor_in))
 
                 # We need to actually add the rule :-)
                 for rule_a in lor_in:
@@ -159,8 +181,8 @@ class Ruleset(object):
                     for rule in rul_pk:
                         if isinstance(rule, dict):  # a 'condition'
                             # {'key': ['from'], 'opr': '==', 'val': ['someone@work.com']}
-                            if all(key in rule.keys() for key in ['key', 'opr', 'val']):
-                                logging.debug("add_rule() (packed): {}, {}".format(colour, rule))
+                            if all(key in rule.keys() for key in self.VALID_RULE_KEYS):
+                                logging.debug("add_rule() okayrule: {}, {}".format(colour, rule))
                                 pass  # All seems okay, ready to be exploded
                             else:
                                 logging.warning("! address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
@@ -176,35 +198,19 @@ class Ruleset(object):
                 return False
             return True
 
-        def unpack_conditions(rul_pk):
+        def xxx_unpack_conditions(rul_pk):
+            ### Unpacking dosn't make sense, as it would create lists with mixed AND/OR relations between elements.
             """ Unpack all packed condition, in a 'rule', into several unpacked conditions,
                 eliminating lists in fields 'key' and 'val'.
                 The unpacker makes no checks, the result should be checked with the appropriate function.
             """
-            lst_singlekey_conds = list()
-            logging.debug("rul_pk1: {}".format(json.dumps(rul_pk)))
-            for cond in rul_pk:
-                if len(cond['key']) > 1:
-                    for key_a in cond['key']:
-                        lst_singlekey_conds.append({'key': key_a, 'opr': cond['opr'], 'val': cond['val']})
-                else:
-                    lst_singlekey_conds = rul_pk
-            logging.debug("rul_pk2: {}".format(json.dumps(lst_singlekey_conds)))
-            for cond in lst_singlekey_conds:
-                if len(cond['val']) > 1:
-                    lst_singleval_conds = list()
-                    for val_a in cond['val']:
-                        lst_singleval_conds.append({'key': cond['key'],'opr': cond['opr'], 'val': val_a})
-                else:
-                    lst_singleval_conds = lst_singlekey_conds
-            logging.debug("rul_pk3: {}".format(json.dumps(lst_singleval_conds)))
-            return lst_singleval_conds
+            lst_simple_cnd = list()
+            return lst_simple_cnd
 
         def rule_check_unpacked(lst_rulelines):
             for rule in lst_rulelines:
                 # 'key'
-                if all(key in ['subject', 'from', 'body', 'to', 'cc', 'bcc', 'size'] for key in
-                       rule['key']):
+                if all(key in self.VALID_EMAIL_HEADERS for key in rule['key']):
                     pass
                 else:
                     logging.warning("! address rule rul_pk has a bad 'key': {}".format(str(rule)))
@@ -216,17 +222,11 @@ class Ruleset(object):
             return True
 
         logging.debug("add_rule() received: {}, {}".format(colour, rul_in))
-        logging.debug("rul_in0: {}".format(json.dumps(rul_in)))
+        ##logging.debug("rul_in0: {}".format(json.dumps(rul_in)))
         # validate and explode
         if rule_check_packeage(colour, rul_in):
-            rul_a = unpack_conditions(rul_in)
-            if rule_check_unpacked(rul_a):
-                # check if exist
-                #     XXX add some check here...
-                # add
-                self._data[colour].append(rul_a)
-            else:
-                logging.warning("! add_rule: rule_check_unpacked() returned False")
+            logging.debug("add_rule() okay pak: {}, {}".format(colour, rul_in))
+            self._data[colour].append(rul_in)
         else:
             logging.warning("! add_rule: rule_check_packeage() returned False")
         return
@@ -238,10 +238,14 @@ class Ruleset(object):
         ##print "\nPrint the rules, via the back door..."
         for key_colour in sorted(self._data.keys()):
             itm_colour = self._data[key_colour]
-            print "\n + Colour: {} ({})".format(key_colour, str(len(itm_colour)))
+            print "\nColour: {} ({})".format(key_colour, str(len(itm_colour)))
             for lst_rule_a in itm_colour:
-                print "     + type: {}\n\t :: {}".format(str(type(lst_rule_a)), str(lst_rule_a))
-                #print "           : {} {} {}".format(lst_rule_a['key'], lst_rule_a['opr'], lst_rule_a['val'])
+                print "\t{}".format(str(type(lst_rule_a)))
+                if isinstance(lst_rule_a, list):
+                    for itm in lst_rule_a:
+                        print "\t\t{}".format(str(itm))
+                else:
+                    print "\t\t{}".format(str(lst_rule_a))
         return
 
 
@@ -250,6 +254,12 @@ class Ruleset(object):
         logging.debug("func. show_rules_pp()")
         ##print "\nPretty Print the rules..."
         los_pp = list()
+        if self._rank == "white":
+            los_pp.append("*** : White over black")
+        elif self._rank == "black":
+            los_pp.append("*** : Black over white")
+        else:
+            los_pp.append("*** : WoB is a mess...: {}".format(self._rank))
         for key_colour in sorted(self._data.keys()):
             itm_colour = self._data[key_colour]
             los_pp.append("*** : {}".format(key_colour))
@@ -259,10 +269,9 @@ class Ruleset(object):
                     rul = lst_rulelines_a[0]
                     los_rules.append("rule: {} {} {}".format(rul['key'], rul['opr'], rul['val']))
                 if len(lst_rulelines_a) > 1:
-                    for num in range(len(lst_rulelines_a)):
-                        rul = lst_rulelines_a[num+1]
-                    los_rules.append(" && : {} {} {}".format(rul['key'], rul['opr'], rul['val']))
-            los_rules.sort()
+                    for rul in lst_rulelines_a[1:]:
+                        los_rules.append(" && : {} {} {}".format(rul['key'], rul['opr'], rul['val']))
+            ##los_rules.sort() messing up the rule, && conections
             los_pp.extend(los_rules)
         for str_pp in los_pp:
             print str_pp
@@ -271,7 +280,7 @@ class Ruleset(object):
         """ This is the simplest analyse, it is based on black-list and white-list rules.
         It will analyse, separately, if the email can be considered black or considered white.
         The final decision, outside this function, depends on a combination of black, white and self._wob. """
-        logging.debug(" func. simple_bw.spamalyse()")
+        logging.debug("func. simple_bw.spamalyse()")
         #print ">>>>>> Spamalyse - Simple black and white"
         dic_res = dict()
         for str_colour in ['black', 'white']:
