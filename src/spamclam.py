@@ -67,24 +67,28 @@ except:
     print "\nSeems to be unable to access the e-mail server..."
     sys.exit(102)
 
-print "LIST:\n",con_pop.list()
-
-(server_msg, body, octets) = con_pop.retr(11)
-print "RETR:\n{} \n\tBytes: {}".format(server_msg, octets)
-#for line in [lin.replace("\\t","\t") for lin in body]:
-#    print "   {}".format(line)
-print "PARS:\n"
-raw_email  = b"\n".join(body)
-email_msg = email.message_from_string(raw_email)
-print email_msg.keys()
-print email_msg.items()
-    
 print "\n=============   Spamalyse   =========================================="
     
 # Create a Spamalyser object
 sal = spamalyse.Spamalyser('../data/',str_mode, str_wob)
 
 print "\n=============   Run   ================================================"
+
+##print "LIST:\n", con_pop.list()
+
+for num_email in range(11,12): #1,num_tot_msgs+1): # pop server count from 1 (not from 0)
+    email_raw = con_pop.retr(num_email)
+    email_string = "\n".join(email_raw[1])
+    msg = email.message_from_string(email_string)
+    # print "multi?: {}".format(msg.is_multipart())
+    # print "keys  : {}".format("\n".join(sorted(msg.keys())))
+    # #print "from  : {}".format(msg['from'])
+    # print "from  : {}".format(email.utils.parseaddr(msg.get('from')))
+    # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
+    # print "to    : {}".format(email.utils.parseaddr(msg['to']))
+    # print "sub   : {}".format(msg['subject'])
+    salmsg = spamalyse.Salmail(msg)
+    print str(type(salmsg))
 
 # Generate Stat for the e-mails on the pop3 server.
 

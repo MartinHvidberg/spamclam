@@ -9,6 +9,18 @@ import logging
 import simple_bw
 
 
+class Salmail(object):
+    """ The 'equvivalent' of one email.
+    But only the relevant parts, and added some more info and functions
+    Instances are initialised with a 'real' email message.
+    This object is designed to be the 'e-mail massage' to put into Spamalyser object methods. """
+
+    def __init__(self, emlmsg):
+        self._data = dict()
+
+
+
+
 class Spamalyser(object):
 
     """ The Spamalyser class """
