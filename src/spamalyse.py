@@ -19,6 +19,9 @@ class Salmail(object):
         self._mesg = emlmsg
         self._data = dict()
         self._msg2data()
+
+    def show(self):
+        print ""
         print(" id      : {}".format(self.get('id')))
         print(" from    : {}".format(self.get('from')))
         print(" to      : {}".format(self.get('to')))
@@ -30,7 +33,12 @@ class Salmail(object):
         """ This function tries to set all the data entries, from the org. message """
         msg = self._mesg
         # * id
-        self._data['id'] = msg.get('Message-ID').strip('<>')
+        try:
+            self._data['id'] = msg.get('Message-ID').strip('<>')
+        except AttributeError:
+            logging.warning("email.message seems to have no 'Message-ID'...\n{}".format(self._mesg))
+            print "email.message seems to have no 'Message-ID'...\n{}".format(" - See message in log file...")
+            self._data['id'] = None
         # * from
         self._data['from'] = email.utils.parseaddr(msg.get('from'))[1]
         # * to
@@ -43,14 +51,14 @@ class Salmail(object):
         raw_sub = msg.get('Subject')
         dcd_sub = email.header.decode_header(raw_sub)
         self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
+        # * body
+
+        # * size
+
 
         # print "multi?: {}".format(msg.is_multipart())
-        # print "keys  : {}".format("\n".join(sorted(msg.keys())))
-        # #print "from  : {}".format(msg['from'])
-        # print "from  : {}".format(email.utils.parseaddr(msg.get('from')))
+        # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
         # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
-        # print "to    : {}".format(email.utils.parseaddr(msg['to']))
-        # print "sub   : {}".format(msg['subject'])
 
     def get(self, mkey):
         """ Get one field from the message """

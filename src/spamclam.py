@@ -20,6 +20,9 @@ import poplib, email, email.header
 
 import spamalyse
 
+sys.path.insert(0, "../../EC_stuff/ec_base/")
+import ec_help
+
 str_start = "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
 print str_start
 
@@ -76,22 +79,24 @@ print "\n=============   Run   ================================================"
 
 ##print "LIST:\n", con_pop.list()
 
-for num_email in range(68,74): #1,num_tot_msgs+1): # pop server count from 1 (not from 0)
+# DEBUG meke some header stat
+cd = ec_help.ec_cntdic()
+cd_received = ec_help.ec_cntdic()
+
+for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
-    # #------
-    # msg_id = msg.get('Message-ID')
-    # if 'zendesk' in msg_id:
-    #     salmsg = spamalyse.Salmail(msg)
-    # msg_cc = msg.get('cc')
-    # if msg_cc:
-    #     print "cc\n", msg.get('subject'), "\n", msg_cc
-    # msg_bcc = msg.get('bcc')
-    # if msg_bcc:
-    #     print "bcc\n", msg.get('subject'), "\n", msg_bcc
-    # #------
     salmsg = spamalyse.Salmail(msg)
+    for keyn in msg.keys():
+        cd.add(keyn.lower())
+        if keyn.lower() == 'to':
+            cd_received.add(msg.get('to'))
+
+#for hit in cd.by_cnt(True):
+#    print hit
+print cd_received.by_cnt(True)
+
 
 # Generate Stat for the e-mails on the pop3 server.
 
