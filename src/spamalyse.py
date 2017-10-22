@@ -10,13 +10,71 @@ import simple_bw
 
 
 class Salmail(object):
-    """ The 'equvivalent' of one email.
+    """ The 'equvivalent' or 'extract' of one email.
     But only the relevant parts, and added some more info and functions
     Instances are initialised with a 'real' email message.
-    This object is designed to be the 'e-mail massage' to put into Spamalyser object methods. """
+    This object is designed to be the 'e-mail massage' to put into Spamalyser methods. """
 
     def __init__(self, emlmsg):
+        self._mesg = emlmsg
         self._data = dict()
+        self._msg2data()
+        print(" id      : {}".format(self.get('id')))
+        print(" from    : {}".format(self.get('from')))
+        print(" to      : {}".format(self.get('to')))
+        print(" cc      : {}".format(self.get('cc')))
+        print(" bcc     : {}".format(self.get('bcc')))
+        print(" subject : {}".format(self.get('subject')))
+
+    def _msg2data(self):
+        """ This function tries to set all the data entries, from the org. message """
+        msg = self._mesg
+        # * id
+        self._data['id'] = msg.get('Message-ID').strip('<>')
+        # * from
+        self._data['from'] = email.utils.parseaddr(msg.get('from'))[1]
+        # * to
+        self._data['to'] = email.utils.parseaddr(msg.get('to'))[1]
+        # * cc
+        self._data['cc'] = msg.get('cc') # happens to return None in no cc available
+        # * bcc
+        self._data['bcc'] = msg.get('bcc') # happens to return None in no cc available
+        # * subject
+        raw_sub = msg.get('Subject')
+        dcd_sub = email.header.decode_header(raw_sub)
+        self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
+
+        # print "multi?: {}".format(msg.is_multipart())
+        # print "keys  : {}".format("\n".join(sorted(msg.keys())))
+        # #print "from  : {}".format(msg['from'])
+        # print "from  : {}".format(email.utils.parseaddr(msg.get('from')))
+        # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
+        # print "to    : {}".format(email.utils.parseaddr(msg['to']))
+        # print "sub   : {}".format(msg['subject'])
+
+    def get(self, mkey):
+        """ Get one field from the message """
+        if mkey == 'id':
+            return self._data['id']
+        elif mkey == 'from':
+            return self._data['from']
+        elif mkey == 'to':
+            return self._data['to']
+        elif mkey == 'cc':
+            return self._data['cc']
+        elif mkey == 'bcc':
+            return self._data['bcc']
+        elif mkey == 'subject':
+            return self._data['subject']
+        elif mkey == 'body':
+            return self._data['body']
+        elif mkey == 'size':
+            return self._data['size']
+        # XXX Consider reply-to, date, has-attachments...
+        #elif mkey == '':
+        #    return self._data['']
+        else:
+            return None
 
 
 

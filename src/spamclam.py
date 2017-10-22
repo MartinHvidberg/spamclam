@@ -16,7 +16,7 @@ __build__ = '20171020.'
 
 import sys
 import logging
-import poplib, email
+import poplib, email, email.header
 
 import spamalyse
 
@@ -76,19 +76,22 @@ print "\n=============   Run   ================================================"
 
 ##print "LIST:\n", con_pop.list()
 
-for num_email in range(11,12): #1,num_tot_msgs+1): # pop server count from 1 (not from 0)
+for num_email in range(68,74): #1,num_tot_msgs+1): # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
-    # print "multi?: {}".format(msg.is_multipart())
-    # print "keys  : {}".format("\n".join(sorted(msg.keys())))
-    # #print "from  : {}".format(msg['from'])
-    # print "from  : {}".format(email.utils.parseaddr(msg.get('from')))
-    # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
-    # print "to    : {}".format(email.utils.parseaddr(msg['to']))
-    # print "sub   : {}".format(msg['subject'])
+    # #------
+    # msg_id = msg.get('Message-ID')
+    # if 'zendesk' in msg_id:
+    #     salmsg = spamalyse.Salmail(msg)
+    # msg_cc = msg.get('cc')
+    # if msg_cc:
+    #     print "cc\n", msg.get('subject'), "\n", msg_cc
+    # msg_bcc = msg.get('bcc')
+    # if msg_bcc:
+    #     print "bcc\n", msg.get('subject'), "\n", msg_bcc
+    # #------
     salmsg = spamalyse.Salmail(msg)
-    print str(type(salmsg))
 
 # Generate Stat for the e-mails on the pop3 server.
 
@@ -109,13 +112,13 @@ for num_email in range(11,12): #1,num_tot_msgs+1): # pop server count from 1 (no
 #sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 
-print "\n=============   Closing up   ========================================="
+#print "\n=============   Closing up   ========================================="
 
 # Close connection to email server
 con_pop.quit()
 del sal
 
-print "\n=============   Done...   ============================================"
+#print "\n=============   Done...   ============================================"
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...
