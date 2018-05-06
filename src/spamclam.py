@@ -77,25 +77,51 @@ sal = spamalyse.Spamalyser('../data/',str_mode, str_wob)
 
 print "\n=============   Run   ================================================"
 
-##print "LIST:\n", con_pop.list()
+print "{}".format(con_pop.list()[0])
+##lst_mls = con_pop.list()[1]
+##for itm in lst_mls:
+##    print itm
 
-# DEBUG meke some header stat
-cd = ec_help.ec_cntdic()
-cd_received = ec_help.ec_cntdic()
+# DEBUG make some header stat  XXX This is noise, and should go away...
+"""cd = ec_help.ec_cntdic()
+cd_to = ec_help.ec_cntdic()
+cd_from = ec_help.ec_cntdic()"""
 
-for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+for num_email in range(1,4):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
-    salmsg = spamalyse.Salmail(msg)
-    for keyn in msg.keys():
+    """for keyn in msg.keys():
         cd.add(keyn.lower())
         if keyn.lower() == 'to':
-            cd_received.add(msg.get('to'))
+            cd_to.add(msg.get('to'))
+        if keyn.lower() == 'from':
+            cd_from.add(msg.get('from'))"""
+    ##print num_email, "from:", msg.get('from'), "subj:", msg.get('subject')  # XXX Before salmsg
 
-#for hit in cd.by_cnt(True):
-#    print hit
-print cd_received.by_cnt(True)
+    # ** Turn the email.massage into a spamalyse.Salmsg
+    salmsg = spamalyse.Salmail(msg)
+    #salmsg.show()
+    ##if "men du tog den ikke" in salmsg.get('subject'):
+    ##    print salmsg.get('from'), salmsg.get('subject')'
+
+    # ** Check the salmsg for 'spam'
+    obj_isspam = sal.is_spam(salmsg)
+    print obj_isspam
+
+
+print "\nProcessed {} e-mails\n".format(num_email)
+
+"""for hit in cd.by_cnt(True):
+    if hit[0] == num_email:
+        print " "+str(hit)
+print "\nStats on 'To'"
+for itm in cd_to.by_cnt(True):
+    print " "+str(itm)
+print "\nStats on 'From'"
+for itm in cd_from.by_cnt(True):
+    print " "+str(itm)"""
+
 
 
 # Generate Stat for the e-mails on the pop3 server.
@@ -109,7 +135,7 @@ print cd_received.by_cnt(True)
 
 
 # Actually delete the e-mails on the server
-# con_pop.dele(mail_number
+# con_pop.dele(mail_number)
 
 #sal.stats_generate_pop3(con_pop)
 #print sal.stats_show()
@@ -117,11 +143,12 @@ print cd_received.by_cnt(True)
 #sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 
-#print "\n=============   Closing up   ========================================="
+#print "\n=============   Closing e-mail server connection   ==================="
 
 # Close connection to email server
 con_pop.quit()
-del sal
+# XXX del sal
+
 
 #print "\n=============   Done...   ============================================"
 

@@ -276,28 +276,27 @@ class Ruleset(object):
         for str_pp in los_pp:
             print str_pp
 
-    def spamalyse(self, eml_in):
+    def spamalyse(self, salmail_in):
         """ This is the simplest analyse, it is based on black-list and white-list rules.
         It will analyse, separately, if the email can be considered black or considered white.
         The final decision, outside this function, depends on a combination of black, white and self._wob. """
-        logging.debug("func. simple_bw.spamalyse()")
+        logging.debug("-----------------------------------------------------------------------------------------------")
+        #logging.debug("func. simple_bw.spamalyse()")
         #print ">>>>>> Spamalyse - Simple black and white"
         dic_res = dict()
         for str_colour in ['black', 'white']:
-            #print "*** ", str_colour
+            logging.debug(".colour: {}".format(str_colour))
             dic_res[str_colour] = list()
             lst_rulelinesets = self._data[str_colour]
-            lst_res = list()
+            lst_res4colour = list()
             for rs in lst_rulelinesets:
-                if not any(lst_res): # No reason to check more rule-sets if we already have a True
-                    anyall = rs[0]
-                    #print "**  ", anyall
-                    for rul in rs[1]:
-                        if not (any(lst_res) and anyall=='if_any_of'): # No reason to check more rules if we already have a True
-                            #print "*rul", rul
-                            if eml_in.has_key(rul['key']):
-                                #print "    ", rul['key']
-                                emlval = eml_in.get(rul['key'])
+                logging.debug("..ruleset: {}".format(rs))
+                if not any(lst_res4colour): # No reason to check more rule-sets if we already have a True
+                    for rul in rs:
+                        if not (any(lst_res4colour)): # No reason to check more rules if we already have a True
+                            logging.debug("...rul: {}".format(rul))
+                            if salmail_in.has_key(rul['key']):
+                                emlval = salmail_in.get(rul['key'])
                                 opr = rul['opr']
                                 bol_hit = False # Assume innocent, until proven guilty...
                                 for val in rul['val']: # there can be a one or more values to check for
@@ -322,11 +321,15 @@ class Ruleset(object):
                                         else:
                                             print "Error: Unknown operator: "+opr
                                             continue
-                                lst_res.append(bol_hit)
+                                lst_res4colour.append(bol_hit)
                             else:
-                                print "email don't seem to have header entry:", rul['key']
-                dic_res[str_colour].append(any(lst_res))
+                                str_msg = "email don't seem to have header entry: {}".format(rul['key'])
+                                print str_msg
+                                logging.warning(str_msg)
+                                del str_msg
+                dic_res[str_colour].append(any(lst_res4colour))
         #print "<<<<<< Spamalyse < end", dic_res
+        logging.debug("<<< res. simple_bw.spamalyse(): {}".format(str(dic_res)))
         return dic_res
 
 

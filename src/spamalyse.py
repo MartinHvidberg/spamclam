@@ -60,6 +60,9 @@ class Salmail(object):
         # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
         # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
 
+    def has_key(self, key_in):
+        return key_in in self._data.keys()
+
     def get(self, mkey):
         """ Get one field from the message """
         if mkey == 'id':
@@ -83,8 +86,6 @@ class Salmail(object):
         #    return self._data['']
         else:
             return None
-
-
 
 
 class Spamalyser(object):
@@ -118,7 +119,31 @@ class Spamalyser(object):
             #print "Show rules PP End..."
 
 
-    def is_spam(self, eml_in):
+    def is_spam(self, salmail_in):
+        """ Accepts an eml (Salmail as defined above)
+        returning ??? indicating if it's considered to be spam.
+        """
+        logging.info("func. is_spam. ({}, {})".format(salmail_in.get('from'), salmail_in.get('subject')))
+        obj_ret = []
+        lst_known_modes = ['simple']
+        if self._mode in lst_known_modes:
+            if self._mode == 'simple': # The default 'simple black and white' analyser
+                dic_result = self._rulob.spamalyse(salmail_in)
+                print "DR", dic_result
+                if self._wob:
+                    if any(dic_result['white']):
+                        obj_ret = False # i.e. Not Spam
+                    else:
+                        obj_ret = any(dic_result['black']) # i.e. Spam if any reason found...
+                else: # wob is false
+                    obj_ret = any(dic_result['black']) # i.e. Spam if any reason found...
+        else:
+            obj_ret = False # if rule unknown, it's not Spam
+        ##self.stat_count_email(salmail_in,obj_ret)
+        return obj_ret
+
+
+'''    def is_spam_old_using_email.message(self, eml_in):
         """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
         email message is expected to be a email.message_from_string(s[, _class[, strict]])
         for details see: https://docs.python.org/2/library/email.message.html#module-email.message
@@ -140,6 +165,7 @@ class Spamalyser(object):
             bol_return = False # if rule unknown, it's not Spam
         self.stat_count_email(eml_in,bol_return)
         return bol_return
+'''
 
 # End class - Spamalyser
 
