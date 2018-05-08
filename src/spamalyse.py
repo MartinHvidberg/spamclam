@@ -129,40 +129,16 @@ class Spamalyser(object):
                 dic_result = self._rulob.spamalyse(salmail_in)
                 print "DR", dic_result
                 if self._wob:
-                    if any(dic_result['white']):
+                    if any(dic_result['whitehits']):
                         obj_ret = False # i.e. Not Spam
                     else:
-                        obj_ret = any(dic_result['black']) # i.e. Spam if any reason found...
+                        obj_ret = any(dic_result['blackhits']) # i.e. Spam if any reason found...
                 else: # wob is false
-                    obj_ret = any(dic_result['black']) # i.e. Spam if any reason found...
+                    obj_ret = any(dic_result['blackhits']) # i.e. Spam if any reason found...
         else:
             obj_ret = False # if mode is unknown, it's not Spam
         return obj_ret
 
-
-'''    def is_spam_old_using_email.message(self, eml_in):
-        """ Accepts an eml (email.message) and return True or False, indicating if it's considered to be spam. 
-        email message is expected to be a email.message_from_string(s[, _class[, strict]])
-        for details see: https://docs.python.org/2/library/email.message.html#module-email.message
-        """
-        logging.debug("func. is_spam.")
-        bol_return = None
-        lst_known_modes = ['simple']
-        if self._mode in lst_known_modes:
-            if self._mode == 'simple': # The default 'simple black and white' analyser
-                dic_result = self._rulob.spamalyse(eml_in)
-                if self._wob:
-                    if any(dic_result['white']):
-                        bol_return = False # i.e. Not Spam
-                    else:
-                        bol_return = any(dic_result['black']) # i.e. Spam if any reason found...
-                else: # wob is false
-                    bol_return = any(dic_result['black']) # i.e. Spam if any reason found...
-        else:
-            bol_return = False # if rule unknown, it's not Spam
-        self.stat_count_email(eml_in,bol_return)
-        return bol_return
-'''
 
 # End class - Spamalyser
 

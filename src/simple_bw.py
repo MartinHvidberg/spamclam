@@ -291,10 +291,8 @@ class Ruleset(object):
             bol_condit_spam = False  # Assuming innocent until proven guilty.
             for key in lst_key:
                 if salmail_in.has_key(key):
-                    #print " ....key: {}".format(key)
                     emlval = salmail_in.get(key)
                     for val in lst_val:
-                        #print " ....val: {}".format(val)
                         print " .....single_condit: ({}), {} {} {}".format(key, emlval, opr, val),
                         if opr == '&&':  # contains
                             bol_hit = val in emlval
@@ -323,7 +321,7 @@ class Ruleset(object):
                     logging.warning(str_msg)
                     del str_msg
                 print " ....condit-spam: {}".format(bol_condit_spam)
-                return bol_condit_spam
+            return bol_condit_spam
 
 
         salmail_in.show()
@@ -332,7 +330,7 @@ class Ruleset(object):
         dic_res = dict()  # initialize the output dic
         for str_colour in ['black', 'white']:
             logging.debug(".colour: {}".format(str_colour))
-            dic_res[str_colour] = list()  # initialize the output list for this colour
+            dic_res[str_colour+'hits'] = list()  # initialize the output hit-list for this colour
             for rul in self._data[str_colour]:
                 # XXX consider if len(dic_res[str_colour] < 1:  # We only need one True, per colour
                 print " ..rule {}-rule: {}".format(str_colour, rul)
@@ -342,9 +340,9 @@ class Ruleset(object):
                     condit_spam = condit_check(condit, salmail_in)
                     bol_rul_spam = bol_rul_spam and condit_spam # All condition in a rule must be true, for the rule to be true
                     if condit_spam:
-                        dic_res[str_colour].append(rul)  # Add the rule that turned true
-                dic_res['spam'] = condit_spam
+                        dic_res[str_colour+'hits'].append(rul)  # Add the rule that turned true
                 print " ..rule= {}".format(bol_rul_spam)
+            dic_res[str_colour] = condit_spam  # return the boolean if this True/False in this colour
         return dic_res
 
     def spamalyse_old_and_clumpsy(self, salmail_in):
