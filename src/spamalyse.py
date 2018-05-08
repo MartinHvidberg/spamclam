@@ -18,6 +18,9 @@ class Salmail(object):
     def __init__(self, emlmsg):
         self._mesg = emlmsg
         self._data = dict()
+        self._mandatory_fields = ('id', 'from', 'to', 'cc', 'bcc', 'subject')
+        for key_i in self._mandatory_fields:
+            self._data[key_i] = "" # Initialize to empty string, rather than None
         self._msg2data()
 
     def show(self):
@@ -59,8 +62,13 @@ class Salmail(object):
         # print "multi?: {}".format(msg.is_multipart())
         # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
         # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
+        for key_check in self._data.keys():
+            if self._data[key_check] == None:
+                self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
 
     def has_key(self, key_in):
+        ##print "  key type and val: {}, {}".format(str(type(key_in)), key_in)
+        ##print "  _data.keys(): {}".format(self._data.keys())
         return key_in in self._data.keys()
 
     def get(self, mkey):
@@ -103,24 +111,14 @@ class Spamalyser(object):
             self._rulob = simple_bw.Ruleset(conf_dir)  # The rules object
             self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
 
-            self._rulob.load_rulesfiles()
-            self._rulob.load_addressbooks()
+            self._rulob.load_rulesfiles()  # XXX Consider moving this inside the Ruleset.__init__
+            self._rulob.load_addressbooks()  # XXX Consider moving this inside the Ruleset.__init__
 
-            # sal.import_addressfile('filename', 'white')
-            # sal.import_rulefile('filename', 'black')
-            # sal.export_2json('filename')
-
-            #print "Show rules backdoor Begin:"
-            #self._rulob.show_rules_backdoor()
-            #print "Show rules backdoor End..."
-
-            #print "Show rules PP Begin:"
-            self._rulob.show_rules_pp()
-            #print "Show rules PP End..."
+            self._rulob.show_rules_pp() # XXX Just for debug... consider writing to logfile
 
 
     def is_spam(self, salmail_in):
-        """ Accepts an eml (Salmail as defined above)
+        """ Accepts an eml (Salmail) as defined above)
         returning ??? indicating if it's considered to be spam.
         """
         logging.info("func. is_spam. ({}, {})".format(salmail_in.get('from'), salmail_in.get('subject')))
@@ -138,8 +136,7 @@ class Spamalyser(object):
                 else: # wob is false
                     obj_ret = any(dic_result['black']) # i.e. Spam if any reason found...
         else:
-            obj_ret = False # if rule unknown, it's not Spam
-        ##self.stat_count_email(salmail_in,obj_ret)
+            obj_ret = False # if mode is unknown, it's not Spam
         return obj_ret
 
 

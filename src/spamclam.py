@@ -87,7 +87,7 @@ print "{}".format(con_pop.list()[0])
 cd_to = ec_help.ec_cntdic()
 cd_from = ec_help.ec_cntdic()"""
 
-for num_email in range(1,4):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+for num_email in range(60,69):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
