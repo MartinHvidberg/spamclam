@@ -55,8 +55,10 @@ class Ruleset(object):
         logging.debug("class init. Ruleset")
         self._rldr = rule_dir  # Where to look for the rule files
         self._data = {'white': list(), 'black': list()}
-        self._rank = 'white'  # Default 'white', meaning white overrules black.
+        self._wob = 'white'  # Default 'white', meaning white overrules black.
 
+
+    ######  Rule-builder ######
 
     def rules_from_strings(self, los_raw):
         """ Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file """
@@ -137,7 +139,6 @@ class Ruleset(object):
                     self.add_rule(str_colour, rule_a)
         return
 
-
     def load_addressbooks(self):
         """ Find and load all address (.scaddr) files in the rule_dir """
         logging.debug("func. load_addressbooks.")
@@ -165,7 +166,6 @@ class Ruleset(object):
                             self.add_rule(str_colour, rule_a)
                         del str_emladd, str_tmp
         return
-
 
     def add_rule(self, colour, rul_in):
         """
@@ -231,7 +231,6 @@ class Ruleset(object):
             logging.warning("! add_rule: rule_check_packeage() returned False")
         return
 
-
     def show_rules_backdoor(self):
         """ Show the rules """
         logging.debug("func. show_rules_backdoor()")
@@ -248,18 +247,17 @@ class Ruleset(object):
                     print "\t\t{}".format(str(lst_rule_a))
         return
 
-
     def show_rules_pp(self):
         """ Show the rules - pretty print """
         logging.debug("func. show_rules_pp()")
         ##print "\nPretty Print the rules..."
         los_pp = list()
-        if self._rank == "white":
+        if self._wob == "white":
             los_pp.append("*** : White over black")
-        elif self._rank == "black":
+        elif self._wob == "black":
             los_pp.append("*** : Black over white")
         else:
-            los_pp.append("*** : WoB is a mess...: {}".format(self._rank))
+            los_pp.append("*** : WoB is a mess...: {}".format(self._wob))
         for key_colour in sorted(self._data.keys()):
             itm_colour = self._data[key_colour]
             los_pp.append("*** : {}".format(key_colour))
@@ -276,7 +274,34 @@ class Ruleset(object):
         for str_pp in los_pp:
             print str_pp
 
-    def spamalyse(self, salmail_in):
+
+    ######  Spalyse ######
+
+    def statement_check(self, salstmn, salmail):
+        """ Checks the salmail against a single statement
+            EBNF: salstmn = (key, opr, val) """
+
+        return  # EBNF: True|False
+
+    def condtion_check(self, salcond, salmail):
+        """ Checks the salmail against a single condition
+            EBNF: salcond = ((key, {key}), opr, (val, {val})) """
+
+        return  # EBNF: salcond_res = ( True|False, ({win_stnm}))
+
+    def rule_check(self, salrule, salmail):
+        """ Checks the salmail agains a single rule
+            EBNF: salrule = (salcond, {salcond}) """
+
+        return  # EBNF: salrule_res = ( True|False, ({win_stnm}))
+
+    def spamalyse(self, salmail):
+        """ Checks an email agains entire rule-set, i.e. self """
+
+        return  # EBNF: salrust_res = ( True|False, ({win_stnm}))
+
+
+    def spamalyse_old2(self, salmail_in):
         """ Do ... """
 
         def condit_check(condit_in, salmail_in):

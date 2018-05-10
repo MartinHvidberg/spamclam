@@ -100,7 +100,7 @@ class Spamalyser(object):
 
     """ The Spamalyser class """
     
-    def __init__(self, conf_dir, mode='simple', wob='True'):
+    def __init__(self, mode, conf_dir, wob='True'):
         logging.debug("class init. Spamalyser")
         self._mode = mode # default mode is 'simple'
         if wob.lower() == 'true': # white over black, white-list overrules black-list... default is True
@@ -127,7 +127,6 @@ class Spamalyser(object):
         if self._mode in lst_known_modes:
             if self._mode == 'simple': # The default 'simple black and white' analyser
                 dic_result = self._rulob.spamalyse(salmail_in)
-                print "DR", dic_result
                 if self._wob:
                     if any(dic_result['whitehits']):
                         obj_ret = False # i.e. Not Spam
