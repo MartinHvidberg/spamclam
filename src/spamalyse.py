@@ -111,9 +111,6 @@ class Spamalyser(object):
             self._rulob = simple_bw.Ruleset(conf_dir)  # The rules object
             self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
 
-            self._rulob.load_rulesfiles()  # XXX Consider moving this inside the Ruleset.__init__
-            self._rulob.load_addressbooks()  # XXX Consider moving this inside the Ruleset.__init__
-
             self._rulob.show_rules_pp() # XXX Just for debug... consider writing to logfile
 
 
@@ -122,18 +119,11 @@ class Spamalyser(object):
         returning ??? indicating if it's considered to be spam.
         """
         logging.info("func. is_spam. ({}, {})".format(salmail_in.get('from'), salmail_in.get('subject')))
-        obj_ret = []
+        ##obj_ret = []
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
             if self._mode == 'simple': # The default 'simple black and white' analyser
-                dic_result = self._rulob.spamalyse(salmail_in)
-                if self._wob:
-                    if any(dic_result['whitehits']):
-                        obj_ret = False # i.e. Not Spam
-                    else:
-                        obj_ret = any(dic_result['blackhits']) # i.e. Spam if any reason found...
-                else: # wob is false
-                    obj_ret = any(dic_result['blackhits']) # i.e. Spam if any reason found...
+                obj_ret = self._rulob.spamalyse(salmail_in, self._wob)
         else:
             obj_ret = False # if mode is unknown, it's not Spam
         return obj_ret

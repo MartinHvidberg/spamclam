@@ -31,7 +31,7 @@ print "\n=============   Spamclam   ==========================================="
 # Setup logging
 logging.basicConfig(filename='spamalyse.log',
                     filemode='w',
-                    level=logging.DEBUG,
+                    level=logging.INFO,
                     format='%(asctime)s %(levelname)7s : %(message)s')
                     # %(funcName)s
 logging.info(str_start)
@@ -79,7 +79,7 @@ print "\n=============   Run   ================================================"
 
 print "{}".format(con_pop.list()[0])
 
-for num_email in range(60,69):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+for num_email in range(1,4):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
@@ -91,6 +91,7 @@ for num_email in range(60,69):#num_tot_msgs+1): # 68,74): # # pop server count f
 
     # ** Check the salmsg for 'spam'
     obj_isspam = salysr.is_spam(salmsg)
+    print "salmsg is spam?",
     print obj_isspam
 
 

@@ -57,6 +57,8 @@ class Ruleset(object):
         self._data = {'white': list(), 'black': list()}
         self._wob = 'white'  # Default 'white', meaning white overrules black.
 
+        self.load_rulesfiles()  # Load any rule files
+        self.load_addressbooks()  # Load any address books
 
     ######  Rule-builder ######
 
@@ -137,6 +139,7 @@ class Ruleset(object):
                 # We need to actually add the rule :-)
                 for rule_a in lor_in:
                     self.add_rule(str_colour, rule_a)
+                logging.info("Loaded rule file {}: {}".format(str_colour, fil_cnf))
         return
 
     def load_addressbooks(self):
@@ -154,7 +157,6 @@ class Ruleset(object):
                     str_colour = ""
                     print "!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_cnf)
                     continue
-                logging.info("Addressbook {}: {}".format(str_colour, fil_cnf))
                 with open(self._rldr+fil_cnf, 'r') as f:
                     for line in f:
                         str_tmp = line.split("#")[0] # Get rid of comments
@@ -165,6 +167,7 @@ class Ruleset(object):
                             rule_a = [dic_rul] # 'A rule' is a list of dics, so we need to wrap it...
                             self.add_rule(str_colour, rule_a)
                         del str_emladd, str_tmp
+                logging.info("Loaded addressbook {}: {}".format(str_colour, fil_cnf))
         return
 
     def add_rule(self, colour, rul_in):
@@ -293,140 +296,82 @@ class Ruleset(object):
         """ Checks the salmail agains a single rule
             EBNF: salrule = (salcond, {salcond}) """
 
-        return  # EBNF: salrule_res = ( True|False, ({win_stnm}))
+        return  (True, [salrule]) # EBNF: salrule_res = ( True|False, ({win_stnm}))
 
-    def spamalyse(self, salmail):
-        """ Checks an email agains entire rule-set, i.e. self """
-
-        return  # EBNF: salrust_res = ( True|False, ({win_stnm}))
-
-
-    def spamalyse_old2(self, salmail_in):
-        """ Do ... """
-
-        def condit_check(condit_in, salmail_in):
-            """ expect: {
+    def spamalyse(self, salmail, wob_in):
+        """ Checks an email agains entire rule-set, i.e. self
+            EBNF: input: rule-set = { 'white': [<rule>]; 'black':[<rule>] }
+                  returns: ( True|False, ({win_stnm})) """
+        """
+{
+    'white': [
+        [
+            {'key': ['from'],
+             'opr': '&&',
+             'val': ['nicesite.com', 'anothernicesite.com']
+             }
+        ],
+        [
+            {
                 'key': ['to', 'cc', 'bcc'],
                 'opr': '[=',
-                'val': ['mail_list_on_Python', 'daily_letter_from_your_groser']
-                } """
-            lst_key = condit_in['key']
-            opr = condit_in['opr']
-            lst_val = condit_in['val']
-            bol_condit_spam = False  # Assuming innocent until proven guilty.
-            for key in lst_key:
-                if salmail_in.has_key(key):
-                    emlval = salmail_in.get(key)
-                    for val in lst_val:
-                        print " .....single_condit: ({}), {} {} {}".format(key, emlval, opr, val),
-                        if opr == '&&':  # contains
-                            bol_hit = val in emlval
-                        elif opr == '!&':  # do_not_contain
-                            bol_hit = not val in emlval
-                        elif opr == '==':  # is
-                            bol_hit = val == emlval
-                        elif opr == '!=':  # is_not
-                            bol_hit = val != emlval
-                        elif opr == '[=':  # begins_with
-                            bol_hit = val == emlval[:len(val)]
-                        elif opr == ']=':  # ends_with
-                            bol_hit = val == emlval[-len(val):]
-                        elif opr == '[!':  # not_begins_with
-                            bol_hit = not val == emlval[:len(val)]
-                        elif opr == ']!':  # not_ends_with
-                            bol_hit = not val == emlval[-len(val):]
-                        else:
-                            print "Error: Unknown operator: " + opr
-                            continue
-                        print "  =  ", bol_hit
-                        bol_condit_spam = bol_condit_spam or bol_hit
+                'val': ['mail_list_on_Python', 'daily_letter_from_your_groser'],
+            }
+        ],
+        [
+            {'val': ['python.org'],
+             'key': ['from'],
+             'opr': '&&'
+             },
+            {'val': ['python_in_greek', 'python_on_windows'],
+             'key': ['subject'],
+             'opr': '!&'
+             }
+        ],
+    ],
+    'black': [
+        [
+            {'val': ['Vi ringede til dig', 'men du tog den ikke'],
+             'key': ['subject'],
+             'opr': '&&'}
+        ],
+        [
+            {'val': ['no-reply@euroinvestor.com'],
+             'opr': '==',
+             'key': ['from']}
+        ]
+    ]
+}"""
+        
+        dic_white_and_black = dict()
+        for str_colour in ('white', 'black'):
+            dic_white_and_black[str_colour] = {'lst_bool': list(), 'lst_stmn': list()}
+            for salrule in self._data[str_colour]:
+                rul_ret = self.rule_check(salrule, salmail)  # Check every rule in the rule-set
+                if rul_ret[0]:
+                    dic_white_and_black[str_colour]['lst_bool'].append(rul_ret[0])
+                    dic_white_and_black[str_colour]['lst_stmn'].append(rul_ret[1])
                 else:
-                    str_msg = "email don't seem to have header entry: {}".format(rul['key'])
-                    print str_msg
-                    logging.warning(str_msg)
-                    del str_msg
-                print " ....condit-spam: {}".format(bol_condit_spam)
-            return bol_condit_spam
+                    dic_white_and_black[str_colour]['lst_bool'].append(False)
+        bol_white = any([itm for itm in dic_white_and_black['white']['lst_bool']])
+        bol_black = any([itm for itm in dic_white_and_black['black']['lst_bool']])
+        lst_w_stm = [itm for itm in dic_white_and_black['white']['lst_stmn']]
+        lst_b_stm = [itm for itm in dic_white_and_black['black']['lst_stmn']]
+        if wob_in:  # i.e. wob is True
+            if bol_white:
+                obj_ret = (False, lst_w_stm)  # wob, white hit exists = Not spam
+            elif bol_black:  # wob is false
+                obj_ret = (True, lst_b_stm)  # wob, only black hit exists = Spam
+            else:
+                obj_ret = (False, [])  # wob, neither white not black hits = Not spam
+        else:  # i.e. wob is False
+            if bol_black:
+                obj_ret = (True, lst_b_stm)  # not wob, black hit exists = Spam
+            elif bol_white:  # wob is false
+                obj_ret = (False, lst_w_stm)  # not wob, only white hit exists = Not spam
+            else:
+                obj_ret = (False, [])  # not wob, neither white not black hits = Not spam
 
-
-        salmail_in.show()
-        #logging.debug("func. simple_bw.spamalyse()")
-        print " . Spamalyse - Simple black and white"
-        dic_res = dict()  # initialize the output dic
-        for str_colour in ['black', 'white']:
-            logging.debug(".colour: {}".format(str_colour))
-            dic_res[str_colour+'hits'] = list()  # initialize the output hit-list for this colour
-            for rul in self._data[str_colour]:
-                # XXX consider if len(dic_res[str_colour] < 1:  # We only need one True, per colour
-                print " ..rule {}-rule: {}".format(str_colour, rul)
-                bol_rul_spam = True # Must start with True, as we use AND
-                for condit in rul:
-                    print " ...condit: {}".format(condit)
-                    condit_spam = condit_check(condit, salmail_in)
-                    bol_rul_spam = bol_rul_spam and condit_spam # All condition in a rule must be true, for the rule to be true
-                    if condit_spam:
-                        dic_res[str_colour+'hits'].append(rul)  # Add the rule that turned true
-                print " ..rule= {}".format(bol_rul_spam)
-            dic_res[str_colour] = condit_spam  # return the boolean if this True/False in this colour
-        return dic_res
-
-    def spamalyse_old_and_clumpsy(self, salmail_in):
-        """ This is the simplest analyse, it is based on black-list and white-list rules.
-        It will analyse, separately, if the email can be considered black or considered white.
-        The final decision, outside this function, depends on a combination of black, white and self._wob. """
-        salmail_in.show()
-        #logging.debug("func. simple_bw.spamalyse()")
-        print ">>>>>> Spamalyse - Simple black and white"
-        dic_res = dict()
-        for str_colour in ['black', 'white']:
-            logging.debug(".colour: {}".format(str_colour))
-            dic_res[str_colour] = list()
-            lst_rulelinesets = self._data[str_colour]
-            lst_res4colour = list()
-            for rs in lst_rulelinesets:
-                logging.debug("..ruleset: {}".format(rs))
-                if not any(lst_res4colour): # No reason to check more rule-sets if we already have a True
-                    for rul in rs:
-                        if not (any(lst_res4colour)): # No reason to check more rules if we already have a True
-                            logging.debug("...rul: {}".format(rul))
-                            for key_r in rul['key']: # there can be a one or more keys to check in, e.g. ['to', 'cc', 'bcc']
-                                if salmail_in.has_key(key_r):
-                                    emlval = salmail_in.get(key_r)
-                                    opr = rul['opr']
-                                    bol_hit = False # Assume innocent, until proven guilty...
-                                    for val in rul['val']: # there can be a one or more values to check for
-                                        if not bol_hit: # no need to look further, if we already have a hit...
-                                            print ">>>>>> ", emlval, opr, val,
-                                            if opr == '&&': # contains
-                                                bol_hit = val in emlval
-                                            elif opr == '!&': # do_not_contain
-                                                bol_hit = not val in emlval
-                                            elif opr == '==': # is
-                                                bol_hit = val == emlval
-                                            elif opr == '!=': # is_not
-                                                bol_hit = val != emlval
-                                            elif opr == '[=': # begins_with
-                                                bol_hit = val == emlval[:len(val)]
-                                            elif opr == ']=': # ends_with
-                                                bol_hit =  val == emlval[-len(val):]
-                                            elif opr == '[!': # not_begins_with
-                                                bol_hit = not val == emlval[:len(val)]
-                                            elif opr == ']!': # not_ends_with
-                                                bol_hit = not val == emlval[-len(val):]
-                                            else:
-                                                print "Error: Unknown operator: "+opr
-                                                continue
-                                            print "  =  ", bol_hit
-                                    lst_res4colour.append(bol_hit)
-                                else:
-                                    str_msg = "email don't seem to have header entry: {}".format(rul['key'])
-                                    print str_msg
-                                    logging.warning(str_msg)
-                                    del str_msg
-                dic_res[str_colour].append(any(lst_res4colour))
-        #print "<<<<<< Spamalyse < end", dic_res
-        logging.debug("<<< res. simple_bw.spamalyse(): {}".format(str(dic_res)))
-        return dic_res
 
 
     # helper functions
