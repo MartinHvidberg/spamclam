@@ -38,6 +38,7 @@ class Salmail(object):
         # * id
         try:
             self._data['id'] = msg.get('Message-ID').strip('<>')
+            ##print msg.get('Message-ID')
         except AttributeError:
             logging.warning("email.message seems to have no 'Message-ID'...\n{}".format(self._mesg))
             print "email.message seems to have no 'Message-ID'...\n{}".format(" - See message in log file...")
@@ -118,14 +119,16 @@ class Spamalyser(object):
         """ Accepts an eml (Salmail) as defined above)
         returning ??? indicating if it's considered to be spam.
         """
-        logging.info("func. is_spam. ({}, {})".format(salmail_in.get('from'), salmail_in.get('subject')))
         ##obj_ret = []
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
             if self._mode == 'simple': # The default 'simple black and white' analyser
                 obj_ret = self._rulob.spamalyse(salmail_in, self._wob)
+            else:
+                obj_ret = False  # This only happens if the programmer f*cked up...
         else:
             obj_ret = False # if mode is unknown, it's not Spam
+        logging.debug(" func. is_spam. {}; {} = {}".format(salmail_in.get('from'), salmail_in.get('subject'), obj_ret))
         return obj_ret
 
 

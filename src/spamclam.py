@@ -79,7 +79,7 @@ print "\n=============   Run   ================================================"
 
 print "{}".format(con_pop.list()[0])
 
-for num_email in range(1,4):#num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
     msg = email.message_from_string(email_string)
@@ -90,10 +90,17 @@ for num_email in range(1,4):#num_tot_msgs+1): # 68,74): # # pop server count fro
     #salmsg.show()
 
     # ** Check the salmsg for 'spam'
-    obj_isspam = salysr.is_spam(salmsg)
-    print "salmsg is spam?",
-    print obj_isspam
+    logging.debug("Email: {}; {}".format(salmsg.get('from'),salmsg.get('subject')))
+    sal_res = salysr.is_spam(salmsg)
 
+    logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res[0]))
+    if sal_res[0]:
+        logging.info("  hit: {}".format(sal_res[1]))
+
+    if sal_res[0]:
+        print "[{}] {}; {}".format(num_email, salmsg.get('from'),salmsg.get('subject'))
+        # Actually delete the e-mails on the server
+        #con_pop.dele(num_email)
 
 print "\nProcessed {} e-mails\n".format(num_email)
 
