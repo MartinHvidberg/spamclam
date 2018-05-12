@@ -40,7 +40,7 @@ class Salmail(object):
             self._data['id'] = msg.get('Message-ID').strip('<>')
             ##print msg.get('Message-ID')
         except AttributeError:
-            logging.warning("email.message seems to have no 'Message-ID'...\n{}".format(self._mesg))
+            logging.warning("email.message seems to have no 'Message-ID'...\n{}".format(self._mesg))  # XXX This is BAD, Dont dump this entire, likely Spam, message to the log file XXX
             print "email.message seems to have no 'Message-ID'...\n{}".format(" - See message in log file...")
             self._data['id'] = None
         # * from
@@ -56,16 +56,25 @@ class Salmail(object):
         dcd_sub = email.header.decode_header(raw_sub)
         self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
         # * body
-
+        # * Date
         # * size
 
 
         # print "multi?: {}".format(msg.is_multipart())
         # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
         # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
+        # Return-Path
+        # Message-ID: in particulary the part right of @
+        # X-Sender
+        # Sender (sending 'on behalf of' from)
+
         for key_check in self._data.keys():
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
+
+    def keys(self):
+        """ Return a list of available keys """
+        return list(self._data.keys())
 
     def has_key(self, key_in):
         ##print "  key type and val: {}, {}".format(str(type(key_in)), key_in)

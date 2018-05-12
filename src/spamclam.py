@@ -21,7 +21,7 @@ import poplib, email, email.header
 import spamalyse
 
 sys.path.insert(0, "../../EC_stuff/ec_base/")
-import ec_help
+##import ec_help
 
 str_start = "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
 print str_start
@@ -77,8 +77,10 @@ salysr = spamalyse.Spamalyser(str_mode, '../data/', str_wob)  # Consider moving 
 
 print "\n=============   Run   ================================================"
 
+dic_trr = dict()  # dic_this_runs_results
 print "{}".format(con_pop.list()[0])
 
+num_email = 0  # To avoid problems with counter after this loop, if no mails found.
 for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
     email_raw = con_pop.retr(num_email)
     email_string = "\n".join(email_raw[1])
@@ -93,44 +95,41 @@ for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 
     logging.debug("Email: {}; {}".format(salmsg.get('from'),salmsg.get('subject')))
     sal_res = salysr.is_spam(salmsg)
 
+    # write to log file
     logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res[0]))
     if sal_res[0]:
         logging.info("  hit: {}".format(sal_res[1]))
 
-    if sal_res[0]:
+        # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
         print "[{}] {}; {}".format(num_email, salmsg.get('from'),salmsg.get('subject'))
         # Actually delete the e-mails on the server
         #con_pop.dele(num_email)
 
+    # ** Collect info for later Stats
+    dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
+
+
 print "\nProcessed {} e-mails\n".format(num_email)
 
 # Generate Stat for the e-mails on the pop3 server.
-
-#lst_dele = list() # List to cache delete commands feed back from server, not really used?
-#for mail_number in range(1,num_tot_msgs+1): # pop server count from 1 (not from 0)
-#    msg_raw = con_pop.retr(mail_number)
-#    msg_eml = email.message_from_string('\n'.join(msg_raw[1]))
-#    if sal.is_spam(msg_eml):
-#        lst_dele.append(mail_number)  # Consider... Is it safe to have pop.retr and pop.dele in same loop, is mail_number solid enough for that?
-
-
-# Actually delete the e-mails on the server
-# con_pop.dele(mail_number)
-
 #sal.stats_generate_pop3(con_pop)
 #print sal.stats_show()
 #sal.apply_rules_pop3(con_pop)
 #sal.report_to_global_stat_file("../data/spamclam_global.stat")
 
 
-#print "\n=============   Closing e-mail server connection   ==================="
+##print "\n=============   Closing e-mail server connection   ==================="
 
 # Close connection to email server
 con_pop.quit()
-# XXX del sal
+
+# Clean major objects
+del con_pop
+del salysr
+del str_srvr, str_user, str_pass
 
 
-#print "\n=============   Done...   ============================================"
+##print "\n=============   Done...   ============================================"
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...
