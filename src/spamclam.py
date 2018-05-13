@@ -96,12 +96,12 @@ for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 
     sal_res = salysr.is_spam(salmsg)
 
     # write to log file
-    logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res[0]))
-    if sal_res[0]:
-        logging.info("  hit: {}".format(sal_res[1]))
+    logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['spam']))
+    if sal_res['spam']:
+        logging.info("  hit: {}".format(sal_res['stmb']))  # if it's spam print the proof, which must be black...
 
         # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
-        print "[{}] {}; {}".format(num_email, salmsg.get('from'),salmsg.get('subject'))
+        print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])
         # Actually delete the e-mails on the server
         #con_pop.dele(num_email)
 
@@ -111,9 +111,9 @@ for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 
 
 print "\nProcessed {} e-mails\n".format(num_email)
 
-# Generate Stat for the e-mails on the pop3 server.
-#sal.stats_generate_pop3(con_pop)
-#print sal.stats_show()
+# Generate Stat for the processed e-mails
+salysr.stats_generate(dic_trr)
+#print salysr.stats_show()
 #sal.apply_rules_pop3(con_pop)
 #sal.report_to_global_stat_file("../data/spamclam_global.stat")
 

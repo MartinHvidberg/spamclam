@@ -302,6 +302,7 @@ class Ruleset(object):
         elif opr == ']!':  # not_ends_with
             bol_hit = not val == emlval[-len(val):]
         else:
+            bol_hit = False
             print "Error: Unknown operator: " + opr
         return  (bol_hit, salstmn)  # EBNF: ( True|False, The_statement )
 
@@ -365,23 +366,44 @@ class Ruleset(object):
         bol_black = any([itm for itm in dic_white_and_black['black']['lst_bool']])
         lst_w_stm = [itm for itm in dic_white_and_black['white']['lst_stmn']]
         lst_b_stm = [itm for itm in dic_white_and_black['black']['lst_stmn']]
+        # construck sal_res as {'spam': boolean(), 'mode': str(), form: str(), 'stmw'. list(), 'stmb': list()}
         # wob decision tree
         if wob_in:  # i.e. wob is True
-            if bol_white:
-                obj_ret = (False, lst_w_stm)  # wob, white hit exists = Not spam
-            elif bol_black:  # wob is false
-                obj_ret = (True, lst_b_stm)  # wob, only black hit exists = Spam
-            else:
-                obj_ret = (False, [])  # wob, neither white not black hits = Not spam
+            if bol_white:  # wob, white hit exists = Not spam
+                bol_spam = False
+                lst_kill = lst_w_stm  # the killer arguments
+                if bol_black:  # there are also black hits
+                    str_tone = 'grey'
+                else:
+                    str_tone = 'white'
+            elif bol_black:  # wob, only black hit exists = Spam
+                bol_spam = True
+                lst_kill = lst_b_stm  # the killer arguments
+                str_tone = 'black'
+            else:  # wob, neither white not black hits = Not spam
+                bol_spam = False
+                lst_kill = []  # the killer arguments
+                str_tone = 'clear'
         else:  # i.e. wob is False
-            if bol_black:
-                obj_ret = (True, lst_b_stm)  # not wob, black hit exists = Spam
-            elif bol_white:  # wob is false
-                obj_ret = (False, lst_w_stm)  # not wob, only white hit exists = Not spam
-            else:
-                obj_ret = (False, [])  # not wob, neither white not black hits = Not spam
-        logging.debug("  func. spamalyse. wob: {}; white: {}; black: {} = Spam: {}".format(wob_in, bol_white, bol_black, obj_ret[0]))
-        return obj_ret
+            if bol_black:  # not wob, black hit exists = Spam
+                bol_spam = True
+                lst_kill = lst_b_stm  # the killer arguments
+                if bol_white:  # there are also white hits
+                    str_tone = 'grey'
+                else:
+                    str_tone = 'black'
+            elif bol_white:  # not wob, only white hit exists = Not spam
+                bol_spam = False
+                lst_kill = lst_w_stm  # the killer arguments
+                str_tone = 'white'
+            else:  # not wob, neither white not black hits = Not spam
+                bol_spam = False
+                lst_kill = []  # the killer arguments
+                str_tone = 'clear'
+        sal_ret = {'spam': bol_spam, 'mode': 'simple', 'tone': str_tone, 'kill': lst_kill, 'stmw': lst_w_stm, 'stmb': lst_b_stm}
+        logging.debug("  func. spamalyse. wob: {}; white: {}; black: {} = Spam: {}".format(wob_in, bol_white, bol_black, sal_ret['spam']))
+        return sal_ret
+
 
     # helper functions
 
