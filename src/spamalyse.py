@@ -33,7 +33,7 @@ class Salmail(object):
         print(" subject : {}".format(self.get('subject')))
 
     def _msg2data(self):
-        """ This function tries to set all the data entries, from the org. message """
+        """ This function tries to set all the mode_simple_bw entries, from the org. message """
         msg = self._mesg
         # * id
         try:

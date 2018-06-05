@@ -1,0 +1,36 @@
+{
+  "fileformat": "Spamclam rules stat",
+  "formatversion": "0.1",
+  "common": {
+    "latest_update": "2018-06-05T17:47",
+    "emails_seen": 1,
+      "times_used_on_hold": 0,
+    "city": "New York",
+    "state": "NY"
+  },
+  "rules": [
+    {
+      "colour": "white",
+      "rule": "['from'] == ['info@urisa.org']",
+      "firstseen": "2018-06-05T17:47",
+      "latesthit": 0,
+      "times_used": 0,
+      "number_hit": 0,
+      "hit_freq": 0.0
+    },
+    {
+      "colour": "black",
+      "number": "['from'] ]= ['goldclubmembers.com']"
+    },
+    {
+      "colour": "black",
+      "number": "['subject'] && ['Adult Video']"
+    },
+    {
+      "colour": "white",
+      "number": "['from'] && ['python.org'] && : ['subject'] !& ['python_in_greek', 'python_on_windows']"
+    }
+  ],
+  "children": [],
+  "spouse": null
+}

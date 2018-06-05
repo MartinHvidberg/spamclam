@@ -14,6 +14,7 @@ Dealing with spam e-mails
 __verion__ = '0.2.2'
 __build__ = '20171020.'
 
+
 import sys
 import logging
 import poplib, email, email.header
@@ -36,97 +37,79 @@ logging.basicConfig(filename='spamalyse.log',
                     # %(funcName)s
 logging.info(str_start)
 
-# Read the command line input
-try:
-    str_srvr = sys.argv[1]
-    str_user = sys.argv[2]
-    str_pass = sys.argv[3]
-    if len(sys.argv) > 4:
-        str_mode = sys.argv[4]
-    else:
-        str_mode = "simple" # Default mode is 'simple black and white (lists)'
-    if len(sys.argv) > 5:
-        str_wob = sys.argv[5]
-    else:
-        str_wob = 'True' # Default wob=true, i.e. white overrules black
-except:
-    # Not as expected: mail.domain.tld user@domain.tld somepassword simple
-    print "Usage: spamclam.py <server> <user> <password> [mode]"
-    print "e.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
-    print "Note:  All other settings are controlled by the files in data/"
-    sys.exit(101)
+def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob):
 
-print "\n=============   Connect to POP3 server   ============================="    
-    
-# Open connection to email (POP) server
-try:
-    con_pop = poplib.POP3(str_srvr)
-    con_pop.user(str_user)
-    con_pop.pass_(str_pass)
-    print "Server says:  "+con_pop.getwelcome()
-    num_tot_msgs, num_tot_bytes = con_pop.stat()
-    print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
-except:
-    print "\nSeems to be unable to access the e-mail server..."
-    sys.exit(102)
+    print "\n=============   Connect to POP3 server   ============================="
 
-print "\n=============   Spamalyse   =========================================="
-    
-# Create a Spamalyser object
-salysr = spamalyse.Spamalyser(str_mode, 'data/', str_wob)  # Consider moving WOB to simple_bw.py
+    # Open connection to email (POP) server
+    try:
+        con_pop = poplib.POP3(str_srvr)
+        con_pop.user(str_user)
+        con_pop.pass_(str_pass)
+        print "Server says:  "+con_pop.getwelcome()
+        num_tot_msgs, num_tot_bytes = con_pop.stat()
+        print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
+    except:
+        print "\nSeems to be unable to access the e-mail server..."
+        sys.exit(102)
 
-print "\n=============   Run   ================================================"
+    print "\n=============   Spamalyse   =========================================="
 
-dic_trr = dict()  # dic_this_runs_results
-print "{}".format(con_pop.list()[0])
+    # Create a Spamalyser object
+    salysr = spamalyse.Spamalyser(str_mode, 'mode_simple_bw/', str_wob)  # Consider moving WOB to simple_bw.py
 
-num_email = 0  # To avoid problems with counter after this loop, if no mails found.
-for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
-    email_raw = con_pop.retr(num_email)
-    email_string = "\n".join(email_raw[1])
-    msg = email.message_from_string(email_string)
-    ##print num_email, "from:", msg.get('from'), "subj:", msg.get('subject')  # XXX Before salmsg
+    print "\n=============   Run   ================================================"
 
-    # ** Turn the email.massage into a spamalyse.Salmsg
-    salmsg = spamalyse.Salmail(msg)
-    #salmsg.show()
+    dic_trr = dict()  # dic_this_runs_results
+    print "{}".format(con_pop.list()[0])
 
-    # ** Check the salmsg for 'spam'
-    logging.debug("Email: {}; {}".format(salmsg.get('from'),salmsg.get('subject')))
-    sal_res = salysr.is_spam(salmsg)
+    num_email = 0  # To avoid problems with counter after this loop, if no mails found.
+    for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+        email_raw = con_pop.retr(num_email)
+        email_string = "\n".join(email_raw[1])
+        msg = email.message_from_string(email_string)
+        ##print num_email, "from:", msg.get('from'), "subj:", msg.get('subject')  # XXX Before salmsg
 
-    # write to log file
-    logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['spam']))
-    if sal_res['spam']:
-        logging.info("  hit: {}".format(sal_res['stmb']))  # if it's spam print the proof, which must be black...
+        # ** Turn the email.massage into a spamalyse.Salmsg
+        salmsg = spamalyse.Salmail(msg)
+        #salmsg.show()
 
-        # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
-        print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])
-        # Actually delete the e-mails on the server
-        #con_pop.dele(num_email)
+        # ** Check the salmsg for 'spam'
+        logging.debug("Email: {}; {}".format(salmsg.get('from'),salmsg.get('subject')))
+        sal_res = salysr.is_spam(salmsg)
 
-    # ** Collect info for later Stats
-    dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
+        # write to log file
+        logging.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['spam']))
+        if sal_res['spam']:
+            logging.info("  hit: {}".format(sal_res['stmb']))  # if it's spam print the proof, which must be black...
+
+            # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
+            print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])
+            # Actually delete the e-mails on the server
+            #con_pop.dele(num_email)
+
+        # ** Collect info for later Stats
+        dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
 
 
-print "\nProcessed {} e-mails\n".format(num_email)
+    print "\nProcessed {} e-mails\n".format(num_email)
 
-# Generate Stat for the processed e-mails
-salysr.stats_generate(dic_trr)
-#print salysr.stats_show()
-#sal.apply_rules_pop3(con_pop)
-#sal.report_to_global_stat_file("data/spamclam_global.stat")
+    # Generate Stat for the processed e-mails
+    salysr.stats_generate(dic_trr)
+    #print salysr.stats_show()
+    #sal.apply_rules_pop3(con_pop)
+    #sal.report_to_global_stat_file("mode_simple_bw/spamclam_global.stat")
 
 
-##print "\n=============   Closing e-mail server connection   ==================="
+    ##print "\n=============   Closing e-mail server connection   ==================="
 
-# Close connection to email server
-con_pop.quit()
+    # Close connection to email server
+    con_pop.quit()
 
-# Clean major objects
-del con_pop
-del salysr
-del str_srvr, str_user, str_pass
+    # Clean major objects
+    del con_pop
+    del salysr
+    del str_srvr, str_user, str_pass
 
 
 ##print "\n=============   Done...   ============================================"

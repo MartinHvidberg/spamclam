@@ -20,7 +20,7 @@ def line2lol(lin_in):
     else:
         return ['', '', '', '', lin_in]
 
-with open("../data/personal_black.scaddr") as fil_in:
+with open("../mode_simple_bw/personal_black.scaddr") as fil_in:
     lines = fil_in.readlines()
 fil_in.close()
 
@@ -30,6 +30,6 @@ for line in lines:
     lol_lines.append(line2lol(line))
 #lol_lines = remove_dupli_from_lol(lol_lines)
 lol_lines.sort()  # order by, Domain, email, head, tail,
-with open("../data/personal_black.scaddr", "w") as fil_out:
+with open("../mode_simple_bw/personal_black.scaddr", "w") as fil_out:
     fil_out.writelines([tok[4]+'\n' for tok in lol_lines])
 fil_in.close()
