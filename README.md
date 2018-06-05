@@ -43,22 +43,22 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
 * there are several kinds, all with separate extensions (.scrule, .scaddr, .stat)
 * .scrule
       * This is the Rule files
-      * They must have either 'white' or 'black' in the name.
-      * The filename determines if the rules are defining white-list or black-list definitions.
+      * They must have either 'white' or 'black' in the name
+      * The filename determines if the rules are defining white-list or black-list definitions
 * .scrule_some_other_name
       * This is the exampe Rule files
-      * Commented examples on how to write a .scrule file.
-      * Not used by the program, just for you to learn from.
+      * Commented examples on how to write a .scrule file
+      * Not used by the program, just for you to learn from
 * .scaddr
       * This is the Address book files
-      * Address books, likely in comma-seperated-values format.
-      * But, the program will just look at them as text files, and try to find one email address on each line. Any other text, including the commas, are ignored.
+      * Address books, likely in comma-seperated-values format
+      * But, the program will just look at them as text files, and try to find one email address on each line. Any other text, including the commas, are ignored
 * .stat
       * This is the Output statistics, written by the program
-      * When run, the program will create or update the .stat file.
-      * It's a .json file so it's quite readable, but you should properly not edit it.
+      * When run, the program will create or update the .stat file
+      * It's a .json file so it's quite readable, but you should properly not edit it
       * For each rule are noted dates and counts of hit
-      * For each sender is noted, number of emails (total) and number of spam-mails (delete).
-      * The number accumulates, each time you run Spamclam, until you delete the file. i.e. the same good emails may be many times.
+      * For each sender is noted, number of emails (total) and number of spam-mails (delete)
+      * The number accumulates, each time you run Spamclam, until you delete the file. i.e. the same good emails may be many times
    
 /Martin
