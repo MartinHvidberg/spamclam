@@ -34,8 +34,8 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
   Contains Spamclams e-mail abstraction class and calls for spamchecks for each mode.
   So far only supports one mode, i.e. Simple Balck/White.
 * /mode_simple_bw - Files involved in Simple Black/White mode filtereing.
-  simple_bw - Handles the black/white rules and can check a single e-mail against them.
-  simple_bw.config - config file for simple black/white mode.
+        * simple_bw - Handles the black/white rules and can check a single e-mail against them.
+        * simple_bw.config - config file for simple black/white mode.
 
 ### "Simple Black/White mode" ../mode_simple_bw/
 
