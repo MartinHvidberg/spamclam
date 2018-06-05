@@ -1,5 +1,15 @@
 
-# include functionality for open/publig BlackList-lists like
+# accumulate statistics
+	witch rules get hit often, or never?
+
+# command line interface
+
+# Rule files cleaner and simplifier
+	spot duplicates
+	spot other redundancy, e.g from == mahvi@sdfe.dk; from [= @sdfe.dk
+	spot logical conflicts, e.g. from && google.com; from != google.com
+
+# include functionality for open/public BlackList-lists like
 	spamhaus.org,
 	uribl.com (free Frankfurt: ff.uribl.com) and
 	SURBL.org

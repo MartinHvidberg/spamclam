@@ -53,7 +53,7 @@ except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
     print "Usage: spamclam.py <server> <user> <password> [mode]"
     print "e.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
-    print "Note:  All other settings are controlled by the files in ../data/"
+    print "Note:  All other settings are controlled by the files in data/"
     sys.exit(101)
 
 print "\n=============   Connect to POP3 server   ============================="    
@@ -73,7 +73,7 @@ except:
 print "\n=============   Spamalyse   =========================================="
     
 # Create a Spamalyser object
-salysr = spamalyse.Spamalyser(str_mode, '../data/', str_wob)  # Consider moving WOB to simple_bw.py
+salysr = spamalyse.Spamalyser(str_mode, 'data/', str_wob)  # Consider moving WOB to simple_bw.py
 
 print "\n=============   Run   ================================================"
 
@@ -115,7 +115,7 @@ print "\nProcessed {} e-mails\n".format(num_email)
 salysr.stats_generate(dic_trr)
 #print salysr.stats_show()
 #sal.apply_rules_pop3(con_pop)
-#sal.report_to_global_stat_file("../data/spamclam_global.stat")
+#sal.report_to_global_stat_file("data/spamclam_global.stat")
 
 
 ##print "\n=============   Closing e-mail server connection   ==================="
