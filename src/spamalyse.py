@@ -3,10 +3,10 @@
 # ver. 0.1.x Early running stages
 # ver. 0.2   Experimenting with Object Rule-set
 
-import os, email
+import email
 import logging
 
-import simple_bw
+from src.mode_simple_bw import simple_bw
 
 
 class Salmail(object):
