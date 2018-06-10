@@ -237,7 +237,7 @@ class Ruleset(object):
     def show_rules_backdoor(self):
         """ Show the rules """
         logging.debug(" func. show_rules_backdoor()")
-        ##print "\nPrint the rules, via the back door..."
+        print "\nPrint the rules, via the back door..."
         for key_colour in sorted(self._data.keys()):
             itm_colour = self._data[key_colour]
             print "\nColour: {} ({})".format(key_colour, str(len(itm_colour)))

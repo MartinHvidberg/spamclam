@@ -128,7 +128,6 @@ class Spamalyser(object):
         """ Accepts an eml (Salmail) as defined above)
         returning ??? indicating if it's considered to be spam.
         """
-        ##obj_ret = []
         lst_known_modes = ['simple']
         if self._mode in lst_known_modes:
             if self._mode == 'simple': # The default 'simple black and white' analyser
