@@ -1,6 +1,6 @@
 
-"""
-Simple Black and White functionality for spamalyser.
+""" Part of ECsoftware's SpamClam
+    This module handles: Simple Black- and Whitelist functionality for spamalyser.py
 """
 
 ### Versions

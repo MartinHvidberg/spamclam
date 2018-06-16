@@ -28,11 +28,12 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
 * scgui - The Spamclam GUI (graphical user interfaece) - yet to be writen...
 * spamclam - The major (top) module of functionality, i.e. not user interface.
   Handles the contact to the e-mail server, and so far only have POP3 capabilities.
-  Hands over each email to be checked by spamalyse. Statistics is also maintained here.
+  Hands over each email to be checked by spamalyse.
 * spamclam.config - config file for spamclam
 * spamalyse - Actually analysing one e-mail.
   Contains Spamclams e-mail abstraction class and calls for spamchecks for each mode.
   So far only supports one mode, i.e. Simple Balck/White.
+* spamstat - Class(es) for handeling statistics
 * /mode_simple_bw - Files involved in Simple Black/White mode filtereing.
         * simple_bw - Handles the black/white rules and can check a single e-mail against them.
         * simple_bw.config - config file for simple black/white mode.

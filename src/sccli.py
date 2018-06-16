@@ -1,4 +1,7 @@
 
+""" Part of ECsoftware's SpamClam
+    This module handles
+"""
 
 import sys
 

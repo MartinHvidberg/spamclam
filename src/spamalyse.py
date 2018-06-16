@@ -1,10 +1,15 @@
 
+""" Part of ECsoftware's SpamClam
+    This module handles: Spam-analysing a single email, with a variety of methods...
+"""
+
 ### History
 # ver. 0.1.x Early running stages
 # ver. 0.2   Experimenting with Object Rule-set
 
 import email
 import logging
+logger = logging.getLogger('spamclam')
 
 from src.mode_simple_bw import simple_bw
 
@@ -16,6 +21,7 @@ class Salmail(object):
     This object is designed to be the 'e-mail massage' to put into Spamalyser methods. """
 
     def __init__(self, emlmsg):
+        logger.debug("class init. Salmail")
         self._mesg = emlmsg
         self._data = dict()
         self._mandatory_fields = ('id', 'from', 'to', 'cc', 'bcc', 'subject')
@@ -40,7 +46,7 @@ class Salmail(object):
             self._data['id'] = msg.get('Message-ID').strip('<>')
             ##print msg.get('Message-ID')
         except AttributeError:
-            logging.warning("email.message seems to have no 'Message-ID'...\n")
+            logger.warning("email.message seems to have no 'Message-ID'...\n")
             # Try to construct a Message-ID form other headers
             self._data['id'] = None
         # * from
@@ -111,7 +117,7 @@ class Spamalyser(object):
     """ The Spamalyser class """
     
     def __init__(self, mode, conf_dir, wob='True'):
-        logging.debug("class init. Spamalyser")
+        logger.info("class init. Spamalyser")
         self._mode = mode # default mode is 'simple'
         if wob.lower() == 'true': # white over black, white-list overrules black-list... default is True
             self._wob = True # cast from string to boolean
@@ -136,19 +142,8 @@ class Spamalyser(object):
                 obj_ret = False  # This only happens if the programmer f*cked up...
         else:
             obj_ret = False # if mode is unknown, it's not Spam
-        logging.debug(" func. is_spam. {}; {} = {}".format(salmail_in.get('from'), salmail_in.get('subject'), obj_ret))
+        logger.debug(" func. is_spam. {}; {} = {}".format(salmail_in.get('from'), salmail_in.get('subject'), obj_ret))
         return obj_ret
-
-    def stats_generate(self, dic_trr):
-        """ Make statistics from a dic_trr (This Runs Results) object
-            so far a dic_trr is a dictionary like dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
-            num_email is a number, so far the serial number of the mail on the pop3 server
-            salmail is an instance of Salmail()
-            We still lak a solid definition of sal_res, but it's whatever comes out of: sal_res = salysr.is_spam(salmsg) """
-        if len(dic_trr.keys()) > 0:
-            pass
-        return
-
 
 # End class - Spamalyser
 
