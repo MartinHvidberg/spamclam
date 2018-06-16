@@ -64,7 +64,11 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob):
         email_raw = con_pop.retr(num_email)
         email_string = "\n".join(email_raw[1])
         msg = email.message_from_string(email_string)
-        ##print num_email, "from:", msg.get('from'), "subj:", msg.get('subject')  # XXX Before salmsg
+        #print "------- HDR e-mail --------------"
+        #print num_email, "date:", msg.get('date'),  "from:", msg.get('from'), "subj:", msg.get('subject')  # XXX Before salmsg
+        #print "------- raw e-mail --------------"
+        #print msg
+        #print "------- raw e-mail --------------"
 
         # ** Turn the email.massage into a spamalyse.Salmsg
         salmsg = spamalyse.Salmail(msg)

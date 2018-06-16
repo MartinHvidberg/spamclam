@@ -6,6 +6,7 @@
 ### History
 # ver. 0.1.x Early running stages
 # ver. 0.2   Experimenting with Object Rule-set
+# ver. 0.3   Introduce date, id on missing id, and stat support
 
 import email
 import logging
@@ -32,6 +33,7 @@ class Salmail(object):
     def show(self):
         print ""
         print(" id      : {}".format(self.get('id')))
+        print(" date    : {}".format(self.get('date')))
         print(" from    : {}".format(self.get('from')))
         print(" to      : {}".format(self.get('to')))
         print(" cc      : {}".format(self.get('cc')))
@@ -39,7 +41,7 @@ class Salmail(object):
         print(" subject : {}".format(self.get('subject')))
 
     def _msg2data(self):
-        """ This function tries to set all the mode_simple_bw entries, from the org. message """
+        """ This function tries to set all the entries, from the org. message """
         msg = self._mesg
         # * id
         try:
@@ -47,8 +49,13 @@ class Salmail(object):
             ##print msg.get('Message-ID')
         except AttributeError:
             logger.warning("email.message seems to have no 'Message-ID'...\n")
-            # Try to construct a Message-ID form other headers
-            self._data['id'] = None
+            # Try to construct a Message-ID form other headers XXX
+            str_d = msg.get('date')
+            str_f = msg.get('from')
+            if str_d or str_f:
+                self._data['id'] = str_d+"__"+str_f
+            else:
+                self._data['id'] = None
         # * from
         self._data['from'] = email.utils.parseaddr(msg.get('from'))[1]
         # * to
@@ -62,9 +69,9 @@ class Salmail(object):
         dcd_sub = email.header.decode_header(raw_sub)
         self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
         # * body
-        # * Date
+        # * date
+        self._data['date'] = msg.get('date')
         # * size
-
 
         # print "multi?: {}".format(msg.is_multipart())
         # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
@@ -78,19 +85,20 @@ class Salmail(object):
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
 
+
     def keys(self):
         """ Return a list of available keys """
         return list(self._data.keys())
 
     def has_key(self, key_in):
-        ##print "  key type and val: {}, {}".format(str(type(key_in)), key_in)
-        ##print "  _data.keys(): {}".format(self._data.keys())
         return key_in in self._data.keys()
 
     def get(self, mkey):
         """ Get one field from the message """
         if mkey == 'id':
             return self._data['id']
+        if mkey == 'date':
+            return self._data['date']
         elif mkey == 'from':
             return self._data['from']
         elif mkey == 'to':
