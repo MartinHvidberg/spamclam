@@ -17,7 +17,7 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
 * Ajust the smapclam.config
 * go to ../mode_simple_bw/ and ajust the .scrule and .scaddr files to match your desired rules
   have a look into the .scrule and .scaddr files for explanations
-* To run: Call spamclam.py with your email credentials
+* To run: Call sccli.py (Spam Clam Command Line Interface) with your email credentials
   e.g. "mail.my_server.net my_name@my_server.net my_password simple"
   replace first three with your own info.
 * Dependencies: Python 2.x (may easily be ported to 3.x)
@@ -28,14 +28,15 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
 * scgui - The Spamclam GUI (graphical user interfaece) - yet to be writen...
 * spamclam - The major (top) module of functionality, i.e. not user interface.
   Handles the contact to the e-mail server, and so far only have POP3 capabilities.
-  Hands over each email to be checked by spamalyse.
-* spamclam.config - config file for spalclam
+  Hands over each email to be checked by spamalyse. Statistics is also maintained here.
+* spamclam.config - config file for spamclam
 * spamalyse - Actually analysing one e-mail.
   Contains Spamclams e-mail abstraction class and calls for spamchecks for each mode.
   So far only supports one mode, i.e. Simple Balck/White.
 * /mode_simple_bw - Files involved in Simple Black/White mode filtereing.
         * simple_bw - Handles the black/white rules and can check a single e-mail against them.
         * simple_bw.config - config file for simple black/white mode.
+* /Statistics - files involved in collecting statistics. Keeps track of which rules are more used, and who spams you most.
 
 ### "Simple Black/White mode" ../mode_simple_bw/
 

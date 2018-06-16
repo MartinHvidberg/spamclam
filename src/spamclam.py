@@ -21,7 +21,7 @@ import poplib, email, email.header
 
 import spamalyse
 
-sys.path.insert(0, "../../EC_stuff/ec_base/")
+##sys.path.insert(0, "../../EC_stuff/ec_base/")
 ##import ec_help
 
 str_start = "Start:{} version:{} build:{}".format(sys.argv[0], __verion__, __build__)
@@ -86,6 +86,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob):
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
             print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])
             # Actually delete the e-mails on the server
+            #ovod.lithium
             #con_pop.dele(num_email)  # <-------------------------------------------------------------------- Here...
 
         # ** Collect info for later Stats
