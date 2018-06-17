@@ -81,16 +81,16 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob):
         # write to log file
         logger.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['spam']))
         if sal_res['spam']:
-            logger.info("  hit: {}".format(sal_res['stmb']))  # if it's spam print the proof, which must be black...
+            logger.info("  hit: {}".format(sal_res['votb']))  # if it's spam print the proof, which must be black...
 
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
             print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])  # XXX This is a non-ui module, to be called from cli and gui alike.
             # Actually delete the e-mails on the server
             #ovod.lithium
-            #con_pop.dele(num_email)  # <-------------------------------------------------------------------- Here...
+            #con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
 
         # ** Collect info for later Stats
-        dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
+        ##dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
         # ** send this email, and sal_result to the stat object
         salsta.add_salres(salmsg, sal_res)
 

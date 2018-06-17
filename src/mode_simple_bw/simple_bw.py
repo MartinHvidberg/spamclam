@@ -366,7 +366,7 @@ class Ruleset(object):
         bol_black = any([itm for itm in dic_white_and_black['black']['lst_bool']])
         lst_w_stm = [itm for itm in dic_white_and_black['white']['lst_stmn']]
         lst_b_stm = [itm for itm in dic_white_and_black['black']['lst_stmn']]
-        # construck sal_res as {'spam': boolean(), 'mode': str(), form: str(), 'stmw'. list(), 'stmb': list()}
+        # construck sal_res as {'spam': boolean(), 'mode': str(), tone: str(), 'votw'. list(), 'votb': list()}
         # wob decision tree
         if wob_in:  # i.e. wob is True
             if bol_white:  # wob, white hit exists = Not spam
@@ -400,7 +400,7 @@ class Ruleset(object):
                 bol_spam = False
                 lst_kill = []  # the killer arguments
                 str_tone = 'clear'
-        sal_ret = {'spam': bol_spam, 'mode': 'simple', 'tone': str_tone, 'kill': lst_kill, 'stmw': lst_w_stm, 'stmb': lst_b_stm}
+        sal_ret = {'spam': bol_spam, 'mode': 'simple', 'tone': str_tone, 'kill': lst_kill, 'votw': lst_w_stm, 'votb': lst_b_stm}
         logging.debug("  func. spamalyse. wob: {}; white: {}; black: {} = Spam: {}".format(wob_in, bol_white, bol_black, sal_ret['spam']))
         return sal_ret
 

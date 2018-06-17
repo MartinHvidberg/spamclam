@@ -149,7 +149,7 @@ class Spamalyser(object):
             else:
                 obj_ret = False  # This only happens if the programmer f*cked up...
         else:
-            obj_ret = False # if mode is unknown, it's not Spam
+            obj_ret = {'spam':False, 'mode':'unknown', 'tone':'clear'} # if mode is unknown, it's not Spam
         logger.debug(" func. is_spam. {}; {} = {}".format(salmail_in.get('from'), salmail_in.get('subject'), obj_ret))
         return obj_ret
 
