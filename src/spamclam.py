@@ -30,7 +30,7 @@ import poplib, email, email.header
 
 import spamalyse, spamstat
 
-def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, rescan='False'):
+def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat='False'):
 
     print "\n=============   Connect to POP3 server   ============================="  # XXX This is a non-ui module, to be called from cli and gui alike.
 
@@ -92,7 +92,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
         # ** Collect info for later Stats
         ##dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
         # ** send this email, and sal_result to the stat object
-        salsta.add_salres(salmsg, sal_res, rescan=rescan)
+        salsta.add_salres(salmsg, sal_res, restat=restat)
 
     print "\nProcessed {} e-mails\n".format(num_email)  # XXX This is a non-ui module, to be called from cli and gui alike.
 
@@ -102,7 +102,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
     con_pop.quit()
 
     # Close statistics collector
-    for line in salsta.show(sort='cnt_spam'):
+    for line in salsta.show(sort='no_rules'): # sort: 'spam', 'rule_hits', 'no_rules', 'cnt', 'cnt_spam'
         print "stat > ", line
     salsta.close()
 

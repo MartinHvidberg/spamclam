@@ -69,7 +69,7 @@ class Spamstat(object):
         logger.info("All statistics files closed...")
 
 
-    def add_salres(self, salmsg, salres, rescan):
+    def add_salres(self, salmsg, salres, restat):
         """ Absorbe one salmsg and its ralres into the salstats object """
         logger.debug("Add one salmsg + salres")
 
@@ -77,7 +77,7 @@ class Spamstat(object):
         bol_seen = False
         msgid = salmsg.get('id')
         if msgid:
-            if msgid in self._data['recently_seen'].keys() and not rescan:  # rescan forces evaluation of e-mails that have been seen before
+            if msgid in self._data['recently_seen'].keys() and not restat:  # restat forces evaluation of e-mails that have been seen before
                 bol_seen = True
             self._data['recently_seen'][msgid] = datetime.datetime.now().isoformat() # set new date for latest seen
 
@@ -106,4 +106,22 @@ class Spamstat(object):
 
     def show(self, table='by_from', sort='spam', rvrs=1, limit=0):
         logger.info("show()")
-        return []
+        # get relevant dic
+        dic_in = self._data['stat_'+table]
+        if sort not in ('spam', 'rule_hits', 'no_rules', 'cnt', 'cnt_spam'):
+            sort = 'spam'  # fall back to default
+        if limit == 0:
+            limit = len(dic_in.keys())
+        # make order list
+        if sort == 'spam':
+            lst_o = [(1.0*dic_in[keyt]['cnt_spam']/dic_in[keyt]['cnt'], keyt) for keyt in dic_in.keys()]
+        elif sort == 'rule_hits':
+            lst_o = [(len(dic_in[keyt][sort]), keyt) for keyt in dic_in.keys()]
+        elif sort == 'no_rules':
+            lst_o = [(keyt, keyt) for keyt in dic_in.keys() if len(dic_in[keyt]['rule_hits'])==0]
+        else:
+            lst_o = [(dic_in[keyt][sort], keyt) for keyt in dic_in.keys()]
+        # sort order list
+        lst_o.sort(reverse=rvrs)
+        # deliver stat show
+        return ["spam: {} ham: {} from: {} rules-hit: {}".format(dic_in[o]['cnt_spam'], dic_in[o]['cnt']-dic_in[o]['cnt_spam'], o, dic_in[o]['rule_hits']) for o in [ord[1] for ord in lst_o]][:limit]
