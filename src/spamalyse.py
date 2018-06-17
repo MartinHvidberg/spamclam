@@ -138,7 +138,7 @@ class Spamalyser(object):
             self._rulob.show_rules_pp() # XXX Just for debug... consider writing to logfile
 
 
-    def is_spam(self, salmail_in):
+    def is_spam(self, salmail_in, rescan=False):
         """ Accepts an eml (Salmail) as defined above)
         returning ??? indicating if it's considered to be spam.
         """

@@ -69,7 +69,7 @@ class Spamstat(object):
         logger.info("All statistics files closed...")
 
 
-    def add_salres(self, salmsg, salres):
+    def add_salres(self, salmsg, salres, rescan):
         """ Absorbe one salmsg and its ralres into the salstats object """
         logger.debug("Add one salmsg + salres")
 
@@ -77,9 +77,10 @@ class Spamstat(object):
         bol_seen = False
         msgid = salmsg.get('id')
         if msgid:
-            if msgid in self._data['recently_seen'].keys():
+            if msgid in self._data['recently_seen'].keys() and not rescan:  # rescan forces evaluation of e-mails that have been seen before
                 bol_seen = True
             self._data['recently_seen'][msgid] = datetime.datetime.now().isoformat() # set new date for latest seen
+
 
         ### Add to stats_by_from
         if not bol_seen: # or "oister.dk" in salmsg.get('from'): # :# # it's a new e-mail      <-------------------------- LUS
@@ -103,6 +104,6 @@ class Spamstat(object):
                             self._data['stat_by_from'][str_from]['rule_hits'][vote] = 0
                         self._data['stat_by_from'][str_from]['rule_hits'][vote] += 1
 
-    def show(self):
+    def show(self, table='by_from', sort='spam', rvrs=1, limit=0):
         logger.info("show()")
-        print "show stats: To be implimented..."
+        return []
