@@ -7,7 +7,7 @@
 # 0.2 - initial version of this module
 
 ### To do
-# Sanitise the rule complex, before applying
+# Sanitise the rule complex, before applying, preferably by calls to ./rule_cleaner module
 
 import os
 import logging

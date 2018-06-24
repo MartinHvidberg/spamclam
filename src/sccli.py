@@ -34,4 +34,6 @@ except:
 
 print "Calling ECsoftware SpamClam, with: \n\tServer: {}\n\tUser: {}\n\tPassw: {}\n\tMode: {}\n\tWob: {}\n\tRestat: {}".format(str_srvr, str_user, '******', str_mode, str_wob, str_restat)
 
-spamclam.spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat=str_restat.lower()=='true')
+scresu = spamclam.spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat=str_restat.lower()=='true')
+
+print "\nProcessed {} e-mails\n".format(scresu[0])
