@@ -8,6 +8,9 @@
 # ver. 0.2   Experimenting with Object Rule-set
 # ver. 0.3   Introduce date, id on missing id, and stat support
 
+### ToDo
+# Look at sender alias, not only sender email, e.g. Daniel Kjeldsen <torkel@metalliccut.com> or InkClub tilbyder <benedikta@iunfn.com>
+
 import email
 import logging
 logger = logging.getLogger('spamclam')

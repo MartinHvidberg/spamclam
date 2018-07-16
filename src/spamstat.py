@@ -116,7 +116,7 @@ class Spamstat(object):
                 if keyr[:3] == 'vot':  # it's a vote list
                     lst_vote = list(set([str(vot) for vot in salres[keyr]]))  # convert to string lables, and remove duplicates
                     for vote in lst_vote:
-                        print "votes <<< ", vote
+                        ###print "votes <<< ", vote
                         if not vote in obj_sbr.keys():
                             obj_sbr[vote] = {'cnt': 0, 'froms': {}, 'corules': {}, 'latest_cnt': None}
                         # update count

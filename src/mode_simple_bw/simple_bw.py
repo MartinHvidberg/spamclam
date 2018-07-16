@@ -65,6 +65,12 @@ class Ruleset(object):
     def rules_from_strings(self, los_raw):
         """ Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file """
         lst_ret = list()
+        logging.debug("rules_from_strings() begin")
+        # remove all comments
+        logging.debug(str(los_raw))
+        los_raw = [raw.split('#')[0] for raw in los_raw]
+        # remove all blank lines
+        los_raw = [raw for raw in los_raw if len(raw.replace('\n', '')) > 0]
         # assume one (complex) condition-string per line, except lines starting with +
         lst_conds = [[str(raw)] for raw in los_raw]
         # XXX This is ugly - make it nicer...
@@ -108,6 +114,9 @@ class Ruleset(object):
             lst_ret.append(rule)
         ##print "^^lor_rules:",lst_ret
         return lst_ret
+
+    def load_rulefile(self, str_fn):
+        pass
 
     def load_rulesfiles(self):
         """ Find and load all .scrule files in the rule_dir """
