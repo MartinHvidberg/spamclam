@@ -23,6 +23,16 @@ logging.basicConfig(filename='rules_cleaner.log',
 logger = logging.getLogger('spamclam')
 
 
+class RulesetWCheck(simple_bw.Ruleset):
+
+    def __init__(self, rule_dir):
+        simple_bw.Ruleset.__init__(self, rule_dir)
+
+    def raw_insert_rule(self, colour, rul_in):
+        # XXX add source filename to rule before insertion
+        self._data[colour].append(rul_in)
+
+
 def reorder_rules_files(str_home_dir):
     pass
 
@@ -47,7 +57,7 @@ def load_files(str_home_dir):
         """ assumes _scan_for_files() have been run before, or more specifically that dic_r[source_files] have been filled """
         for str_fn in dic_r['source_files']:
             los_lines = list()
-            dic_r[str_fn] = simple_bw.Ruleset('/home')
+            dic_r[str_fn] = RulesetWCheck('/home')
             with open(str_fn) as fil_in:
                 for line in fil_in:
                     los_lines.append(line)

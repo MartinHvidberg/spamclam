@@ -116,7 +116,7 @@ class Ruleset(object):
         return lst_ret
 
     def load_rulefile(self, str_fn):
-        pass
+        return
 
     def load_rulesfiles(self):
         """ Find and load all .scrule files in the rule_dir """
@@ -143,12 +143,15 @@ class Ruleset(object):
 
                 # Converting text strings to rule-set object
                 lor_in = self.rules_from_strings(lst_rulelines)
-                logging.debug("lst_cnf3: {}".format(lor_in))
+                logging.info("lst_cnf3: {}".format(lor_in))
 
                 # We need to actually add the rule :-)
                 for rule_a in lor_in:
                     self.add_rule(str_colour, rule_a)
                 logging.info("Loaded rule file {}: {}".format(str_colour, fil_cnf))
+        return
+
+    def load_addressbook(self, str_fn):
         return
 
     def load_addressbooks(self):
@@ -178,6 +181,9 @@ class Ruleset(object):
                         del str_emladd, str_tmp
                 logging.info("Loaded addressbook {}: {}".format(str_colour, fil_cnf))
         return
+
+    def raw_insert_rule(self, colour, rul_in):
+        self._data[colour].append(rul_in)
 
     def add_rule(self, colour, rul_in):
         """
@@ -238,7 +244,7 @@ class Ruleset(object):
         # validate and explode
         if rule_check_packeage(colour, rul_in):
             logging.debug("add_rule() okay pak: {}, {}".format(colour, rul_in))
-            self._data[colour].append(rul_in)
+            self.raw_insert_rule(colour, rul_in)
         else:
             logging.warning("! add_rule: rule_check_packeage() returned False")
         return
