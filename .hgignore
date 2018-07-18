@@ -1,0 +1,29 @@
+syntax: glob
+.idea/codeStyles/Project.xml
+.idea/dbnavigator.xml
+.idea/encodings.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/spamclam.iml
+.idea/vcs.xml
+.idea/workspace.xml
+scratchpad/RFC 5322 - Internet Message Format.html
+scratchpad/construct_call_graph.py
+scratchpad/rfc4021.pdf
+scratchpad/rfc5322.pdf
+src/__init__.pyc
+src/mode_simple_bw/__init__.pyc
+src/mode_simple_bw/personal_black.scaddr
+src/mode_simple_bw/personal_black.scrule
+src/mode_simple_bw/personal_white.scaddr
+src/mode_simple_bw/personal_white.scrule
+src/mode_simple_bw/rules_cleaner.log
+src/mode_simple_bw/simple_bw.pyc
+src/spamalyse.log
+src/spamalyse.pyc
+src/spamclam.pyc
+src/spamstat.pyc
+src/statistics/recently_seen.scstat
+src/statistics/stat_by_bwrule.scstat
+src/statistics/stat_by_from.scstat

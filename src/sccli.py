@@ -27,7 +27,8 @@ try:
         str_restat = 'False' # Default is to NOT scan old massages, set to True to enforce new statistics on old e-mails.
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
-    print "Usage: spamclam.py <server> <user> <password> [mode]"
+    print "Usage: spamclam.py <server> <user> <password> [mode] [wob] [restat]"
+    print "Default values: mode=simple, wob=true restat=false"
     print "e.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
     print "Note:  All other settings are controlled by spamalyse.config and the files in mode_*/"
     sys.exit(101)
