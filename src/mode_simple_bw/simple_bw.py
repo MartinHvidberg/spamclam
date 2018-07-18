@@ -5,13 +5,14 @@
 
 ### Versions
 # 0.2 - initial version of this module
+# 0.3 - changing rules fra dic_of_lists to dic_of_dics, to better support child class (RulesetWChecks)
 
 ### To do
 # Sanitise the rule complex, before applying, preferably by calls to ./rule_cleaner module
 
 import os
 import logging
-import json
+#import json
 import re # for helper function
 
 
@@ -54,7 +55,7 @@ class Ruleset(object):
     def __init__(self, rule_dir):
         logging.debug("class init. Ruleset")
         self._rldr = rule_dir  # Where to look for the rule files
-        self._data = {'white': list(), 'black': list()}
+        self._data = {'white': dict(), 'black': dict(), 'num_last_rule': 0}
         self._wob = 'white'  # Default 'white', meaning white overrules black.
 
         self.load_rulesfiles()  # Load any rule files
@@ -182,8 +183,21 @@ class Ruleset(object):
                 logging.info("Loaded addressbook {}: {}".format(str_colour, fil_cnf))
         return
 
+    def list_rulenumbers_of_colour(self, str_colour):
+        """ return a sorted list of numbers, pointing to rules of colour str_colour """
+        return sorted(self._data[str_colour].keys())
+
+    def get_rule_by_number(self, num_rule):
+        for str_colour in ('white', 'black'):
+            for num_crule in self._data[str_colour].keys():
+                if num_crule == num_rule:
+                    return self._data[str_colour][num_rule]
+        return None  # If nothing found.
+
     def raw_insert_rule(self, colour, rul_in):
-        self._data[colour].append(rul_in)
+        num_next_rule = self._data['num_last_rule'] + 1
+        self._data[colour][num_next_rule] = rul_in
+        self._data['num_last_rule'] = num_next_rule
 
     def add_rule(self, colour, rul_in):
         """
@@ -253,19 +267,12 @@ class Ruleset(object):
         """ Show the rules """
         logging.debug(" func. show_rules_backdoor()")
         print "\nPrint the rules, via the back door..."
-        for key_colour in sorted(self._data.keys()):
-            itm_colour = self._data[key_colour]
-            print "\nColour: {} ({})".format(key_colour, str(len(itm_colour)))
-            for lst_rule_a in itm_colour:
-                print "\t{}".format(str(type(lst_rule_a)))
-                if isinstance(lst_rule_a, list):
-                    for itm in lst_rule_a:
-                        print "\t\t{}".format(str(itm))
-                else:
-                    print "\t\t{}".format(str(lst_rule_a))
+        for key_colour in ('white', 'black'):
+            for num_col in self.list_rulenumbers_of_colour(key_colour):
+                print "\t{} # {} = {}".format(key_colour, num_col, self.get_rule_by_number(num_col))
         return
 
-    def show_rules_pp(self):
+    def show_rules_pp(self):  # XXX This needs some working on, to be real pretty...
         """ Show the rules - pretty print """
         logging.debug(" func. show_rules_pp()")
         ##print "\nPretty Print the rules..."
@@ -276,19 +283,19 @@ class Ruleset(object):
             los_pp.append("*** : Black over white")
         else:
             los_pp.append("*** : WoB is a mess...: {}".format(self._wob))
-        for key_colour in sorted(self._data.keys()):
-            itm_colour = self._data[key_colour]
-            los_pp.append("*** : {}".format(key_colour))
-            los_rules = list()
-            for lst_rulelines_a in itm_colour:
-                if len(lst_rulelines_a) > 0:
-                    rul = lst_rulelines_a[0]
-                    los_rules.append("rule: {} {} {}".format(rul['key'], rul['opr'], rul['val']))
-                if len(lst_rulelines_a) > 1:
-                    for rul in lst_rulelines_a[1:]:
-                        los_rules.append(" && : {} {} {}".format(rul['key'], rul['opr'], rul['val']))
-            ##los_rules.sort() messing up the rule, && conections
-            los_pp.extend(los_rules)
+        los_rules = list()
+        for key_colour in ('white', 'black'):
+            for num_col in self.list_rulenumbers_of_colour(key_colour):
+                los_pp.append("*** : {}".format(key_colour))
+                for num_rule in self.list_rulenumbers_of_colour(key_colour):
+                    lst_rulelines_a = self.get_rule_by_number(num_rule)
+                    if len(lst_rulelines_a) > 0:
+                        rul = lst_rulelines_a[0]
+                        los_rules.append("\t[{}] rule: {} {} {}".format(num_rule, rul['key'], rul['opr'], rul['val']))
+                    if len(lst_rulelines_a) > 1:
+                        for rul in lst_rulelines_a[1:]:
+                            los_rules.append("\t[{}]  && : {} {} {}".format(num_rule, rul['key'], rul['opr'], rul['val']))
+                los_pp.extend(los_rules)
         for str_pp in los_pp:
             print str_pp
 
@@ -369,7 +376,8 @@ class Ruleset(object):
         dic_white_and_black = dict()
         for str_colour in ('white', 'black'):
             dic_white_and_black[str_colour] = {'lst_bool': list(), 'lst_stmn': list()}
-            for salrule in self._data[str_colour]:
+            for num_rule in self.list_rulenumbers_of_colour(str_colour):
+                salrule = self.get_rule_by_number(num_rule)
                 rul_ret = self.rule_check(salrule, salmail)  # Check every rule in the rule-set
                 if rul_ret[0]:
                     dic_white_and_black[str_colour]['lst_bool'].append(rul_ret[0])
