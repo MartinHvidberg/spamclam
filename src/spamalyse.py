@@ -8,6 +8,9 @@
 # ver. 0.2   Experimenting with Object Rule-set
 # ver. 0.3   Introduce date, id on missing id, and stat support
 
+### ToDo
+# Look at sender alias, not only sender email, e.g. Daniel Kjeldsen <torkel@metalliccut.com> or InkClub tilbyder <benedikta@iunfn.com>
+
 import email
 import logging
 logger = logging.getLogger('spamclam')
@@ -135,6 +138,8 @@ class Spamalyser(object):
             self._rulob = simple_bw.Ruleset(conf_dir)  # The rules object
             self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
 
+    def show_rules(self):
+        if self._mode.lower() in ('simple'):
             self._rulob.show_rules_pp() # XXX Just for debug... consider writing to logfile
 
 

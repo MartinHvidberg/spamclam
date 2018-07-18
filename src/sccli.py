@@ -27,11 +27,14 @@ try:
         str_restat = 'False' # Default is to NOT scan old massages, set to True to enforce new statistics on old e-mails.
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
-    print "Usage: spamclam.py <server> <user> <password> [mode]"
+    print "Usage: spamclam.py <server> <user> <password> [mode] [wob] [restat]"
+    print "Default values: mode=simple, wob=true restat=false"
     print "e.g.   spamclam.py mailserver.company.com my_name@company.com qwerty simple"
     print "Note:  All other settings are controlled by spamalyse.config and the files in mode_*/"
     sys.exit(101)
 
 print "Calling ECsoftware SpamClam, with: \n\tServer: {}\n\tUser: {}\n\tPassw: {}\n\tMode: {}\n\tWob: {}\n\tRestat: {}".format(str_srvr, str_user, '******', str_mode, str_wob, str_restat)
 
-spamclam.spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat=str_restat.lower()=='true')
+scresu = spamclam.spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat=str_restat.lower()=='true')
+
+print "\nProcessed {} e-mails\n".format(scresu[0])

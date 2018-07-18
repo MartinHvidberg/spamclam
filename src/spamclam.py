@@ -1,19 +1,21 @@
 
 """ Part of ECsoftware's SpamClam
-    This module handles: ...
+    This module handles: Connection to the email server, and is the main (non-ui) module
 """
 
 ### Versions ###
 # 0.1 - The initial tries, that worked :-)
 # 0.2 - Trying to make it OOP and insisting on modularizing
 # 0.3 - Introducing Statistics
+# 0.3.1 intro stat by rule
+
+__verion__ = '0.3.1'
+__build__ = '20180624.'
 
 ### To do ###
 # make header print uft-8 eller noget...
 # introduce prof command line parameters, though sccli takes care of some cli
-
-__verion__ = '0.3.0'
-__build__ = '20180616.'
+# remove remaining print sentences, this is not a ui-module
 
 import sys
 import logging
@@ -32,7 +34,7 @@ import spamalyse, spamstat
 
 def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat='False'):
 
-    print "\n=============   Connect to POP3 server   ============================="  # XXX This is a non-ui module, to be called from cli and gui alike.
+    # =============   Connect to POP3 server   =============================
 
     # Open connection to email (POP) server
     try:
@@ -46,21 +48,21 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
         print "\nSeems to be unable to access the e-mail server..."
         sys.exit(102)
 
-    print "\n=============   Spamalyse   =========================================="  # XXX This is a non-ui module, to be called from cli and gui alike.
+    # =============   Spamalyse   ==========================================
 
-    # Create a Spamalyser object
-    salysr = spamalyse.Spamalyser(str_mode, 'mode_simple_bw/', str_wob)  # Consider moving WOB to simple_bw.py
+    # Create Spamalyser object(s)
+    salysr_sbw = spamalyse.Spamalyser(str_mode, 'mode_simple_bw/', str_wob)  # Consider moving WOB to simple_bw.py
+    ##salysr_sbw.show_rules()  ## only for debug - a non ui-module should not use print, nor pp
 
     # Create a Statistics object
     salsta = spamstat.Spamstat()
 
-    print "\n=============   Run   ================================================"  # XXX This is a non-ui module, to be called from cli and gui alike.
+    # =============   Run   ================================================"
 
-    dic_trr = dict()  # dic_this_runs_results
-    print "{}".format(con_pop.list()[0])  # XXX This is a non-ui module, to be called from cli and gui alike.
+    ##print "{}".format(con_pop.list()[0])  # XXX This is a non-ui module, to be called from cli and gui alike.
 
     num_email = 0  # To avoid problems with counter after this loop, if no mails found.
-    for num_email in range(1,num_tot_msgs+1): # 68,74): # # pop server count from 1 (not from 0)
+    for num_email in range(1,num_tot_msgs+1):  # pop server count from 1 (not from 0)
         email_raw = con_pop.retr(num_email)
         email_string = "\n".join(email_raw[1])
         msg = email.message_from_string(email_string)
@@ -76,44 +78,38 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
 
         # ** Check the salmsg for 'spam'
         logger.debug("Email: {}; {}".format(salmsg.get('from'),salmsg.get('subject')))
-        sal_res = salysr.is_spam(salmsg)
+        sal_res_sbw = salysr_sbw.is_spam(salmsg)
 
-        # write to log file
-        logger.info("Email: [{}] {}; {} = {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['spam']))
-        if sal_res['spam']:
-            logger.info("  hit: {}".format(sal_res['votb']))  # if it's spam print the proof, which must be black...
+        # Actually delete the e-mail, and write to log file
+        logger.info("Email: [{}] {} {}; {}".format(num_email, sal_res_sbw['spam'], salmsg.get('from'),salmsg.get('subject')))
+        if sal_res_sbw['spam']:
+            logger.info("  hit: {}".format(sal_res_sbw['votb']))  # if it's spam print the proof, which must be black...
+            print "  hit: {}".format(sal_res_sbw['votb'])
 
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
-            print "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res['tone'], sal_res['kill'])  # XXX This is a non-ui module, to be called from cli and gui alike.
+            ## "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res_sbw['tone'], sal_res_sbw['kill'])
             # Actually delete the e-mails on the server
-            #ovod.lithium
-            #con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
+            con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
 
-        # ** Collect info for later Stats
-        ##dic_trr[num_email] = {'salmail': salmsg, 'salresu': sal_res}
-        # ** send this email, and sal_result to the stat object
-        salsta.add_salres(salmsg, sal_res, restat=restat)
-
-    print "\nProcessed {} e-mails\n".format(num_email)  # XXX This is a non-ui module, to be called from cli and gui alike.
-
-    ##print "\n=============   Closing e-mail server connection   ==================="
+        # ** send this email, and sal_res_sbw to the stat object
+        salsta.add_salres(salmsg, sal_res_sbw, restat=restat)
 
     # Close connection to email server
     con_pop.quit()
 
     # Close statistics collector
-    for line in salsta.show(sort='no_rules'): # sort: 'spam', 'rule_hits', 'no_rules', 'cnt', 'cnt_spam'
-        print "stat > ", line
+    #for line in salsta.show(sort='spam'): # sort: 'spam', 'rule_hits', 'no_rules', 'cnt', 'cnt_spam'
+    #    print "stat > ", line
     salsta.close()
 
     # Clean major objects
     del con_pop
-    del salysr
+    del salysr_sbw
     del salsta
     del str_srvr, str_user, str_pass
 
+    return [num_email]  # List of return elements can be expanded later...
 
-##print "\n=============   Done...   ============================================"
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...

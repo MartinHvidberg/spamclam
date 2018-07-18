@@ -19,7 +19,7 @@ class Spamstat(object):
         self._stdr = stat_dir
         self._los_fn = ("stat_by_from.scstat", "stat_by_bwrule.scstat", "recently_seen.scstat")
         self._load_stats_files()
-        self._clean_recent(30)
+        self._clean_recent(90)
 
 
     def _file2dic(self, str_dir, str_fn):
@@ -45,10 +45,10 @@ class Spamstat(object):
         for expfile in self._los_fn:
             dic_stat_unit = self._file2dic(self._stdr, expfile)
             self._data[expfile.split('.')[0]] = dic_stat_unit
-            logging.info("Loaded stat file {}".format(expfile))
+            logging.info("Loaded stat file {} with {} units".format(expfile, len(dic_stat_unit)))
 
 
-    def _clean_recent(self, num_days=30):
+    def _clean_recent(self, num_days=90):
         logging.info("Cleaning 'recently_seen' to newest {} days".format(num_days))
         dat_now = datetime.datetime.now()
         for recn in self._data['recently_seen']:
@@ -65,12 +65,12 @@ class Spamstat(object):
         for expfile in self._los_fn:
             dic_stat_unit = self._data[expfile.split('.')[0]]
             self._dic2file(dic_stat_unit, self._stdr, expfile)
-            logging.info("Stored stat file {}".format(expfile))
+            logging.info("Stored stat file {} with {} units".format(expfile, len(dic_stat_unit)))
         logger.info("All statistics files closed...")
 
 
     def add_salres(self, salmsg, salres, restat):
-        """ Absorbe one salmsg and its ralres into the salstats object """
+        """ Absorb one salmsg and its ralres into the salstats object """
         logger.debug("Add one salmsg + salres")
 
         ### Compare to Recently_seen
@@ -81,28 +81,60 @@ class Spamstat(object):
                 bol_seen = True
             self._data['recently_seen'][msgid] = datetime.datetime.now().isoformat() # set new date for latest seen
 
-
         ### Add to stats_by_from
-        if not bol_seen: # or "oister.dk" in salmsg.get('from'): # :# # it's a new e-mail      <-------------------------- LUS
-            ##print "New e-mail: {}".format(msgid)
-            logger.info("new e-mail: {}".format(msgid))
+        if not bol_seen: # or "oister.dk" in salmsg.get('from'): # it's a new e-mail      <-------------------------- LUS
+            logger.info("Stat:(by from) New e-mail: {}".format(msgid))
             str_from = salmsg.get('from')
-            if not str_from in self._data['stat_by_from'].keys():
-                self._data['stat_by_from'][str_from] = {'cnt':0, 'cnt_spam':0, 'rule_hits':{}}
+            obj_sbf = self._data['stat_by_from']
+            # {<from>: {cnt': <num>, 'rule_hits': {"[[('subject', '&&', '<string>')]], ...}, 'cnt_spam': <num>}, ...}
+            if not str_from in obj_sbf.keys():
+                obj_sbf[str_from] = {'cnt':0, 'cnt_spam':0, 'rule_hits':{}}
             # count the e-mail
-            self._data['stat_by_from'][str_from]['cnt'] += 1
+            obj_sbf[str_from]['cnt'] += 1
+            obj_sbf[str_from]['latest_cnt'] = datetime.datetime.now().isoformat()
             # count spam
             if salres['spam']:
-                self._data['stat_by_from'][str_from]['cnt_spam'] += 1
+                obj_sbf[str_from]['cnt_spam'] += 1
+            obj_sbf[str_from]['latest_cnt_spam'] = datetime.datetime.now().isoformat()
             # count rule hits
             for keyr in salres:
                 if keyr[:3] == 'vot':  # it's a vote list
                     lst_vote = list(set([str(vot) for vot in salres[keyr]]))  # convert to string lables, and remove duplicates
                     for vote in lst_vote:
                         ##print "votes <<< ", vote
-                        if not vote in self._data['stat_by_from'][str_from]['rule_hits'].keys():
-                            self._data['stat_by_from'][str_from]['rule_hits'][vote] = 0
-                        self._data['stat_by_from'][str_from]['rule_hits'][vote] += 1
+                        if not vote in obj_sbf[str_from]['rule_hits'].keys():
+                            obj_sbf[str_from]['rule_hits'][vote] = 0
+                        obj_sbf[str_from]['rule_hits'][vote] += 1
+
+        ### Add to stats_by_rule
+        if True or not bol_seen: # it's a new e-mail
+            logger.info("Stat:(by rule) New e-mail: {}".format(msgid))
+            str_from = salmsg.get('from')
+            obj_sbr = self._data['stat_by_bwrule']
+            # count rule hits
+            for keyr in salres:
+                if keyr[:3] == 'vot':  # it's a vote list
+                    lst_vote = list(set([str(vot) for vot in salres[keyr]]))  # convert to string lables, and remove duplicates
+                    for vote in lst_vote:
+                        ###print "votes <<< ", vote
+                        if not vote in obj_sbr.keys():
+                            obj_sbr[vote] = {'cnt': 0, 'froms': {}, 'corules': {}, 'latest_cnt': None}
+                        # update count
+                        obj_sbr[vote]['cnt'] += 1
+                        # append sender
+                        if str_from not in obj_sbr[vote]['froms'].keys():
+                            obj_sbr[vote]['froms'][str_from] = 1
+                        else:
+                            obj_sbr[vote]['froms'][str_from] += 1
+                        # append co-rules
+                        for corule in list(set([str(vot) for vot in salres[keyr]])):  # for each rule hit by this e-mail
+                            if corule != vote:  # except for myself
+                                if corule not in obj_sbr[vote]['corules'].keys():  # if I havent co-ruled this before
+                                    obj_sbr[vote]['corules'][corule] = 1
+                                else:
+                                    obj_sbr[vote]['corules'][corule] += 1
+                        # update latest count
+                        obj_sbr[vote]['latest_cnt'] = datetime.datetime.now().isoformat()
 
     def show(self, table='by_from', sort='spam', rvrs=1, limit=0):
         logger.info("show()")
@@ -122,6 +154,6 @@ class Spamstat(object):
         else:
             lst_o = [(dic_in[keyt][sort], keyt) for keyt in dic_in.keys()]
         # sort order list
-        lst_o.sort(reverse=rvrs)
+        lst_o.sort(reverse=rvrs!=0)  # anything != 0 is considered True
         # deliver stat show
         return ["spam: {} ham: {} from: {} rules-hit: {}".format(dic_in[o]['cnt_spam'], dic_in[o]['cnt']-dic_in[o]['cnt_spam'], o, dic_in[o]['rule_hits']) for o in [ord[1] for ord in lst_o]][:limit]
