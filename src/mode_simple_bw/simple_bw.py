@@ -6,11 +6,14 @@
 ### Versions
 # 0.2 - initial version of this module
 # 0.3 - changing rules fra dic_of_lists to dic_of_dics, to better support child class (RulesetWChecks)
+# 0.4 - rewriting rule- and address-file reading, to make it clearer and DRY.
 
 ### To do
+# Make all docstrings reST format
 # Sanitise the rule complex, before applying, preferably by calls to ./rule_cleaner module
 
 import os
+import sys
 import logging
 #import json
 import re # for helper function
@@ -56,154 +59,195 @@ class Ruleset(object):
         logging.debug("class init. Ruleset")
         self._rldr = rule_dir  # Where to look for the rule files
         self._data = {'white': dict(), 'black': dict(), 'num_last_rule': 0}
-        self._wob = 'white'  # Default 'white', meaning white overrules black.
+        self._wob = 'white'  # Default 'white', meaning white overrules black. XXX Consider making it boolean
 
-        self.load_rulesfiles()  # Load any rule files
-        self.load_addressbooks()  # Load any address books
+        self.load_all_rule_files()  # Load all rule- and address files
 
     ######  Rule-builder ######
 
-    def rules_from_strings(self, los_raw):
-        """ Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file """
-        lst_ret = list()
-        logging.debug("rules_from_strings() begin")
-        # remove all comments
-        logging.debug(str(los_raw))
-        los_raw = [raw.split('#')[0] for raw in los_raw]
-        # remove all blank lines
-        los_raw = [raw for raw in los_raw if len(raw.replace('\n', '')) > 0]
-        # assume one (complex) condition-string per line, except lines starting with +
-        lst_conds = [[str(raw)] for raw in los_raw]
-        # XXX This is ugly - make it nicer...
-        num_iter = len(lst_conds)
-        for cnt in range(num_iter):
-            for num_con in range(len(lst_conds)):
-                if lst_conds[num_con][0][0] == '+':
-                    lst_conds[num_con-1].append(lst_conds[num_con][0].lstrip('+').strip())
-                    del lst_conds[num_con]
-                    continue
-        ##for conds in lst_conds:
-        ##    print " cond: {}".format(conds)
-        # list of strings 2 list of rules
-        for lo_conds in lst_conds:
-            rule = list()
-            for conds in lo_conds:
-                if any(opr in conds for opr in self.VALID_OPR):
-                    # Check only 1 opr in condition-string
-                    num_opr = 0
-                    for str_valopr in self.VALID_OPR:
-                        if " {} ".format(str_valopr) in conds:
-                            num_opr += 1
-                            lst_cnd = conds.split(" {} ".format(str_valopr), 1)
-                            lst_cnd = [tok.split(',') for tok in lst_cnd] # conveniently also turns simple conditions into lists
-                            dic_cnd = dict()
-                            dic_cnd['opr'] = str_valopr
-                            dic_cnd['key'] = lst_cnd[0]
-                            dic_cnd['val'] = lst_cnd[1]
-                    if num_opr == 1:
-                        # strip all strings - XXX this is ugly, try fix that...
-                        for keyval in ('key', 'val'):
-                            dic_cnd[keyval] = [tok.strip() for tok in dic_cnd[keyval]]
-                        # fanally add the condition
-                        ##print "good:", conds, str(dic_cnd)
-                        rule.append(dic_cnd)
-                        ##print " ^rule:", rule
-                    else:
-                        logging.warning("! Condition have more that one OPR: {}".format(conds))
+
+    def rules_from_strings(self, los_in):
+        """ ! This is still ugly-land, and I want to nice it up. !
+        Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file
+        Assume one (complex) condition-string per line, except lines starting with +
+        :param los_in list: list of strings
+        :return: list of rules
+        """
+        if isinstance(los_in, list):  # if input is list
+            if all([isinstance(s, str) for s in los_in]):  # if input is list of strings
+                lst_ret = list()
+                logging.debug("rules_from_strings() begin")
+                lst_conds = [[str(raw)] for raw in los_in]  # Wrap each line of text in a list
+                if lst_conds[0][0][0] != '+':  # if the first line don't start with +
+                    # Handle + lines ... This is still bloody ugly! XXX
+                    lst_tmp = list()
+                    for i in lst_conds:
+                        if i[0][0] == '+':  # the first letter the first string, in this list, is '+'
+                            lst_last = lst_tmp[-1]    # get the last item we put in lst_tmp
+                            lst_tmp = lst_tmp[:-1]    # remove it from the list
+                            lst_last.extend(i)        # extend it with the + condition
+                            lst_tmp.append(lst_last)  # put it back...
+                        else:
+                            lst_tmp.append(i)
+                    lst_conds = lst_tmp
+                    # list of strings to list of rules
+                    for lo_conds in lst_conds:
+                        rule = list()
+                        for conds in lo_conds:
+                            if any(opr in conds for opr in self.VALID_OPR):
+                                # Check only 1 opr in condition-string
+                                num_opr = 0
+                                for str_valopr in self.VALID_OPR:
+                                    if " {} ".format(str_valopr) in conds:
+                                        num_opr += 1
+                                        lst_cnd = conds.split(" {} ".format(str_valopr), 1)
+                                        lst_cnd = [tok.split(',') for tok in lst_cnd] # conveniently also turns simple conditions into lists
+                                        dic_cnd = dict()
+                                        dic_cnd['opr'] = str_valopr
+                                        dic_cnd['key'] = lst_cnd[0]
+                                        dic_cnd['val'] = lst_cnd[1]
+                                if num_opr == 1:
+                                    # strip all strings - XXX this is ugly, try fix that...
+                                    for keyval in ('key', 'val'):
+                                        dic_cnd[keyval] = [tok.strip() for tok in dic_cnd[keyval]]
+                                    ### fanally add the condition
+                                    ##rule.append(dic_cnd)  # should not be done inside this loop, just return it ...
+                                    ##print " ^rule:", rule
+                                else:
+                                    logging.warning("! Condition have more that one OPR: {}".format(conds))
+                            else:
+                                logging.warning("! Condition have no valid OPR: {}".format(conds))
+                        lst_ret.append(rule)
+                    ##print "^^lor_rules:",lst_ret
+                    return lst_ret
                 else:
-                    logging.warning("! Condition have no valid OPR: {}".format(conds))
-            lst_ret.append(rule)
-        ##print "^^lor_rules:",lst_ret
-        return lst_ret
+                    logging.warning("! The first string should never start with +: {}".format(lst_conds[0][0]))
+            else:
+                logging.warning("! received list containing non-string object: {}".format([str(type(o)) for o in los_in]))
+        else:
+            logging.warning("! received non-list object: {}".format(str(type(los_in))))
 
-    def load_rulefile(self, str_fn):
-        return
+    def rules_from_listofaddressers(self, los_adr):
+        """
+        Convert list of addresses into an equivalent list of rules.
+        Ignores anything in the string, that is't part of the (first) e-mail address
+        :param los_adr: list-of-strings, each string containing an address
+        :return: list_of_rules
+        """
+        lor_ret = list()
+        for str_addline in los_adr:
+            str_emladd = self.get_email_address_from_string(str_addline)
+            if len(str_emladd) > 0:  # Insert email address in ruleset
+                logging.debug("e-mail addr: {}".format(str_emladd))
+                dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
+                rule_a = [dic_rul]  # 'A rule' is a list of dics, so we need to wrap it...
+                lor_ret.append(rule_a)
+            del str_emladd
+        return lor_ret
 
-    def load_rulesfiles(self):
-        """ Find and load all .scrule files in the rule_dir """
-        logging.debug(" func. load_rulesfiles.")
-        for fil_cnf in os.listdir(self._rldr):
-            if fil_cnf.endswith(".scrule"):
-                logging.debug(".scrule file: {}".format(fil_cnf))
-                if "white" in fil_cnf.lower():
-                    str_colour = 'white'
-                elif "black" in fil_cnf.lower():
-                    str_colour = "black"
-                else:
-                    str_colour = ""
-                    str_report = "!!! file name contained neither 'white' nor 'black'... I'm confused."
-                    print str_report
-                    logging.debug(str_report)
-                    continue
-                with open(self._rldr+fil_cnf) as f:
-                    lst_rulelines = f.readlines()
-                logging.debug("lst_cnf1: {}".format(lst_rulelines))
-                lst_rulelines = [conf.split("#")[0].strip() for conf in lst_rulelines] # Get rid of comments
-                lst_rulelines = [conf for conf in lst_rulelines if conf != ''] # Get rid of empty lines
-                logging.debug("lst_cnf2: {}".format(lst_rulelines))
-
-                # Converting text strings to rule-set object
-                lor_in = self.rules_from_strings(lst_rulelines)
-                logging.info("lst_cnf3: {}".format(lor_in))
-
-                # We need to actually add the rule :-)
-                for rule_a in lor_in:
-                    self.add_rule(str_colour, rule_a)
-                logging.info("Loaded rule file {}: {}".format(str_colour, fil_cnf))
-        return
-
-    def load_addressbook(self, str_fn):
-        return
-
-    def load_addressbooks(self):
-        """ Find and load all address (.scaddr) files in the rule_dir """
-        logging.debug(" func. load_addressbooks.")
-        # Find addressbook files
-        for fil_cnf in os.listdir(self._rldr):
-            if fil_cnf.endswith(".scaddr"):
-                # Crunch the addressbook file
-                if "white" in fil_cnf.lower():
-                    str_colour = 'white'
-                elif "black" in fil_cnf.lower():
-                    str_colour = "black"
-                else:
-                    str_colour = ""
-                    print "!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_cnf)
-                    continue
-                with open(self._rldr+fil_cnf, 'r') as f:
-                    for line in f:
-                        str_tmp = line.split("#")[0] # Get rid of comments
-                        str_emladd = self.get_email_address_from_string(str_tmp)
-                        if len(str_emladd) > 0: # Insert email address in ruleset
-                            logging.debug("{} << addr {}".format(str_colour, str_emladd))
-                            dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
-                            rule_a = [dic_rul] # 'A rule' is a list of dics, so we need to wrap it...
-                            self.add_rule(str_colour, rule_a)
-                        del str_emladd, str_tmp
-                logging.info("Loaded addressbook {}: {}".format(str_colour, fil_cnf))
-        return
-
-    def list_rulenumbers_of_colour(self, str_colour):
-        """ return a sorted list of numbers, pointing to rules of colour str_colour """
-        return sorted(self._data[str_colour].keys())
-
-    def get_rule_by_number(self, num_rule):
-        for str_colour in ('white', 'black'):
-            for num_crule in self._data[str_colour].keys():
-                if num_crule == num_rule:
-                    return self._data[str_colour][num_rule]
-        return None  # If nothing found.
+    def los_to_lor(self, los_in, str_assume):
+        """
+        Interpret list_of_strings, depending on str_assume, and returning list_of_rules
+        :param los list: list of strings
+        :param str_assume str: What type of info it's assumed to be
+        :return: list -- list of rules
+        """
+        lor_ret = list()
+        if str_assume == 'rules':
+            lor_ret = self.rules_from_strings(los_in)
+        elif str_assume == 'addresses':
+            lor_ret = self.rules_from_listofaddressers(los_in)
+        else:
+            pass  # XXX Consider making a qualified guess, based on contents, rather than returning empty...
+        return lor_ret  # Return empty list of rules, if str_assume is not recognised. XXX Consider raising warning
 
     def raw_insert_rule(self, colour, rul_in):
+        """
+        The raw insert just push the rule into the rule-store, assuming you have made sure it's valid.
+        This function is overloaded in child classes, e.g. RulesetWCheck() to support different rule-store format.
+        :param colour str: 'black' or 'white'
+        :param rul_in list: A rule - that you vouch for
+        :return: None, there is no error handling anyway...
+        """
         num_next_rule = self._data['num_last_rule'] + 1
         self._data[colour][num_next_rule] = rul_in
         self._data['num_last_rule'] = num_next_rule
+        return None
 
-    def add_rule(self, colour, rul_in):
+    def lor_validator(self, lor):
+        """ Looks through a list-of-rules, returning the list with invalid rules removed """
+        XXX code missing here.
+        return lor
+
+    def lor_inserter(self, str_colour, lor):
+        # call validator
+        for rul_in in lor:
+            self.raw_insert_rule(str_colour, rul_in)
+        return None
+
+    def load_file(self, fil_in):
+        """ Opens a single file (rule-, address-, or other) and return it as cleaned list_of_strings """
+        with open(self._rldr + fil_in) as f:
+            lst_lines = f.readlines()
+        lst_lines = [conf.split("#")[0].strip() for conf in lst_lines]  # Get rid of comments
+        lst_lines = [conf for conf in lst_lines if conf != '']  # Get rid of empty lines
+        return lst_lines
+
+    def load_a_rule_file(self, str_colour, str_fn):
+        """
+        Load the specified rule file (rule or address) to the rules collection
+        - read the file with load_file(), to get a list_of_strings
+        - call los_to_lor(), setting str_assume= based on str_fn, to get a list_of_rules
+        - call lor_validator(), to filter away invalid rules
+        - insert the validated lor into collection of colour str_colour
+        :param str_colour str: 'black' or 'white'
+        :param str_fn: name of the file to be loaded. Just the file name, assuming it's in self._rldr
+        :return: None
+        """
+        logging.debug(" func. load_a_rule_file: {}, {}".format(str_colour, str_fn))
+        los_in = self.load_file(str_fn)
+        if '.scrule' in str_fn:
+            str_assume = 'rules'
+        elif 'scaddr' in str_fn:
+            str_assume = 'addresses'
+        else:
+            str_assume = ""
+        lor_in = self.los_to_lor(los_in, str_assume)
+        lor_va = self.lor_validator(lor_in)
+        self.lor_inserter(str_colour, lor_va)
+        return None
+
+    def load_all_rule_files(self):
+        """
+        Load all rule files (rule and address) from default dir.
+        - walk the dir
+        - send all reasonable files to load_a_rule_file()
+        :return: None
+        """
+        logging.debug(" func. load_all_rule_files in: {}".format(self._rldr))
+        for fil_in in os.listdir(self._rldr):
+            if fil_in.endswith(".scrule") or fil_in.endswith(".scaddr"):
+                logging.debug(".scxxxx file: {}".format(fil_in))
+                if "white" in fil_in.lower():
+                    str_colour = 'white'
+                elif "black" in fil_in.lower():
+                    str_colour = "black"
+                else:
+                    str_colour = ""
+                    str_report = "!!! file-name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in)
+                    print str_report
+                    logging.debug(str_report)
+                    continue
+                if str_colour != "":
+                    self.load_a_rule_file(str_colour, fil_in)
+                    logging.info("Loaded {} rule file: {}".format(str_colour, fil_in))
+        return None
+
+    def xadd_rule(self, colour, rul_in):
         """
         Receives, validates and (if valid) adds the 'rule' to the main rule-set.
-        :param colour: 'black' or 'white'
-        :param rul_in: A 'rule', i.e. a list of conditions
+        :param colour str: 'black' or 'white'
+        :param rul_in list: A 'rule', i.e. a list of conditions
         :return: TBD
         """
 
@@ -230,15 +274,6 @@ class Ruleset(object):
                 return False
             return True
 
-        def xxx_unpack_conditions(rul_pk):
-            ### Unpacking dosn't make sense, as it would create lists with mixed AND/OR relations between elements.
-            """ Unpack all packed condition, in a 'rule', into several unpacked conditions,
-                eliminating lists in fields 'key' and 'val'.
-                The unpacker makes no checks, the result should be checked with the appropriate function.
-            """
-            lst_simple_cnd = list()
-            return lst_simple_cnd
-
         def rule_check_unpacked(lst_rulelines):
             for rule in lst_rulelines:
                 # 'key'
@@ -261,7 +296,93 @@ class Ruleset(object):
             self.raw_insert_rule(colour, rul_in)
         else:
             logging.warning("! add_rule: rule_check_packeage() returned False")
-        return
+        return None
+
+    def xload_rulefile(self, str_colour, fil_in):
+        """ Open and read a single rule file """
+        lst_rulelines = self.load_file(fil_in)
+        # Converting text strings to rule-set object
+        lor_in = self.rules_from_strings(lst_rulelines)
+        # We need to actually add the rule :-)
+        for rule_a in lor_in:
+            self.add_rule(str_colour, rule_a)
+        return None
+
+    def xload_rulesfiles(self):
+        """ Find and load all .scrule files in the rule_dir """
+        logging.debug(" func. load_rulesfiles in: {}".format(self._rldr))
+        for fil_in in os.listdir(self._rldr):
+            if fil_in.endswith(".scrule"):
+                logging.debug(".scrule file: {}".format(fil_in))
+                if "white" in fil_in.lower():
+                    str_colour = 'white'
+                elif "black" in fil_in.lower():
+                    str_colour = "black"
+                else:
+                    str_colour = ""
+                    str_report = "!!! file name contained neither 'white' nor 'black'... I'm confused."
+                    print str_report
+                    logging.debug(str_report)
+                    continue
+                if str_colour != "":
+                    self.load_rulefile(str_colour, fil_in)
+                    logging.info("Loaded rule file {}: {}".format(str_colour, fil_in))
+        return None
+
+    def get_email_address_from_string(self,str_in):
+        if '@' in str_in:
+            match = re.search(r'[\w\.-]+@[\w\.-]+', str_in)
+            str_return = match.group(0).lower()
+            return str_return
+        else:
+            return ""
+
+    def xload_addressbook(self, str_colour, fil_in):
+        lst_addlines = self.load_file(fil_in)
+        for add_line in lst_addlines:
+            str_emladd = self.get_email_address_from_string(add_line)
+            if len(str_emladd) > 0:  # Insert email address in ruleset
+                logging.debug("{} << addr {}".format(str_colour, str_emladd))
+                dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
+                rule_a = [dic_rul]  # 'A rule' is a list of dics, so we need to wrap it...
+                self.add_rule(str_colour, rule_a)
+            del str_emladd
+        return None
+
+    def xload_addressbooks(self):
+        """ Find and load all address (.scaddr) files in the rule_dir """
+        logging.debug(" func. load_addressbooks.")
+        # Find addressbook files
+        for fil_in in os.listdir(self._rldr):
+            if fil_in.endswith(".scaddr"):
+                # Crunch the addressbook file
+                if "white" in fil_in.lower():
+                    str_colour = 'white'
+                elif "black" in fil_in.lower():
+                    str_colour = "black"
+                else:
+                    str_colour = ""
+                    print "!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in)
+                    continue
+                self.load_addressbook(str_colour, fil_in)
+                logging.info("Loaded addressbook {}: {}".format(str_colour, fil_in))
+        return None
+
+    def list_rulenumbers_of_colour(self, str_colour):
+        """ return a sorted list of numbers, pointing to rules of colour str_colour """
+        return sorted(self._data[str_colour].keys())
+
+    def get_number_of_rules(self):
+        """ return the total number of rules in black and white
+            actually counting them, rather than just quoting self._data['num_last_rule'] """
+        return sum(len(j) for j in [i for i in [self._data[col].keys() for col in ['white', 'black']]])
+
+    def get_rule_by_number(self, num_rule):
+        for str_colour in ('white', 'black'):
+            for num_crule in self._data[str_colour].keys():
+                if num_crule == num_rule:
+                    return self._data[str_colour][num_rule]
+        return None  # If nothing found.
 
     def show_rules_backdoor(self):
         """ Show the rules """
@@ -270,7 +391,7 @@ class Ruleset(object):
         for key_colour in ('white', 'black'):
             for num_col in self.list_rulenumbers_of_colour(key_colour):
                 print "\t{} # {} = {}".format(key_colour, num_col, self.get_rule_by_number(num_col))
-        return
+        return None
 
     def show_rules_pp(self):  # XXX This needs some working on, to be real pretty...
         """ Show the rules - pretty print """
@@ -298,6 +419,7 @@ class Ruleset(object):
                 los_pp.extend(los_rules)
         for str_pp in los_pp:
             print str_pp
+        return None
 
 
     ######  Spalyse ######
@@ -429,14 +551,4 @@ class Ruleset(object):
 
 
     # helper functions
-
-    def get_email_address_from_string(self,str_in):
-        if '@' in str_in:
-            match = re.search(r'[\w\.-]+@[\w\.-]+', str_in)
-            str_return = match.group(0).lower()
-            return str_return
-        else:
-            return ""
-
-
 # End class - Ruleset

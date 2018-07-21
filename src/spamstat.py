@@ -108,7 +108,7 @@ class Spamstat(object):
 
         ### Add to stats_by_rule
         if True or not bol_seen: # it's a new e-mail
-            logger.info("Stat:(by rule) New e-mail: {}".format(msgid))
+            logger.debug("Stat:(by rule) New e-mail: {}".format(msgid))
             str_from = salmsg.get('from')
             obj_sbr = self._data['stat_by_bwrule']
             # count rule hits

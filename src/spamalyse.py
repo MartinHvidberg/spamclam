@@ -137,6 +137,7 @@ class Spamalyser(object):
         if mode == 'simple':
             self._rulob = simple_bw.Ruleset(conf_dir)  # The rules object
             self._stat = {'cnt_eml': 0, 'cnt_del':0, 'senders': {}} # consider WGB stat (white, Grey, black)
+        logger.info("class init. Spamalyser done. mode: {}, rules: {}".format(self._mode, self._rulob.get_number_of_rules()))
 
     def show_rules(self):
         if self._mode.lower() in ('simple'):
