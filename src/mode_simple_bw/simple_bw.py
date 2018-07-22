@@ -22,32 +22,40 @@ import re # for helper function
 class Ruleset(object):
 
     """ Rule-set to be used with Spamalyser.
-    A 'rule-set' is a dictionary of (2) lists of 'rules'.
-        The only valid keys in this dictionary are 'black' and 'white'.
-    A 'rule' is a lists of conditions.
+    A 'rule-set' is a dictionary of (2) dictionaries of 'rules'.
+        The only valid rule-keys in this dictionary are 'black' and 'white'.
+        There is an additional key called 'num_last_rule', for compatibility with some child classes
+    A 'rule' is a list of conditions.
         A 'simple rule' have one condition.
         A 'complex rule' have several conditions.
         There are implicit AND between the conditions in a complex rule.
     A 'condition' is a dictionary. It has entries 'key', 'opr' and 'val'
         'opr' is a string
-        'key' and 'val' are lists. In simple cases the lists only has one element each.
+        'key' and 'val' are lists of strings. In simple cases the lists only has one element.
         in 'packed conditions' the lists can have multiple elements
         There are implicit OR between the elements in a packed condition list.
 
-    In code it all looks like this:
-    _data {'white':
-            [
-                [{[from] == ['dave@mygrocer.com']}],
-                [{[subject] && ['spamalyser']}],
-                [{[from] ]= ['python.org', 'python.net']}, {[subject] !& ['python in greek']}]
-            ],
-           'black:
-            [
-                [{[from] == ['spammer_dude@highprice.com']}],
-                [{[to] !& ['myemail@home.net']}],
-                [{[from] ]= [microsoft.com]}, {[subject] !& ['open source', 'free license']}]
-            ]
-          }
+    In code, a sample rule-set with 4 white and 2 black rules, look like this.
+    Notice that rules 3, 4 and 6 are complex rules, i.e. have multiple conditions.
+    Notice that rules 1, 2 and 3 hold packed conditions.
+    self._data {
+    'white': {
+        1: [{'key': ['from'], 'opr': '&&', 'val': ['nicesite.com', 'anothernicesite.com']}],
+        2: [{'key': ['to', 'cc', 'bcc'], 'opr': '[='}, 'val': ['mail_list_on_Python', 'daily_letter']],
+        3: [{'key': ['from'], 'opr': '&&', 'val': ['python.org']},
+            {'key': ['subject'], 'opr': '!&', 'val': ['greek', 'dutch']}],
+        4: [{'key': ['from'], 'opr': '&&', 'val': ['fsf.org']},
+            {'key': ['subject'], 'opr': '!&', 'val': ['python_on_windows']},
+            {'key': ['to'], 'opr': '[='}, 'val': ['@mydomain.org']]
+        },
+    'black': {
+        5: [{'key': ['from'], 'opr': '==', 'val': ['marketing101@somewhere.ch']}],
+        6: [{'key': ['subject'], 'opr': '&&', 'val': ['Use just a few minutes']},
+            {'key': ['subject'], 'opr': '&&', 'val': ['you will not regret it']}]
+        }
+    'num_last_rule': 6,
+    }
+
     """
 
     # Some class 'constants'
@@ -67,65 +75,62 @@ class Ruleset(object):
 
 
     def rules_from_strings(self, los_in):
-        """ ! This is still ugly-land, and I want to nice it up. !
+        """ ! This is still messy, and I want to nice it up. !
         Make a list of 'rule's from a list of raw strings, typically the content of a .scrule file
-        Assume one (complex) condition-string per line, except lines starting with +
+        Assume all #comments have been removed
+        Assume no blank lines
+        Assume one (packed) condition-string per line
+        Assume some lines starts with +, which indicate it's part of a complex rule, together with the line(s) before.
         :param los_in list: list of strings
         :return: list of rules
         """
-        if isinstance(los_in, list):  # if input is list
+        logging.debug("rules_from_strings() begin")
+        lst_ret = list()  # initialize a return-list
+        if isinstance(los_in, list) and len(los_in) > 0:  # if input is a list
             if all([isinstance(s, str) for s in los_in]):  # if input is list of strings
-                lst_ret = list()
-                logging.debug("rules_from_strings() begin")
-                lst_conds = [[str(raw)] for raw in los_in]  # Wrap each line of text in a list
-                if lst_conds[0][0][0] != '+':  # if the first line don't start with +
+                lst_in = [[str(raw)] for raw in los_in]  # Wrap each line of text in a list
+                if lst_in[0][0][0] != '+':  # if the first line don't start with +
                     # Handle + lines ... This is still bloody ugly! XXX
                     lst_tmp = list()
-                    for i in lst_conds:
-                        if i[0][0] == '+':  # the first letter the first string, in this list, is '+'
-                            lst_last = lst_tmp[-1]    # get the last item we put in lst_tmp
-                            lst_tmp = lst_tmp[:-1]    # remove it from the list
-                            lst_last.extend(i)        # extend it with the + condition
+                    for i in lst_in:
+                        if i[0][0] == '+':  # the first letter in the first string, is '+'
+                            lst_last = lst_tmp[-1]  # get back the last item we put in lst_tmp
+                            lst_tmp = lst_tmp[:-1]  # remove it from the list
+                            lst_last.append(i[0].lstrip('+').strip())  # extend it with the + condition, stripping the +
                             lst_tmp.append(lst_last)  # put it back...
+                            del lst_last
                         else:
                             lst_tmp.append(i)
-                    lst_conds = lst_tmp
-                    # list of strings to list of rules
-                    for lo_conds in lst_conds:
-                        rule = list()
-                        for conds in lo_conds:
-                            if any(opr in conds for opr in self.VALID_OPR):
-                                # Check only 1 opr in condition-string
-                                num_opr = 0
-                                for str_valopr in self.VALID_OPR:
-                                    if " {} ".format(str_valopr) in conds:
-                                        num_opr += 1
-                                        lst_cnd = conds.split(" {} ".format(str_valopr), 1)
-                                        lst_cnd = [tok.split(',') for tok in lst_cnd] # conveniently also turns simple conditions into lists
-                                        dic_cnd = dict()
-                                        dic_cnd['opr'] = str_valopr
-                                        dic_cnd['key'] = lst_cnd[0]
-                                        dic_cnd['val'] = lst_cnd[1]
-                                if num_opr == 1:
-                                    # strip all strings - XXX this is ugly, try fix that...
-                                    for keyval in ('key', 'val'):
-                                        dic_cnd[keyval] = [tok.strip() for tok in dic_cnd[keyval]]
-                                    ### fanally add the condition
-                                    ##rule.append(dic_cnd)  # should not be done inside this loop, just return it ...
-                                    ##print " ^rule:", rule
-                                else:
-                                    logging.warning("! Condition have more that one OPR: {}".format(conds))
+                    lst_srules = lst_tmp
+                    del lst_tmp, i
+                    # We now have a list of lists of strings, each string representing a (packed) condition.
+                    for lo_pcon in lst_srules:  # each rule is a list_of_packed-conditions, as strings
+                        ##print ".", lo_pcon  # show for debug
+                        rule = list()  # variable name 'rule' is used for the next step
+                        for pcon in lo_pcon:
+                            lst_opr = [opr for opr in self.VALID_OPR if opr in pcon]
+                            if len(lst_opr) == 1:  # Check exactely 1 opr
+                                str_opr = lst_opr[0]
+                                lst_cnd = pcon.split(" {} ".format(str_opr), 1)
+                                lst_cnd = [tok.split(',') for tok in lst_cnd]  # conveniently also turns simple conditions into lists
+                                # pack it up in a dic. Leaving any further validation to the validator...
+                                dic_cnd = dict()
+                                dic_cnd['opr'] = str_opr
+                                dic_cnd['key'] = [tok.strip() for tok in lst_cnd[0]]
+                                dic_cnd['val'] = [tok.strip() for tok in lst_cnd[1]]
+                                rule.append(dic_cnd)
                             else:
-                                logging.warning("! Condition have no valid OPR: {}".format(conds))
+                                logging.warning("! Condition have either No or Mutiple valid OPR: {}".format(pcon))
+                        ##print " ^rule:", rule
                         lst_ret.append(rule)
                     ##print "^^lor_rules:",lst_ret
-                    return lst_ret
                 else:
-                    logging.warning("! The first string should never start with +: {}".format(lst_conds[0][0]))
+                    logging.warning("! The first string should never start with +: {}".format(lst_in[0][0]))
             else:
                 logging.warning("! received list containing non-string object: {}".format([str(type(o)) for o in los_in]))
         else:
-            logging.warning("! received non-list object: {}".format(str(type(los_in))))
+            logging.warning("! received empty list, or non-list object: {}".format(str(type(los_in))))
+        return lst_ret
 
     def rules_from_listofaddressers(self, los_adr):
         """
@@ -176,7 +181,7 @@ class Ruleset(object):
 
     def lor_validator(self, lor):
         """ Looks through a list-of-rules, returning the list with invalid rules removed """
-        XXX code missing here.
+        #XXX code missing here.
         return lor
 
     def lor_inserter(self, str_colour, lor):
@@ -215,6 +220,7 @@ class Ruleset(object):
         lor_in = self.los_to_lor(los_in, str_assume)
         lor_va = self.lor_validator(lor_in)
         self.lor_inserter(str_colour, lor_va)
+        ##print "\n{}".format(self._data)
         return None
 
     def load_all_rule_files(self):

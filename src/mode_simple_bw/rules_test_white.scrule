@@ -35,3 +35,9 @@
 	from && python.org
 	+ subject !& python_in_greek, python_on_windows
 
+# Example 3. multiple +lines
+
+	from && fsf.org
+	+ subject !& python_in_greek, python_on_windows
+	+ to [= @mydomain.org
+

@@ -87,8 +87,6 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
             print "  hit: {}".format(sal_res_sbw['votb'])
 
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
-            ## "[{}] {}; {}; {} {}".format(num_email, salmsg.get('from'),salmsg.get('subject'), sal_res_sbw['tone'], sal_res_sbw['kill'])
-            # Actually delete the e-mails on the server
             #con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
 
         # ** send this email, and sal_res_sbw to the stat object
