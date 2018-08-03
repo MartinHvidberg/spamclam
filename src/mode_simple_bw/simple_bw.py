@@ -11,6 +11,14 @@
 ### To do
 # Make all docstrings reST format
 # Sanitise the rule complex, before applying, preferably by calls to ./rule_cleaner module
+# Consider xtra syntax where:
+#  subject && Ansøg om
+#  + subject && i dag
+#  + subject && og få dem lynhurtigt
+# is replaced by:
+#  subject && Ansøg om + i dag + og få dem lynhurtigt
+# though it would add + to reserved chars.
+
 
 import os
 import sys
@@ -249,92 +257,6 @@ class Ruleset(object):
                     logging.info("Loaded {} rule file: {}".format(str_colour, fil_in))
         return None
 
-    def xadd_rule(self, colour, rul_in):
-        """
-        Receives, validates and (if valid) adds the 'rule' to the main rule-set.
-        :param colour str: 'black' or 'white'
-        :param rul_in list: A 'rule', i.e. a list of conditions
-        :return: TBD
-        """
-
-        def rule_check_packeage(colour, rul_pk):
-            if colour in ['white', 'black']:  # Rule must be white or black
-                if isinstance(rul_pk, list):  # a 'rule'
-                    for rule in rul_pk:
-                        if isinstance(rule, dict):  # a 'condition'
-                            # {'key': ['from'], 'opr': '==', 'val': ['someone@work.com']}
-                            if all(key in rule.keys() for key in self.VALID_RULE_KEYS):
-                                logging.debug("add_rule() okayrule: {}, {}".format(colour, rule))
-                                pass  # All seems okay, ready to be exploded
-                            else:
-                                logging.warning("! address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
-                                return False
-                        else:
-                            logging.warning("! address rule rul_in. 'condition' is not type dict")
-                            return False
-                else:
-                    logging.warning("! address rule rul_in. 'rule' is not type list")
-                    return False
-            else:
-                logging.warning("! illegal colour in added rule: {}".format(str(colour)))
-                return False
-            return True
-
-        def rule_check_unpacked(lst_rulelines):
-            for rule in lst_rulelines:
-                # 'key'
-                if all(key in self.VALID_EMAIL_HEADERS for key in rule['key']):
-                    pass
-                else:
-                    logging.warning("! address rule rul_pk has a bad 'key': {}".format(str(rule)))
-                    return False
-                    # XXX add check that key is in [,,,]
-                    # XXX add check that dic[key] is list of valid e-mail header fields
-                    # XXX add check that opr is in [,,,]
-                    # XXX add check that dic[val] is list of valid text strings
-            return True
-
-        logging.debug("add_rule() received: {}, {}".format(colour, rul_in))
-        ##logging.debug("rul_in0: {}".format(json.dumps(rul_in)))
-        # validate and explode
-        if rule_check_packeage(colour, rul_in):
-            logging.debug("add_rule() okay pak: {}, {}".format(colour, rul_in))
-            self.raw_insert_rule(colour, rul_in)
-        else:
-            logging.warning("! add_rule: rule_check_packeage() returned False")
-        return None
-
-    def xload_rulefile(self, str_colour, fil_in):
-        """ Open and read a single rule file """
-        lst_rulelines = self.load_file(fil_in)
-        # Converting text strings to rule-set object
-        lor_in = self.rules_from_strings(lst_rulelines)
-        # We need to actually add the rule :-)
-        for rule_a in lor_in:
-            self.add_rule(str_colour, rule_a)
-        return None
-
-    def xload_rulesfiles(self):
-        """ Find and load all .scrule files in the rule_dir """
-        logging.debug(" func. load_rulesfiles in: {}".format(self._rldr))
-        for fil_in in os.listdir(self._rldr):
-            if fil_in.endswith(".scrule"):
-                logging.debug(".scrule file: {}".format(fil_in))
-                if "white" in fil_in.lower():
-                    str_colour = 'white'
-                elif "black" in fil_in.lower():
-                    str_colour = "black"
-                else:
-                    str_colour = ""
-                    str_report = "!!! file name contained neither 'white' nor 'black'... I'm confused."
-                    print str_report
-                    logging.debug(str_report)
-                    continue
-                if str_colour != "":
-                    self.load_rulefile(str_colour, fil_in)
-                    logging.info("Loaded rule file {}: {}".format(str_colour, fil_in))
-        return None
-
     def get_email_address_from_string(self,str_in):
         if '@' in str_in:
             match = re.search(r'[\w\.-]+@[\w\.-]+', str_in)
@@ -342,37 +264,6 @@ class Ruleset(object):
             return str_return
         else:
             return ""
-
-    def xload_addressbook(self, str_colour, fil_in):
-        lst_addlines = self.load_file(fil_in)
-        for add_line in lst_addlines:
-            str_emladd = self.get_email_address_from_string(add_line)
-            if len(str_emladd) > 0:  # Insert email address in ruleset
-                logging.debug("{} << addr {}".format(str_colour, str_emladd))
-                dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
-                rule_a = [dic_rul]  # 'A rule' is a list of dics, so we need to wrap it...
-                self.add_rule(str_colour, rule_a)
-            del str_emladd
-        return None
-
-    def xload_addressbooks(self):
-        """ Find and load all address (.scaddr) files in the rule_dir """
-        logging.debug(" func. load_addressbooks.")
-        # Find addressbook files
-        for fil_in in os.listdir(self._rldr):
-            if fil_in.endswith(".scaddr"):
-                # Crunch the addressbook file
-                if "white" in fil_in.lower():
-                    str_colour = 'white'
-                elif "black" in fil_in.lower():
-                    str_colour = "black"
-                else:
-                    str_colour = ""
-                    print "!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in)
-                    continue
-                self.load_addressbook(str_colour, fil_in)
-                logging.info("Loaded addressbook {}: {}".format(str_colour, fil_in))
-        return None
 
     def list_rulenumbers_of_colour(self, str_colour):
         """ return a sorted list of numbers, pointing to rules of colour str_colour """
@@ -558,3 +449,123 @@ class Ruleset(object):
 
     # helper functions
 # End class - Ruleset
+
+# Historic maerial
+
+
+    def xx_add_rule(self, colour, rul_in):
+        """
+        Receives, validates and (if valid) adds the 'rule' to the main rule-set.
+        :param colour str: 'black' or 'white'
+        :param rul_in list: A 'rule', i.e. a list of conditions
+        :return: TBD
+        """
+
+        def rule_check_packeage(colour, rul_pk):
+            if colour in ['white', 'black']:  # Rule must be white or black
+                if isinstance(rul_pk, list):  # a 'rule'
+                    for rule in rul_pk:
+                        if isinstance(rule, dict):  # a 'condition'
+                            # {'key': ['from'], 'opr': '==', 'val': ['someone@work.com']}
+                            if all(key in rule.keys() for key in self.VALID_RULE_KEYS):
+                                logging.debug("add_rule() okayrule: {}, {}".format(colour, rule))
+                                pass  # All seems okay, ready to be exploded
+                            else:
+                                logging.warning("! address rule rul_in is missing one or more of the keys: {}".format(str(lst_expected_keys)))
+                                return False
+                        else:
+                            logging.warning("! address rule rul_in. 'condition' is not type dict")
+                            return False
+                else:
+                    logging.warning("! address rule rul_in. 'rule' is not type list")
+                    return False
+            else:
+                logging.warning("! illegal colour in added rule: {}".format(str(colour)))
+                return False
+            return True
+
+        def rule_check_unpacked(lst_rulelines):
+            for rule in lst_rulelines:
+                # 'key'
+                if all(key in self.VALID_EMAIL_HEADERS for key in rule['key']):
+                    pass
+                else:
+                    logging.warning("! address rule rul_pk has a bad 'key': {}".format(str(rule)))
+                    return False
+                    # XXX add check that key is in [,,,]
+                    # XXX add check that dic[key] is list of valid e-mail header fields
+                    # XXX add check that opr is in [,,,]
+                    # XXX add check that dic[val] is list of valid text strings
+            return True
+
+        logging.debug("add_rule() received: {}, {}".format(colour, rul_in))
+        ##logging.debug("rul_in0: {}".format(json.dumps(rul_in)))
+        # validate and explode
+        if rule_check_packeage(colour, rul_in):
+            logging.debug("add_rule() okay pak: {}, {}".format(colour, rul_in))
+            self.raw_insert_rule(colour, rul_in)
+        else:
+            logging.warning("! add_rule: rule_check_packeage() returned False")
+        return None
+
+    def xx_load_rulefile(self, str_colour, fil_in):
+        """ Open and read a single rule file """
+        lst_rulelines = self.load_file(fil_in)
+        # Converting text strings to rule-set object
+        lor_in = self.rules_from_strings(lst_rulelines)
+        # We need to actually add the rule :-)
+        for rule_a in lor_in:
+            self.add_rule(str_colour, rule_a)
+        return None
+
+    def xx_load_rulesfiles(self):
+        """ Find and load all .scrule files in the rule_dir """
+        logging.debug(" func. load_rulesfiles in: {}".format(self._rldr))
+        for fil_in in os.listdir(self._rldr):
+            if fil_in.endswith(".scrule"):
+                logging.debug(".scrule file: {}".format(fil_in))
+                if "white" in fil_in.lower():
+                    str_colour = 'white'
+                elif "black" in fil_in.lower():
+                    str_colour = "black"
+                else:
+                    str_colour = ""
+                    str_report = "!!! file name contained neither 'white' nor 'black'... I'm confused."
+                    print str_report
+                    logging.debug(str_report)
+                    continue
+                if str_colour != "":
+                    self.load_rulefile(str_colour, fil_in)
+                    logging.info("Loaded rule file {}: {}".format(str_colour, fil_in))
+        return None
+
+    def xx_load_addressbook(self, str_colour, fil_in):
+        lst_addlines = self.load_file(fil_in)
+        for add_line in lst_addlines:
+            str_emladd = self.get_email_address_from_string(add_line)
+            if len(str_emladd) > 0:  # Insert email address in ruleset
+                logging.debug("{} << addr {}".format(str_colour, str_emladd))
+                dic_rul = {'key': ['from'], 'opr': '==', 'val': [str_emladd]}
+                rule_a = [dic_rul]  # 'A rule' is a list of dics, so we need to wrap it...
+                self.add_rule(str_colour, rule_a)
+            del str_emladd
+        return None
+
+    def xx_load_addressbooks(self):
+        """ Find and load all address (.scaddr) files in the rule_dir """
+        logging.debug(" func. load_addressbooks.")
+        # Find addressbook files
+        for fil_in in os.listdir(self._rldr):
+            if fil_in.endswith(".scaddr"):
+                # Crunch the addressbook file
+                if "white" in fil_in.lower():
+                    str_colour = 'white'
+                elif "black" in fil_in.lower():
+                    str_colour = "black"
+                else:
+                    str_colour = ""
+                    print "!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in)
+                    continue
+                self.load_addressbook(str_colour, fil_in)
+                logging.info("Loaded addressbook {}: {}".format(str_colour, fil_in))
+        return None

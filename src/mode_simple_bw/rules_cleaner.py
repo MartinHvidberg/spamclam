@@ -27,11 +27,16 @@ class RulesetWCheck(simple_bw.Ruleset):
 
     def __init__(self, rule_dir):
         simple_bw.Ruleset.__init__(self, rule_dir)
+        #self._current_file = ""
 
     def raw_insert_rule(self, colour, rul_in):
-        # XXX add source filename to rule before insertion
-        self._data[colour].append(rul_in)
+        rul_in['source_file'] = self._current_file
+        simple_bw.Ruleset.raw_insert_rule(self, colour, rul_in)
 
+    def load_file(self, fil_in):
+        self._current_file = fil_in
+        simple_bw.Ruleset.load_file(self, fil_in)
+        self._current_file = ""
 
 def reorder_rules_files(str_home_dir):
     pass
@@ -43,6 +48,10 @@ def reorder_address_books(str_home_dir):
 
 
 def load_files(str_home_dir):
+    rus_chk = RulesetWCheck(str_home_dir)
+    return rus_chk
+
+def x_load_files(str_home_dir):
 
     def _scan_for_files(str_hd, dic_r):
         for root, dirs, files in os.walk(str_hd):
@@ -88,11 +97,11 @@ def check_logical_conflict(dic_rules):
 def main(str_home_dir):
 
     dic_rules = load_files(str_home_dir)
-    check_redundant_rules(dic_rules)
-    check_logical_conflict(dic_rules)
-    update_files(dic_rules, str_home_dir) # We need to preserve comments and grouping, so a clean rewrite makes no sense.
-    reorder_rules_files(str_home_dir)
-    reorder_address_books(str_home_dir)
+    #check_redundant_rules(dic_rules)
+    #check_logical_conflict(dic_rules)
+    #update_files(dic_rules, str_home_dir) # We need to preserve comments and grouping, so a clean rewrite makes no sense.
+    #reorder_rules_files(str_home_dir)
+    #reorder_address_books(str_home_dir)
 
 
 if __name__ == "__main__":
