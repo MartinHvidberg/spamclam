@@ -1,4 +1,7 @@
 syntax: glob
+.pyc
+.xml
+.log
 .idea/codeStyles/Project.xml
 .idea/dbnavigator.xml
 .idea/encodings.xml
