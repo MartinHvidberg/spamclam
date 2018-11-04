@@ -59,8 +59,8 @@ A small Python Spam-deleter, for POP3 (so far only POP3, but extendable)
       * This is the Output statistics, written by the program
       * When run, the program will create or update the .stat file
       * It's a .json file so it's quite readable, but you should properly not edit it
-      * For each rule are noted dates and counts of hit
+      * For each rule is noted dates and counts of hit
       * For each sender is noted, number of emails (total) and number of spam-mails (delete)
-      * The number accumulates, each time you run Spamclam, until you delete the file. i.e. the same good emails may be many times
+      * The number accumulates, each time you run Spamclam, until you delete the file. i.e. the same good emails may be counted many times
    
 /Martin

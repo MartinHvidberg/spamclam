@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 """ Part of ECsoftware's SpamClam
-    This module handles: Connection to the email server, and is the main (non-ui) module
-"""
+    This module handles: Connection to the email server,
+    and is the main (non-ui) module
 
-### Versions ###
+### History
 # 0.1 - The initial tries, that worked :-)
 # 0.2 - Trying to make it OOP and insisting on modularizing
 # 0.3 - Introducing Statistics
@@ -11,14 +13,13 @@
 
 ### ToDo
 # Forward to spamclam_myuser@mydomain.tld
+# introduce prof command line parameters, though sccli takes care of some cli
+# remove remaining print sentences, this is not a ui-module
+# Consider the use of __version__, is it relevant?
+"""
 
 __verion__ = '0.3.1'
 __build__ = '20180624.'
-
-### To do ###
-# make header print uft-8 eller noget...
-# introduce prof command line parameters, though sccli takes care of some cli
-# remove remaining print sentences, this is not a ui-module
 
 import sys
 import logging
@@ -90,7 +91,8 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
             print "  hit: {}".format(sal_res_sbw['votb'])
 
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
-            con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
+            #
+            #con_pop.dele(num_email)  # <-------------------------------------------------------------------- LUS
 
         # ** send this email, and sal_res_sbw to the stat object
         salsta.add_salres(salmsg, sal_res_sbw, restat=restat)
@@ -111,6 +113,9 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
 
     return [num_email]  # List of return elements can be expanded later...
 
+if __name__ == "__main__":
+    print("\n!!! Note: {} is not a runnable module".format(__file__))
+    print("          You likely want to run a 'user interface' module like sccli or scgui...")
 
 # Music that accompanied the coding of this script:
 #   David Bowie - Best of...

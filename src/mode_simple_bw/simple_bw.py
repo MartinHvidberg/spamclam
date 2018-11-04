@@ -1,14 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 """ Part of ECsoftware's SpamClam
     This module handles: Simple Black- and Whitelist functionality for spamalyser.py
-"""
 
 ### Versions
 # 0.2 - initial version of this module
 # 0.3 - changing rules fra dic_of_lists to dic_of_dics, to better support child class (RulesetWChecks)
 # 0.4 - rewriting rule- and address-file reading, to make it clearer and DRY.
 
-### To do
+### ToDo
 # Make all docstrings reST format
 # Sanitise the rule complex, before applying, preferably by calls to ./rule_cleaner module
 # Consider xtra syntax where:
@@ -18,6 +19,7 @@
 # is replaced by:
 #  subject && Ansøg om + i dag + og få dem lynhurtigt
 # though it would add + to reserved chars.
+"""
 
 
 import os

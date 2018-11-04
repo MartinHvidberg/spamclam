@@ -1,12 +1,58 @@
 
 """ Part of ECsoftware's SpamClam
-    This module handles
+    This module handles CLI (Command Line Interface) to SpamClam
+
+    commands:
+
+    get  - copy/download info about emails on server, to local data base
+    list - list info in local data base
+    simp - run 'simple black and white' filter, on local data base
+    ussu - run 'usual suspects' filter, on local data base (in development)
+    male - run 'machine learning' filter, on local data base (not available yet)
+    kill - actually delete the messages pointed out by the filter(s)
+
+    options:
+
+    --help :
+    --version :
+
+    connecting to the email server (used by get and kill)
+    --server : the email servers name, e.g. mail.company.com
+    --user : user name on the email server, e.g. john@company.com
+    --passw : password on the email server
+
+    specific to list
+    --spam : show emails marked as spam, by at least one filter
+    --grey : show emails with a 'grey' status
+    --white : show emails with white status, i.e. not tagged by any filter
+
+    specific for simple-black-and-white filter
+    --swob : simple-White-over-black. Default is true, i.e. white overrules black
+    --srestat : simple-ReStat. Force stats to be wiped. Default is false
+
+    specific for usual-suspects filter
+    --usite1 : include site-1 in filter
+    --usite2 : include site-2 in filter
+
+    specific for kill
+    --min : minimum number of filters that says kill. Default is all
+
 """
 
 import sys
 
+import argparse
 import spamclam
 
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='SpamClam CLI interface')
+    parser.add_argument('-v', '--version', action='version', version='%(prog)s 2.0')
+    parser.add_argument("command")
+    args = parser.parse_args()
+
+"""  OLD VERSION
 
 # Read the command line input
 try:
@@ -38,3 +84,5 @@ print "Calling ECsoftware SpamClam, with: \n\tServer: {}\n\tUser: {}\n\tPassw: {
 scresu = spamclam.spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat=str_restat.lower()=='true')
 
 print "\nProcessed {} e-mails\n".format(scresu[0])
+
+"""
