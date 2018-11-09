@@ -42,7 +42,7 @@
 import sys
 
 import argparse
-import spamclam
+from . import spamclam
 
 
 if __name__ == "__main__":

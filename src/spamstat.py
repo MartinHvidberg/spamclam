@@ -77,7 +77,7 @@ class Spamstat(object):
         bol_seen = False
         msgid = salmsg.get('id')
         if msgid:
-            if msgid in self._data['recently_seen'].keys() and not restat:  # restat forces evaluation of e-mails that have been seen before
+            if msgid in list(self._data['recently_seen'].keys()) and not restat:  # restat forces evaluation of e-mails that have been seen before
                 bol_seen = True
             self._data['recently_seen'][msgid] = datetime.datetime.now().isoformat() # set new date for latest seen
 
@@ -87,7 +87,7 @@ class Spamstat(object):
             str_from = salmsg.get('from')
             obj_sbf = self._data['stat_by_from']
             # {<from>: {cnt': <num>, 'rule_hits': {"[[('subject', '&&', '<string>')]], ...}, 'cnt_spam': <num>}, ...}
-            if not str_from in obj_sbf.keys():
+            if not str_from in list(obj_sbf.keys()):
                 obj_sbf[str_from] = {'cnt':0, 'cnt_spam':0, 'rule_hits':{}}
             # count the e-mail
             obj_sbf[str_from]['cnt'] += 1
@@ -102,7 +102,7 @@ class Spamstat(object):
                     lst_vote = list(set([str(vot) for vot in salres[keyr]]))  # convert to string lables, and remove duplicates
                     for vote in lst_vote:
                         ##print "votes <<< ", vote
-                        if not vote in obj_sbf[str_from]['rule_hits'].keys():
+                        if not vote in list(obj_sbf[str_from]['rule_hits'].keys()):
                             obj_sbf[str_from]['rule_hits'][vote] = 0
                         obj_sbf[str_from]['rule_hits'][vote] += 1
 
@@ -117,19 +117,19 @@ class Spamstat(object):
                     lst_vote = list(set([str(vot) for vot in salres[keyr]]))  # convert to string lables, and remove duplicates
                     for vote in lst_vote:
                         ###print "votes <<< ", vote
-                        if not vote in obj_sbr.keys():
+                        if not vote in list(obj_sbr.keys()):
                             obj_sbr[vote] = {'cnt': 0, 'froms': {}, 'corules': {}, 'latest_cnt': None}
                         # update count
                         obj_sbr[vote]['cnt'] += 1
                         # append sender
-                        if str_from not in obj_sbr[vote]['froms'].keys():
+                        if str_from not in list(obj_sbr[vote]['froms'].keys()):
                             obj_sbr[vote]['froms'][str_from] = 1
                         else:
                             obj_sbr[vote]['froms'][str_from] += 1
                         # append co-rules
                         for corule in list(set([str(vot) for vot in salres[keyr]])):  # for each rule hit by this e-mail
                             if corule != vote:  # except for myself
-                                if corule not in obj_sbr[vote]['corules'].keys():  # if I havent co-ruled this before
+                                if corule not in list(obj_sbr[vote]['corules'].keys()):  # if I havent co-ruled this before
                                     obj_sbr[vote]['corules'][corule] = 1
                                 else:
                                     obj_sbr[vote]['corules'][corule] += 1
@@ -143,16 +143,16 @@ class Spamstat(object):
         if sort not in ('spam', 'rule_hits', 'no_rules', 'cnt', 'cnt_spam'):
             sort = 'spam'  # fall back to default
         if limit == 0:
-            limit = len(dic_in.keys())
+            limit = len(list(dic_in.keys()))
         # make order list
         if sort == 'spam':
-            lst_o = [(1.0*dic_in[keyt]['cnt_spam']/dic_in[keyt]['cnt'], keyt) for keyt in dic_in.keys()]
+            lst_o = [(1.0*dic_in[keyt]['cnt_spam']/dic_in[keyt]['cnt'], keyt) for keyt in list(dic_in.keys())]
         elif sort == 'rule_hits':
-            lst_o = [(len(dic_in[keyt][sort]), keyt) for keyt in dic_in.keys()]
+            lst_o = [(len(dic_in[keyt][sort]), keyt) for keyt in list(dic_in.keys())]
         elif sort == 'no_rules':
-            lst_o = [(keyt, keyt) for keyt in dic_in.keys() if len(dic_in[keyt]['rule_hits'])==0]
+            lst_o = [(keyt, keyt) for keyt in list(dic_in.keys()) if len(dic_in[keyt]['rule_hits'])==0]
         else:
-            lst_o = [(dic_in[keyt][sort], keyt) for keyt in dic_in.keys()]
+            lst_o = [(dic_in[keyt][sort], keyt) for keyt in list(dic_in.keys())]
         # sort order list
         lst_o.sort(reverse=rvrs!=0)  # anything != 0 is considered True
         # deliver stat show

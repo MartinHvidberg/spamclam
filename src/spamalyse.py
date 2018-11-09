@@ -34,14 +34,14 @@ class Salmail(object):
         self._msg2data()
 
     def show(self):
-        print ""
-        print(" id      : {}".format(self.get('id')))
-        print(" date    : {}".format(self.get('date')))
-        print(" from    : {}".format(self.get('from')))
-        print(" to      : {}".format(self.get('to')))
-        print(" cc      : {}".format(self.get('cc')))
-        print(" bcc     : {}".format(self.get('bcc')))
-        print(" subject : {}".format(self.get('subject')))
+        print("")
+        print((" id      : {}".format(self.get('id'))))
+        print((" date    : {}".format(self.get('date'))))
+        print((" from    : {}".format(self.get('from'))))
+        print((" to      : {}".format(self.get('to'))))
+        print((" cc      : {}".format(self.get('cc'))))
+        print((" bcc     : {}".format(self.get('bcc'))))
+        print((" subject : {}".format(self.get('subject'))))
 
     def _msg2data(self):
         """ This function tries to set all the entries, from the org. message """
@@ -84,7 +84,7 @@ class Salmail(object):
         # X-Sender
         # Sender (sending 'on behalf of' from)
 
-        for key_check in self._data.keys():
+        for key_check in list(self._data.keys()):
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
 
@@ -94,7 +94,7 @@ class Salmail(object):
         return list(self._data.keys())
 
     def has_key(self, key_in):
-        return key_in in self._data.keys()
+        return key_in in list(self._data.keys())
 
     def get(self, mkey):
         """ Get one field from the message """

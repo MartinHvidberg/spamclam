@@ -13,7 +13,7 @@
 import os
 import logging
 
-import simple_bw
+from . import simple_bw
 
 logging.basicConfig(filename='rules_cleaner.log',
                     filemode='w',
@@ -71,13 +71,13 @@ def x_load_files(str_home_dir):
                 for line in fil_in:
                     los_lines.append(line)
             if '.scrule' in str_fn:
-                print dic_r[str_fn].rules_from_strings(los_lines)
+                print(dic_r[str_fn].rules_from_strings(los_lines))
         return dic_r
 
     dic_rules = dict()  # The overall archive of rules
     dic_rules['source_files'] = list()  # Keep track of the source files
     dic_rules = _scan_for_files(str_home_dir, dic_rules)
-    for str_fn in dic_rules['source_files']: print str_fn  # Just for debug...
+    for str_fn in dic_rules['source_files']: print(str_fn)  # Just for debug...
     dic_rules = _load_all_files(dic_rules)
     return dic_rules
 
@@ -107,4 +107,4 @@ def main(str_home_dir):
 if __name__ == "__main__":
 
     main('./')
-    print "Done..."
+    print("Done...")

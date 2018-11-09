@@ -34,7 +34,7 @@ logger.info(str_start)
 
 import poplib, email, email.header
 
-import spamalyse, spamstat
+from . import spamalyse, spamstat
 
 def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat='False'):
 
@@ -45,11 +45,11 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
         con_pop = poplib.POP3(str_srvr)
         con_pop.user(str_user)
         con_pop.pass_(str_pass)
-        print "Server says:  "+con_pop.getwelcome()
+        print("Server says:  "+con_pop.getwelcome())
         num_tot_msgs, num_tot_bytes = con_pop.stat()
-        print "Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes))
+        print("Mailbox stat:\n  {} messages\n  {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes)))
     except:
-        print "\nSeems to be unable to access the e-mail server..."
+        print("\nSeems to be unable to access the e-mail server...")
         sys.exit(102)
 
     # =============   Spamalyse   ==========================================
@@ -88,7 +88,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
         logger.info("Email: [{}] {} {}; {}".format(num_email, sal_res_sbw['spam'], salmsg.get('from'),salmsg.get('subject')))
         if sal_res_sbw['spam']:
             logger.info("  hit: {}".format(sal_res_sbw['votb']))  # if it's spam print the proof, which must be black...
-            print "  hit: {}".format(sal_res_sbw['votb'])
+            print("  hit: {}".format(sal_res_sbw['votb']))
 
             # ** Actually delete the file (on some pop3 servers this do not really happen until we log out...)
             #
@@ -114,7 +114,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
     return [num_email]  # List of return elements can be expanded later...
 
 if __name__ == "__main__":
-    print("\n!!! Note: {} is not a runnable module".format(__file__))
+    print(("\n!!! Note: {} is not a runnable module".format(__file__)))
     print("          You likely want to run a 'user interface' module like sccli or scgui...")
 
 # Music that accompanied the coding of this script:
