@@ -18,8 +18,8 @@
 # Consider the use of __version__, is it relevant?
 """
 
-__verion__ = '0.3.1'
-__build__ = '20180624.'
+__verion__ = '0.4.0'  # First Python 3.x version
+__build__ = '20181109.'
 
 import sys
 import logging
@@ -114,7 +114,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
     return [num_email]  # List of return elements can be expanded later...
 
 if __name__ == "__main__":
-    print(("\n!!! Note: {} is not a runnable module".format(__file__)))
+    print("\n!!! Note: {} is not a runnable module".format(__file__))
     print("          You likely want to run a 'user interface' module like sccli or scgui...")
 
 # Music that accompanied the coding of this script:

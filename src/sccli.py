@@ -1,4 +1,6 @@
 
+Replaced by sc.py
+
 """ Part of ECsoftware's SpamClam
     This module handles CLI (Command Line Interface) to SpamClam
 

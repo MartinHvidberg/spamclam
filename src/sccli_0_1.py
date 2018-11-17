@@ -6,11 +6,10 @@
     Don't use this, go find a newer version
 """
 
-###### OLD version!
+OLD version!
 
 import sys
 
-import argparse
 from . import spamclam
 
 # Read the command line input
