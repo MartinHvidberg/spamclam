@@ -1,8 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """ Part of ECsoftware's SpamClam
-    The Spam Clam Command Line Interface (replaces sccli)
+The Spam Clam Command Line Interface
 """
 
+__version__ = '0.4.1'
+
+### History
+# 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
+
 import argparse
+
+import sc_register as sc_reg
+import sc_get
 
 
 def get_args():
@@ -16,8 +27,8 @@ def get_args():
                         choices=['get', 'filter', 'view', 'set', 'kill', 'clear', 'stat', 'log', 'config', 'version'], #ssccvv
                         help='The main command, i.e. what you want sc to do')
     arg_comm, arg_rest = parser.parse_known_args()
-    print("comm: {}".format(arg_comm))
-    print("rest: {}".format(arg_rest))
+    print("CLI comm: {}".format(arg_comm))
+    print("CLI rest: {}".format(arg_rest))
     if arg_comm.command == 'get':  # ------ get -------------------------------
         parser.add_argument('server',
                            help = 'your e-mail server, e.g. mail.company.com')
@@ -49,12 +60,36 @@ def get_args():
                             choices = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'spam'],
                             default = 'spam',
                             help = 'To what level do you want to kill (0..9) or spam, where spam is synonym with 7. Default is spam')
+    elif arg_comm.command == 'version':  # ------ version ---------------------
+        pass  # XXX consider changing to flag --version
     args = parser.parse_args()
-    print("args: {}".format(args))
+    ##print("CLI args: {}".format(args))
     return args
 
 
 if __name__ == '__main__':
-    arg_in = get_args()
 
-    print("arg: {}".format(arg_in))
+    arg_in = get_args()
+    print("CLI arg: {}".format(arg_in))
+
+    if arg_in.command == 'get':
+        # deal with --logmode
+        reg_sc = sc_reg.Register()  # Build empty register
+        reg_sc = sc_get.get(arg_in.server ,arg_in.user ,arg_in.password, reg_sc)  # Fill register with e-mail info from server
+    elif arg_in.command == 'filter':
+        pass
+    elif arg_in.command == 'view':
+        pass
+    elif arg_in.command == 'set':
+        pass
+    elif arg_in.command == 'kill':
+        pass
+    elif arg_in.command == 'version':
+        print("SpamClam - Command Line Interface. Version {}".format(__version__))
+    else:
+        print("You should never see this, because that would mean that get_args() have parsed a command that isn't implemented...")
+
+# End of Python
+
+# Music that accompanied the coding of this script:
+#   Queen - Greatest hits I

@@ -1,0 +1,18 @@
+
+* SpamClam - Module overview
+
+sc.py - The CLI module
+
+
+sc_register.py - The Register module
+
+	class Salmail(object):
+
+	class Register(object):
+
+
+sc_get.py
+
+
+sc_filter.py - The Top Filter module (formerly class Spamalyser())
+

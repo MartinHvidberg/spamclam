@@ -4,7 +4,7 @@
 """ Part of ECsoftware's SpamClam
     This module handles: Simple Black- and Whitelist functionality for spamalyser.py
 
-### Versions
+### Versions  <-- Out of sync with the overall SpamClam versioning...
 # 0.2 - initial version of this module
 # 0.3 - changing rules fra dic_of_lists to dic_of_dics, to better support child class (RulesetWChecks)
 # 0.4 - rewriting rule- and address-file reading, to make it clearer and DRY.

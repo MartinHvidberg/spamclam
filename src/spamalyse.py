@@ -97,7 +97,7 @@ class Salmail(object):
         return key_in in list(self._data.keys())
 
     def get(self, mkey):
-        """ Get one field from the message """
+        """ Get one field from the message """   # XXX Slim this list...
         if mkey == 'id':
             return self._data['id']
         if mkey == 'date':

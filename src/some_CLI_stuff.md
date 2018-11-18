@@ -1,3 +1,7 @@
+
+	*** PLEASE TURN THIS TEXT INTO MARKDOWN ***
+
+
 sc COMMAND [Argument ...] [option ...] [--flag ...]
 
 GET Server,User,Pasw  # Read e-mails on the server, building/updating the register

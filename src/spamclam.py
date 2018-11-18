@@ -15,7 +15,6 @@
 # Forward to spamclam_myuser@mydomain.tld
 # introduce prof command line parameters, though sccli takes care of some cli
 # remove remaining print sentences, this is not a ui-module
-# Consider the use of __version__, is it relevant?
 """
 
 __verion__ = '0.4.0'  # First Python 3.x version

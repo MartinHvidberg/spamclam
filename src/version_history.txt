@@ -1,0 +1,12 @@
+
+### History of versions of SpamClam...
+
+# 0.1	The initial tries, that worked :-)
+
+# 0.2	Trying to make it OOP and insisting on modularizing
+
+# 0.3	Introducing Statistics
+# 0.3.1	intro stat by rule
+
+# 0.4	First Python 3.x version. aiming for a substantial re-write. 2018-11-09
+# 0.4.1	A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli). 2018-11-17
