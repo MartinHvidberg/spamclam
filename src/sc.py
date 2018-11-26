@@ -27,8 +27,8 @@ def get_args():
                         choices=['get', 'filter', 'view', 'set', 'kill', 'clear', 'stat', 'log', 'config', 'version'], #ssccvv
                         help='The main command, i.e. what you want sc to do')
     arg_comm, arg_rest = parser.parse_known_args()
-    print("CLI comm: {}".format(arg_comm))
-    print("CLI rest: {}".format(arg_rest))
+    ##print("CLI comm: {}".format(arg_comm))
+    ##print("CLI rest: {}".format(arg_rest))
     if arg_comm.command == 'get':  # ------ get -------------------------------
         parser.add_argument('server',
                            help = 'your e-mail server, e.g. mail.company.com')
@@ -70,7 +70,7 @@ def get_args():
 if __name__ == '__main__':
 
     arg_in = get_args()
-    print("CLI arg: {}".format(arg_in))
+    ##print("CLI arg: {}".format(arg_in))
 
     if arg_in.command == 'get':
         # deal with --logmode

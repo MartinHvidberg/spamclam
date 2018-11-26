@@ -17,11 +17,16 @@ logging.basicConfig(filename='sc_get.log',
                     level=logging.INFO, # DEBUG
                     format='%(asctime)s %(levelname)7s %(funcName)s : %(message)s')
                     # %(funcName)s
-logger = logging.getLogger('spamclam')
+logger = logging.getLogger(__name__)
 str_start = "Start: {} version: {}".format(__file__, __version__)
 logger.info(str_start)
 
-import poplib, email, email.header
+import poplib, email
+from email import policy
+from email import parser
+
+import sc_register as sc_reg
+import sc_debug
 
 
 def get(str_srvr, str_user, str_pass, reg_sc):
@@ -33,9 +38,9 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         else:
             return decoded_bytes.decode(charset)
 
-    def cool_msg_walker(parsed_email):  # from https://gist.github.com/strayge/f619cacb972d956ddbe1472d882821fe
-        """ Taks a walk inside a parsed_email """
-        for part in parsed_email.walk():
+    def cool_msg_walker(email_parsed):  # from https://gist.github.com/strayge/f619cacb972d956ddbe1472d882821fe
+        """ Taks a walk inside a email_parsed """
+        for part in email_parsed.walk():
             if part.is_multipart():
                 # maybe need also parse all subparts
                 continue
@@ -53,7 +58,6 @@ def get(str_srvr, str_user, str_pass, reg_sc):
 
     # =============   Connect to POP3 server   =============================
 
-    print(str_srvr, str_user, str_pass)
     # Open connection to email (POP) server
     try:
         con_pop = poplib.POP3_SSL(str_srvr)  # SSL is cool
@@ -72,19 +76,18 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         logging.info("Start reading {} messages from server".format(num_tot_msgs))
         # We have a pop3 connection :-)
         num_email = 0  # To avoid problems with counter after this loop, if no mails found.
+        dic_keys = dict()  # for key stat only
         for num_email in range(1,num_tot_msgs+1):  # pop3 server count from 1 (not from 0)
-            #if num_email > 6: continue
+            if num_email >= 300: continue  # <------------------------------------------------------------------------------ LUS¨
+            # Retreive the e-mail from the server
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
-
-            raw_email = b"\n".join(email_retr)
-            parsed_email = email.message_from_bytes(raw_email)
-            logging.info("#{}  {} << {}".format(num_email, decode_header(parsed_email['Subject']), decode_header(parsed_email['From'])))
-            # parsed_email['Date'] , parsed_email['To']
-
-            # # Turn the email.massage into a SCMail
-            # scm_in = sc_reg.SCMail(msg)
-            # # Add the SCMail to the register
-            # reg_sc.insert(scm_in)
+            email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)
+            # Turn the email.massage into a SCMail
+            if num_email == -1: sc_debug.analyse_parsed_email(email_parsed)  # look at one email
+            scm_in = sc_reg.SCMail(email_parsed)
+            scm_in.show()
+            # Add the SCMail to the register
+            ##reg_sc.insert(scm_in)
 
         # Close connection to email server
         con_pop.quit()

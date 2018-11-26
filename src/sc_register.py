@@ -21,60 +21,58 @@ logger = logging.getLogger('spamclam')
 
 class SCMail(object):
     """ The 'equivalent' or 'extract' of one email.
+    expects an object of type: email.message.Message
     But only the relevant parts, and added some more info and functions
     Instances are initialised with a 'real' email message.
     This object is designed to be the 'e-mail massage' to use with SpamClam. """
 
-    def __init__(self, emlmsg):
+    def __init__(self, eml_in):
         logger.debug("class init. SCMail")
-        self._mesg = emlmsg
-        self._data = dict()
+        self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._spamlevel = 0  # 0..9
-        self._mandatory_fields = ('id', 'from', 'to', 'cc', 'bcc', 'subject')
-        for key_i in self._mandatory_fields:
-            self._data[key_i] = "" # Initialize to empty string, rather than None
-        self._msg2data()
+        if isinstance(eml_in, email.message.EmailMessage):
+            self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
+            self._msg2data()  # fill _data with info from _mesg
+        else:
+            self._mesg = None
 
     def show(self):
-        print("")
-        print((" id      : {}".format(self.get('id'))))
-        print((" date    : {}".format(self.get('date'))))
-        print((" from    : {}".format(self.get('from'))))
-        print((" to      : {}".format(self.get('to'))))
-        print((" cc      : {}".format(self.get('cc'))))
-        print((" bcc     : {}".format(self.get('bcc'))))
-        print((" subject : {}".format(self.get('subject'))))
+        print("------ SCMail:")
+        for key in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject']:
+            if self.get(key) != "":
+                print((" {}: {}".format(key.ljust(8), self.get(key))))
 
     def _msg2data(self):
         """ This function tries to set all the entries, from the org. message """
         msg = self._mesg
+        ## Apparently msg.get('<lable>') and msg['<lable>'] is interchangeable. Try using shorter form.
         # * id
         try:
-            self._data['id'] = msg.get('Message-ID').strip('<>')
+            self._data['id'] = msg['Message-ID'].strip('<>')
         except AttributeError:
-            logger.warning("email.message seems to have no 'Message-ID'...\n")
+            logger.warning("email.message seems to have no 'Message-ID'...")
             # Try to construct a Message-ID form other headers
-            str_d = msg.get('date')
-            str_f = msg.get('from')
+            str_d = msg['date']
+            str_f = msg['from']
             if str_d or str_f:
-                self._data['id'] = "EC_"+str_d+"__"+str_f
+                self._data['id'] = str_d+"__"+str_f+"@ECsoftware.net"
             else:
-                self._data['id'] = "EC_"+str(uuid.uuid4())  # random unique id
+                self._data['id'] = str(uuid.uuid4())+"@ECsoftware.net"  # random unique id
+            logger.info("Assigning internal EC 'Message-ID': {}".format(self._data['id']))
         # * from
-        self._data['from'] = email.utils.parseaddr(msg.get('from'))[1]
+        self._data['from'] = msg['from'] ##email.utils.parseaddr(msg.get('from'))[1]
         # * to
-        self._data['to'] = email.utils.parseaddr(msg.get('to'))[1]
+        self._data['to'] = msg['to'] ##email.utils.parseaddr(msg.get('to'))[1]
         # * cc
-        self._data['cc'] = msg.get('cc') # happens to return None in no cc available
+        self._data['cc'] = msg['cc'] ##msg.get('cc') # happens to return None in no cc available
         # * bcc
-        self._data['bcc'] = msg.get('bcc') # happens to return None in no cc available
+        self._data['bcc'] = msg['bcc'] ##msg.get('bcc') # happens to return None in no cc available
         # * subject
-        raw_sub = msg.get('Subject')
-        dcd_sub = email.header.decode_header(raw_sub)
+        dcd_sub = email.header.decode_header(msg['Subject'])
         self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
         # * body
         # * date
-        self._data['date'] = msg.get('date')
+        self._data['date'] = self._mesg['date']
         # * size
 
         # print "multi?: {}".format(msg.is_multipart())
