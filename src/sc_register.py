@@ -21,7 +21,7 @@ logger = logging.getLogger('spamclam')
 
 class SCMail(object):
     """ The 'equivalent' or 'extract' of one email.
-    expects an object of type: email.message.Message
+    expects an object of type: email.message.EmailMessage
     But only the relevant parts, and added some more info and functions
     Instances are initialised with a 'real' email message.
     This object is designed to be the 'e-mail massage' to use with SpamClam. """
@@ -40,18 +40,31 @@ class SCMail(object):
         print("------ SCMail:")
         for key in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject']:
             if self.get(key) != "":
-                print((" {}: {}".format(key.ljust(8), self.get(key))))
+                print((" {}: {}".format(key.ljust(16), self.get(key))))
+
+    def showall(self):
+        print("------ SCMail:")
+        for key in sorted(self.keys()):
+            if self.get(key) != "":
+                if key != 'body':
+                    print((" {}: {}".format(key.ljust(16), self.get(key))))
+                else:
+                    print((" {}: {}".format(key.ljust(16), "Body type/size: {} / {}".format(len(self.get(key)), type(self.get(key))))))
 
     def _msg2data(self):
-        """ This function tries to set all the entries, from the org. message """
+        """ This function tries to set all the entries, from the org. message.
+         Apparently msg.get('<lable>') and msg['<lable>'] is interchangeable. Try using shorter form. """
         msg = self._mesg
-        ## Apparently msg.get('<lable>') and msg['<lable>'] is interchangeable. Try using shorter form.
-        # * id
+        try:
+            pass#print("======\n{}\n------".format(str(msg)))
+        except:
+            pass
+        # * Message-ID:
         try:
             self._data['id'] = msg['Message-ID'].strip('<>')
         except AttributeError:
-            logger.warning("email.message seems to have no 'Message-ID'...")
             # Try to construct a Message-ID form other headers
+            logger.warning("email.message seems to have no 'Message-ID'...")
             str_d = msg['date']
             str_f = msg['from']
             if str_d or str_f:
@@ -59,29 +72,41 @@ class SCMail(object):
             else:
                 self._data['id'] = str(uuid.uuid4())+"@ECsoftware.net"  # random unique id
             logger.info("Assigning internal EC 'Message-ID': {}".format(self._data['id']))
-        # * from
-        self._data['from'] = msg['from'] ##email.utils.parseaddr(msg.get('from'))[1]
-        # * to
-        self._data['to'] = msg['to'] ##email.utils.parseaddr(msg.get('to'))[1]
-        # * cc
-        self._data['cc'] = msg['cc'] ##msg.get('cc') # happens to return None in no cc available
-        # * bcc
-        self._data['bcc'] = msg['bcc'] ##msg.get('bcc') # happens to return None in no cc available
-        # * subject
-        dcd_sub = email.header.decode_header(msg['Subject'])
-        self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
-        # * body
+        self._data['id_dom'] = self._data['id'].rsplit("@", 1)[1]
         # * date
         self._data['date'] = self._mesg['date']
+        try:
+            pass # parse the date...
+        except ValueError:
+            print("Bad date: {}".format(self._mesg['date']))
+        # * from
+        self._data['from'] = msg['from']
+        if "<" in self._data['from']:
+            self._data['from_nam'] = self._data['from'].split('<', 1)[0].strip()
+            self._data['from_adr'] = self._data['from'].rsplit("<", 1)[1].strip('>')
+            self._data['from_dom'] = self._data['from_adr'].rsplit("@", 1)[1]
+        else:
+            self._data['from_dom'] = self._data['from'].rsplit("@", 1)[1]
+        # * return-path
+        self._data['return-path'] = msg['return-path']
+        self._data['return-path_dom'] = self._data['return-path'].rsplit("@", 1)[1].strip('>').strip()
+        # * reply-to
+        if 'reply-to' in msg:  # It's email.message.EmailMessage style not to use .keys()
+            self._data['reply-to'] = msg['reply-to']
+            self._data['reply-to_dom'] = self._data['reply-to'].rsplit("@", 1)[1].strip('>').strip()
+        # * to
+        self._data['to'] = msg['to']
+        # * cc
+        self._data['cc'] = msg['cc']
+        # * bcc
+        self._data['bcc'] = msg['bcc']
+        # * subject
+        ##dcd_sub = email.header.decode_header(msg['Subject'])
+        ##self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
+        self._data['subject'] = msg['subject']
+        # * body
+        self._data['body'] = msg.get_body()
         # * size
-
-        # print "multi?: {}".format(msg.is_multipart())
-        # print "keys  : {}".format("\n = ".join(sorted(msg.keys())))
-        # print "rplto : {}".format(email.utils.parseaddr(msg.get('reply-to')))
-        # Return-Path
-        # Message-ID: in particulary the part right of @
-        # X-Sender
-        # Sender (sending 'on behalf of' from)
 
         for key_check in list(self._data.keys()):
             if self._data[key_check] == None:
@@ -97,11 +122,10 @@ class SCMail(object):
 
     def get(self, mkey):
         """ Get one field's value """
-        if mkey in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject', 'body', 'size']:
-            return self._data[mkey]
-        # XXX Consider reply-to, date, has-attachments...
-        else:
-            return None
+        #if mkey in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject', 'body', 'size']:
+        return self._data[mkey]
+        #else:
+        #    return None
 
     # End of class SCMail()
 

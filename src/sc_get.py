@@ -78,14 +78,17 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         num_email = 0  # To avoid problems with counter after this loop, if no mails found.
         dic_keys = dict()  # for key stat only
         for num_email in range(1,num_tot_msgs+1):  # pop3 server count from 1 (not from 0)
-            if num_email >= 300: continue  # <------------------------------------------------------------------------------ LUS¨
+            if num_email >= 999: continue  # <------------------------------------------------------------------------------ LUS¨
             # Retreive the e-mail from the server
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
             email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)
             # Turn the email.massage into a SCMail
-            if num_email == -1: sc_debug.analyse_parsed_email(email_parsed)  # look at one email
+            #if num_email == -1: sc_debug.analyse_parsed_email(email_parsed)  # look at one email
+            if 'passagen' in email_parsed['from']:
+                sc_debug.analyse_retreived_email(email_retr)  # look at one email
+                #sc_debug.analyse_parsed_email(email_parsed)  # look at one email
             scm_in = sc_reg.SCMail(email_parsed)
-            scm_in.show()
+            scm_in.showall()
             # Add the SCMail to the register
             ##reg_sc.insert(scm_in)
 
