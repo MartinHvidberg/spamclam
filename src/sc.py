@@ -12,7 +12,7 @@ __version__ = '0.4.1'
 
 import argparse
 
-import sc_register as sc_reg
+import sc_register
 import sc_get
 
 
@@ -42,7 +42,7 @@ def get_args():
                             help = 'What you want to do with the filter, e.g. run')
     elif arg_comm.command == 'view':  # ------ view ---------------------------
         parser.add_argument('view_level',
-                            choices = ['spam', 'gray', 'white'],
+                            choices = ['spam', 'gray', 'white', 'all'],
                             nargs = '+',
                             help = 'What do you want to view, e.g. spam gray')
     elif arg_comm.command == 'set':  # ------ set ----------------------------
@@ -73,13 +73,22 @@ if __name__ == '__main__':
     ##print("CLI arg: {}".format(arg_in))
 
     if arg_in.command == 'get':
+        print("SpamClam get : running...")
         # deal with --logmode
-        reg_sc = sc_reg.Register()  # Build empty register
+        reg_sc = sc_register.Register()  # Build empty register
         reg_sc = sc_get.get(arg_in.server ,arg_in.user ,arg_in.password, reg_sc)  # Fill register with e-mail info from server
+        reg_sc.write_to_file()  # Write the new register to default filename
+        print("SpamClam get : {} e-mails. Done...".format(reg_sc.count()))
     elif arg_in.command == 'filter':
         pass
     elif arg_in.command == 'view':
-        pass
+        print("SpamClam view : running...")
+        reg_sc = sc_register.Register()  # Build empty register
+        reg_sc.read_from_file()
+        for scmail_id in reg_sc.list():
+            reg_sc.get(scmail_id).showmini()
+        print("... e-mails now available: {}".format(reg_sc.count()))
+        print("SpamClam view : Done...".format(reg_sc.count()))
     elif arg_in.command == 'set':
         pass
     elif arg_in.command == 'kill':

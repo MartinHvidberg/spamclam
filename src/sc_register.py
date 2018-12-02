@@ -13,6 +13,9 @@ __version__ = '0.4.1'
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 
+import os
+import datetime
+import pickle
 import uuid
 import email
 import logging
@@ -22,7 +25,7 @@ logger = logging.getLogger('spamclam')
 class SCMail(object):
     """ The 'equivalent' or 'extract' of one email.
     expects an object of type: email.message.EmailMessage
-    But only the relevant parts, and added some more info and functions
+    But only the relevant parts are kept, and some more info and functions are added
     Instances are initialised with a 'real' email message.
     This object is designed to be the 'e-mail massage' to use with SpamClam. """
 
@@ -30,6 +33,7 @@ class SCMail(object):
         logger.debug("class init. SCMail")
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._spamlevel = 0  # 0..9
+        self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         if isinstance(eml_in, email.message.EmailMessage):
             self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
             self._msg2data()  # fill _data with info from _mesg
@@ -41,6 +45,9 @@ class SCMail(object):
         for key in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject']:
             if self.get(key) != "":
                 print((" {}: {}".format(key.ljust(16), self.get(key))))
+
+    def showmini(self):
+        print((" {} :: {}".format(self.get('from'), self.get('subject'))))
 
     def showall(self):
         print("------ SCMail:")
@@ -135,13 +142,20 @@ class Register(object):
 
     def __init__(self, str_infile=None):
         self._data = dict()  # dictionary of SCMails
-        self._count = 0
         if str_infile:
             self.read_from_file(str_infile)
 
     def insert(self, scm_in):
         """ inserts a SCMail into the register """
-        pass
+        id = scm_in.get('id')
+        ##print("id:{}".format(id))
+        if id in self.list():
+            print("Warning: e-mail id all ready exist in register! Overwriting: {}".format(id))
+        self._data[id] = scm_in
+
+    def count(self):
+        """ Return number of e-mails in the register """
+        return len(self._data.keys())
 
     def list(self):
         """ return a list of id's for the SCMails in the register"""
@@ -155,15 +169,42 @@ class Register(object):
     def get(self, id):
         """ return the SCMail with the given id
         if not found, then returns None """
-        return None
+        return self._data[id]
 
-    def write_to_file(self, str_fn):
+    def write_to_file(self, str_fn=""):
         """ writes the entire Register to a disc file """
-        pass
+        if str_fn == "":  # User didn't specify filename, use default
+            # XXX Make sure ../register exist as a directory ...
+            str_timestamp =  str(datetime.datetime.now()).split(".")[0].replace(":", "").replace("-", "").replace(" ", "_")
+            str_fn = r"../register/SCreg_" + str_timestamp + ".ecscreg"
+        with open(str_fn, 'wb') as fil_out:
+            # Pickle the 'data' dictionary using the highest protocol available.
+            pickle.dump(self._data, fil_out, pickle.HIGHEST_PROTOCOL)
 
-    def read_from_file(self, str_fn):
+    def read_from_file(self, str_fn=""):
         """ fills the Register with the info from a disc file """
-        pass
+
+        def find_newest_register():
+            """ Find the newest .ecscreg file in ../register """
+            str_root_dir = r"../register"
+            lst_finds = list()
+            for dirName, subdirList, fileList in os.walk(str_root_dir):
+                for str_fn in fileList:
+                    if str_fn.lower().endswith(('ecscreg')):
+                        lst_finds.append(str_fn)
+            if len(lst_finds) > 0:
+                lst_finds.sort()
+                return str_root_dir + os.sep + lst_finds[-1]
+            else:
+                print("No valid files found...")
+                return None
+
+        if str_fn == "":  # User didn't specify filename, find newest default file
+            # XXX Make sure ../register exist as a directory ...
+            str_fn = find_newest_register()
+            with open(str_fn, 'rb') as fil_in:
+                obj_reg = pickle.load(fil_in)
+            self._data = obj_reg
 
     # End of class Register()
 
@@ -173,4 +214,6 @@ if __name__ == '__main__':
 # End of Python
 
 # Music that accompanied the coding of this script:
-#   Queen - Greatest hits III
+#    Queen - Greatest hits III
+#    TV2 - Sæler, Hvaler og Solskin
+#    Pink Floyd - Dark side of the Moon
