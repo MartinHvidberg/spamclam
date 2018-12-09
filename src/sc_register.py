@@ -32,13 +32,18 @@ class SCMail(object):
     def __init__(self, eml_in):
         logger.debug("class init. SCMail")
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
-        self._spamlevel = 0  # 0..9
+        self._filterres = list()  # List of Filter_result objects.
+        self._spamlevel = None  # 0..9, None if un-set
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         if isinstance(eml_in, email.message.EmailMessage):
             self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
             self._msg2data()  # fill _data with info from _mesg
         else:
             self._mesg = None
+
+    def set_spamlevel_from_filterres(self):
+        """ Read through the filter results, and determines the final spam-level """
+        pass
 
     def show(self):
         print("------ SCMail:")
@@ -141,6 +146,7 @@ class Register(object):
     """ Essentially a dict() of SCMails, with some functions to handle it ... """
 
     def __init__(self, str_infile=None):
+        """ Note: Only _data is pickled """
         self._data = dict()  # dictionary of SCMails
         if str_infile:
             self.read_from_file(str_infile)

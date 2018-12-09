@@ -37,25 +37,33 @@ def get_args():
         parser.add_argument('password',
                             help = 'Your secret e-mail pasword, e.g. Fu6hx!2Z')
     elif arg_comm.command == 'filter':  # ------ filter -----------------------
-        parser.add_argument('filter_activity',
+        parser.add_argument('fdo',
                             choices = ['run', 'form'],
+                            nargs = 1,
                             help = 'What you want to do with the filter, e.g. run')
+        parser.add_argument('fname',
+                            choices = ['bw', 'karma'],
+                            nargs = 1,
+                            help = 'Name of the filter you want to run, e.g. karma')
+        parser.add_argument('--fdetails',
+                            nargs = '*',
+                            help = 'More options, specific to the selected filter')
     elif arg_comm.command == 'view':  # ------ view ---------------------------
-        parser.add_argument('view_level',
+        parser.add_argument('vlevel',
                             choices = ['spam', 'gray', 'white', 'all'],
                             nargs = '+',
                             help = 'What do you want to view, e.g. spam gray')
     elif arg_comm.command == 'set':  # ------ set ----------------------------
-        parser.add_argument('set_value',
+        parser.add_argument('sval',
                             choices = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'o', 's', 'p', 'u'],
                             nargs = 1,
                             help = 'What value do you want to apply to an e-mail (0..9,o,s,p,u) for spam-level, okay, spam, protected or un-protected')
-        parser.add_argument('set_mailnumb',
+        parser.add_argument('smails',
                             metavar = 'mail#',
                             nargs = '+',
                             help = 'list of e-mail numbers you wat to apply to, e.g. 7 9 13')
     elif arg_comm.command == 'kill':  # ------ kill ---------------------------
-        parser.add_argument('kill_level',
+        parser.add_argument('klevel',
                             nargs = '?',
                             choices = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'spam'],
                             default = 'spam',
@@ -70,31 +78,60 @@ def get_args():
 if __name__ == '__main__':
 
     arg_in = get_args()
-    ##print("CLI arg: {}".format(arg_in))
+    print("CLI arg: {}".format(arg_in))
+
+    bol_okay = True  # Assume that everything is Okay, until proven wrong
 
     if arg_in.command == 'get':
-        print("SpamClam get : running...")
-        # deal with --logmode
-        reg_sc = sc_register.Register()  # Build empty register
-        reg_sc = sc_get.get(arg_in.server ,arg_in.user ,arg_in.password, reg_sc)  # Fill register with e-mail info from server
-        reg_sc.write_to_file()  # Write the new register to default filename
-        print("SpamClam get : {} e-mails. Done...".format(reg_sc.count()))
+        # Check parameters arg_in.server ,arg_in.user ,arg_in.password
+        if not "@" in arg_in.user:
+            print(" ! argument for 'user' is expected to contain an '@'")
+            bol_okay = False
+        if bol_okay:
+            print("SpamClam get : {} {} ****** ...running...".format(arg_in.server, arg_in.user))
+            # deal with --logmode
+            reg_sc = sc_register.Register()  # Build empty register
+            reg_sc = sc_get.get(arg_in.server ,arg_in.user ,arg_in.password, reg_sc)  # Fill register with e-mail info from server
+            reg_sc.write_to_file()  # Write the new register to default filename
+            print("SpamClam get : {} e-mails. Done...".format(reg_sc.count()))
+
     elif arg_in.command == 'filter':
-        pass
+        str_filter_do = arg_in.fdo[0]
+        str_filter_name = arg_in.fname[0]
+        if bol_okay:
+            print("SpamClam filter : {} {} {} ...running...".format(str_filter_do, str_filter_name, arg_in.fdetails))
+            # Load Register
+            reg_sc = sc_register.Register()  # Build empty register
+            reg_sc.read_from_file()
+            # Load Filter
+
+            # Parse Register through Filter
+
+            print("SpamClam filter : Done...")
+
     elif arg_in.command == 'view':
-        print("SpamClam view : running...")
-        reg_sc = sc_register.Register()  # Build empty register
-        reg_sc.read_from_file()
-        for scmail_id in reg_sc.list():
-            reg_sc.get(scmail_id).showmini()
-        print("... e-mails now available: {}".format(reg_sc.count()))
-        print("SpamClam view : Done...".format(reg_sc.count()))
+        if bol_okay:
+            print("SpamClam view : ...running...")
+            # Load Register
+            reg_sc = sc_register.Register()  # Build empty register
+            reg_sc.read_from_file()
+            # View Register
+            for scmail_id in reg_sc.list():
+                reg_sc.get(scmail_id).showmini()
+            print("... e-mails now available: {}".format(reg_sc.count()))
+            print("SpamClam view : Done...".format(reg_sc.count()))
+
     elif arg_in.command == 'set':
-        pass
+        if bol_okay:
+            pass
+
     elif arg_in.command == 'kill':
-        pass
+        if bol_okay:
+            pass
+
     elif arg_in.command == 'version':
         print("SpamClam - Command Line Interface. Version {}".format(__version__))
+
     else:
         print("You should never see this, because that would mean that get_args() have parsed a command that isn't implemented...")
 

@@ -78,7 +78,7 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         num_email = 0  # To avoid problems with counter after this loop, if no mails found.
         dic_keys = dict()  # for key stat only
         for num_email in range(1,num_tot_msgs+1):  # pop3 server count from 1 (not from 0)
-            if num_email >= 9999: continue  # <------------------------------------------------------------------------------ LUS¨
+            if num_email >= 999999999: continue  # <------------------------------------------------------------------------------ LUS¨
             # Retreive the e-mail from the server
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
             email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)

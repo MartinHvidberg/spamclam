@@ -54,7 +54,7 @@ def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, res
     # =============   Spamalyse   ==========================================
 
     # Create Spamalyser object(s)
-    salysr_sbw = spamalyse.Spamalyser(str_mode, 'mode_simple_bw/', str_wob)  # Consider moving WOB to simple_bw.py
+    salysr_sbw = spamalyse.Spamalyser(str_mode, 'filter_simple_bw/', str_wob)  # Consider moving WOB to simple_bw.py
     ##salysr_sbw.show_rules()  ## only for debug - a non ui-module should not use print, nor pp
 
     # Create a Statistics object
