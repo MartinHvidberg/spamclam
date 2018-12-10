@@ -36,10 +36,15 @@ class Karma(filter_base.Filter):
     """ Karma is a mix of many factors, lets see where it leads... """
 
     def __init__(self):
+        super().__init__()
         logging.debug("class init. {}".format(self.say_hi()))
 
     def spamalyse(self, scm_in):  # overload method from Filter()
         pass
+
+    def _debug(self, param):
+        self._data['debug'] = param
+        return self._data['debug']
 
 if __name__ == '__main__':
 
@@ -47,3 +52,4 @@ if __name__ == '__main__':
     flt_k = Karma()
     print("test: {}".format(flt_k))
     print("Say: {}".format(flt_k.say_hi()))
+    print("db: {}".format(flt_k._debug('Yoo')))
