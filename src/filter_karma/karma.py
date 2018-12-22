@@ -37,14 +37,23 @@ class Karma(filter_base.Filter):
 
     def __init__(self):
         super().__init__()
+        self.str_filter_name = 'Karma'
         logging.debug("class init. {}".format(self.say_hi()))
 
     def spamalyse(self, scm_in):  # overload method from Filter()
-        pass
+        self.check_message_id(scm_in)
+        return scm_in
+
 
     def _debug(self, param):
         self._data['debug'] = param
         return self._data['debug']
+
+    def check_message_id(self, scm_i):
+        """ Checks the scmail's Messag-ID """
+        if scm_i.get('id').endswith('@ECsoftware.net'):
+            scm_i.add_vote(self.str_filter_name, 1, None, None, 'No Message-ID')
+        print("MsgID: {}".format(scm_i.get('id')))
 
 if __name__ == '__main__':
 

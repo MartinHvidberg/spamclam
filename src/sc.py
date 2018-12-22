@@ -10,10 +10,13 @@ __version__ = '0.4.1'
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 
+import sys, os
 import argparse
 
 import sc_register
 import sc_get
+sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
+import karma
 
 
 def get_args():
@@ -104,8 +107,9 @@ if __name__ == '__main__':
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc.read_from_file()
             # Load Filter
-
+            ftr_karma = karma.Karma()
             # Parse Register through Filter
+            ftr_karma.filter(reg_sc)
 
             print("SpamClam filter : Done...")
 
@@ -116,7 +120,7 @@ if __name__ == '__main__':
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc.read_from_file()
             # View Register
-            for scmail_id in reg_sc.list():
+            for scmail_id in reg_sc.list_all():
                 reg_sc.get(scmail_id).showmini()
             print("... e-mails now available: {}".format(reg_sc.count()))
             print("SpamClam view : Done...".format(reg_sc.count()))
@@ -139,3 +143,4 @@ if __name__ == '__main__':
 
 # Music that accompanied the coding of this script:
 #   Queen - Greatest hits I
+

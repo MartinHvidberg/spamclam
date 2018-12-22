@@ -32,7 +32,7 @@ class SCMail(object):
     def __init__(self, eml_in):
         logger.debug("class init. SCMail")
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
-        self._filterres = list()  # List of Filter_result objects.
+        self._filterres = dict()  # Dict of Filter Response objects.
         self._spamlevel = None  # 0..9, None if un-set
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         if isinstance(eml_in, email.message.EmailMessage):
@@ -101,7 +101,10 @@ class SCMail(object):
             self._data['from_dom'] = self._data['from'].rsplit("@", 1)[1]
         # * return-path
         self._data['return-path'] = msg['return-path']
-        self._data['return-path_dom'] = self._data['return-path'].rsplit("@", 1)[1].strip('>').strip()
+        if "@" in self._data['return-path']:
+            self._data['return-path_dom'] = self._data['return-path'].rsplit("@", 1)[1].strip('>').strip()
+        else:
+            self._data['return-path_dom'] = self._data['return-path']
         # * reply-to
         if 'reply-to' in msg:  # It's email.message.EmailMessage style not to use .keys()
             self._data['reply-to'] = msg['reply-to']
@@ -120,24 +123,41 @@ class SCMail(object):
         self._data['body'] = msg.get_body()
         # * size
 
-        for key_check in list(self._data.keys()):
+        for key_check in self._data.keys():
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
 
     def keys(self):
         """ Return a list of available keys """
-        return list(self._data.keys())
+        return self._data.keys()
 
     def has_key(self, key_in):
         """ return true if a key exists, otherwise false """
-        return key_in in list(self._data.keys())
+        return key_in in self._data.keys()
 
     def get(self, mkey):
         """ Get one field's value """
-        #if mkey in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject', 'body', 'size']:
-        return self._data[mkey]
-        #else:
-        #    return None
+        if self.has_key(mkey):
+            return self._data[mkey]
+        else:
+            return None
+
+    def add_filter_response(self, ftr_in):
+        """ Create a new filter Response on the _filterres list. """
+        self._filterres[ftr_in['name']] = ftr_in
+
+    def add_vote(self, filter_name, vote, fmin, fmax, note):
+        if not filter_name in self._filterres.keys():
+            self.add_filter_response(filter_name)
+        rsp_obj = self._filterres[filter_name]
+        if isinstance(fmin, int):
+            rsp_obj.update_fmin(fmin)
+        if isinstance(fmax, int):
+            rsp_obj.update_fmax(fmax)
+        if isinstance(vote, int):
+            rsp_obj.vote(vote)
+        if isinstance(note, str):
+            rsp_obj.add_note(note)
 
     # End of class SCMail()
 
@@ -155,7 +175,7 @@ class Register(object):
         """ inserts a SCMail into the register """
         id = scm_in.get('id')
         ##print("id:{}".format(id))
-        if id in self.list():
+        if id in self.list_all():
             print("Warning: e-mail id all ready exist in register! Overwriting: {}".format(id))
         self._data[id] = scm_in
 
@@ -163,7 +183,7 @@ class Register(object):
         """ Return number of e-mails in the register """
         return len(self._data.keys())
 
-    def list(self):
+    def list_all(self):
         """ return a list of id's for the SCMails in the register"""
         return self._data.keys()
 
