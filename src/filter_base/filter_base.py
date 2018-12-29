@@ -32,7 +32,7 @@ class Response(dict):
     """
 
     def __init__(self, name=''):
-        super(Response, self).__init__()
+        super().__init__()
         self['name'] = name
         self['vote'] = 0
         self['fmin'] = 0
@@ -40,11 +40,41 @@ class Response(dict):
         self['reasons'] = list()
 
 
-    def set_name(self, name):
-        self['name'] = name
+    def _update_fmin(self, valu):
+        """ Set fmin to valu, if stronger than present value. """
+        if isinstance(valu, int):
+            if valu >= 0 and valu <= 9:
+                if valu < self['fmin']:  # Only change is new values is stronger
+                    self['fmin'] = valu
+                    self._secure_limits()
 
 
-    def secure_value(self):
+    def _update_fmax(self, valu):
+        """ Set fmax to valu, if stronger than present value. """
+        if isinstance(valu, int):
+            if valu >= 0 and valu <= 9:
+                if valu > self['fmax']:  # Only change is new values is stronger
+                    self['fmax'] = valu
+                    self._secure_limits()
+
+
+    def _add_reason(self, str_reson):
+        """ Adds a reason (string) to the reasons list """
+        self['reasons'].append(str_reson)  # XXX make it a tuple w. vote, min, max & reason
+
+
+    def vote(self, vote, fmin, fmax, reason):
+        """ Adjust Vote by a defined value, + is up and - is down
+        Limits Min and Max applies, and reason is added. """
+        if isinstance(vote, int):
+            self._update_fmin(fmin)
+            self._update_fmax(fmax)
+            self['vote'] += vote
+            self._secure_value()
+            self._add_reason(reason)
+
+
+    def _secure_value(self):
         """ Pushes value inside the Min Max limits """
         if self['vote'] > self['fmax']:  # Obay the Max limit
             self['vote'] = self['fmax']
@@ -52,78 +82,52 @@ class Response(dict):
             self['vote'] = self['fmin']
 
 
-    def secure_limits(self):
-        """ If the Min Max limits are chrossed, then flip them """
+    def _secure_limits(self):
+        """ If the Min Max limits are crossed, then flip them """
         if self['fmin'] > self['fmax']:
             temp = self['fmin']
             self['fmin'] = self['fmax']
             self['fmax'] = temp
-        self.secure_value()  # Secure the Vote is inside the ajusted limits
-
-
-    def set_fmin(self, valu):
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                self['fmin'] = valu
-                self.secure_limits()
-
-
-    def update_fmin(self, valu):
-        """ Set fmin to value, if stronger than present value. """
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                if valu < self['fmin']:  # Only change is new values is stronger
-                    self['fmin'] = valu
-                    self.secure_limits()
-
-
-    def set_fmax(self, valu):
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                self['fmax'] = valu
-                self.secure_limits()
-
-
-    def update_fmax(self, valu):
-        """ Set fmax to value, if stronger than present value. """
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                if valu > self['fmax']:  # Only change is new values is stronger
-                    self['fmax'] = valu
-                    self.secure_limits()
-
-
-    def set_vote(self, vote):
-        """ Set Vote to a defined value
-        Limits Min and Max applies """
-        if isinstance(vote, int):
-            self['vote'] = vote
-            self.secure_value()
-
-
-    def vote(self, vote):
-        """ Ajust Vote by a defined value, + is up and - is down
-        Limits Min and Max applies """
-        if isinstance(vote, int):
-            self['vote'] += vote
-            self.secure_value()
-
-
-    def add_reason(self, str_reson):
-        """ Adds a reason (string) to the reasons list """
-        self['reasons'].append(str_reson)
+        self._secure_value()  # Secure the Vote is inside the adjusted limits
 
 
     def merge(self, another_responce):
         """ Includes another response in this response,
-        preserving the more conservative values between them """
+        preserving the more conservative values between them. """
         if isinstance(another_responce, Response):
             self['fmin'] = min(self['fmin'], another_responce['fmin'])
             self['fmax'] = max(self['fmax'], another_responce['fmax'])
             self['vote'] = max(self['vote'], another_responce['vote'])
             self['reasons'].extend(another_responce['reasons'])
-            self.secure_limits()
-            self.secure_value()
+            self._secure_limits()
+            self._secure_value()
+
+
+    def xxxset_name(self, name):
+        self['name'] = name
+
+
+    def xxxset_fmin(self, valu):
+        if isinstance(valu, int):
+            if valu >= 0 and valu <= 9:
+                self['fmin'] = valu
+                self._secure_limits()
+
+
+    def xxxset_fmax(self, valu):
+        if isinstance(valu, int):
+            if valu >= 0 and valu <= 9:
+                self['fmax'] = valu
+                self._secure_limits()
+
+
+    def xxxset_vote(self, vote):
+        """ Set Vote to a defined value
+        Limits Min and Max applies """
+        if isinstance(vote, int):
+            self['vote'] = vote
+            self._secure_value()
+
 
 
 
@@ -137,21 +141,22 @@ class Filter(object):
     def __init__(self):
         logging.debug("class init. Filter")
         self.str_filter_name = "Base filter"
-        ##self._data = dict()  # Not really sure what to put here, yet
 
     def spamalyse(self, scmail):
         """ Checks a single SCMail against the filter, i.e. it self.
-         Filters always receive one scmail and return one scmail
-         The filter always add (or update) one Response entry in the _filterres list
+         Always receive one scmail and return one scmail
+         Always updates one Response entry in the scmail's _filterres list
          """
-        scmail.add_filter_response(self.str_filter_name, Response())
         return scmail  # method is supposed to be overloaded
 
-    def filter(self, register):
+    def filter(self, reg_in):
         """ Checks all SCMails in a Register against the filter, i.e. it self """
-        reg_out = sc_register.Register()
-        for scm_id in register.list_all():
-            scm_f = self.spamalyse(register.get(scm_id))
+        reg_out = sc_register.Register()  # The return Register starts empty
+        for scm_id in reg_in.list_all(): # reg_in.list_match(["id=1545156198.5c193666a9623@w2.doggooi.com"]): # <------ LUS
+            scmail = reg_in.get(scm_id)  # Retrieve the SCMail
+            rsp_in = Response(self.str_filter_name)  # Create a filter Response
+            scmail.add_filter_response(rsp_in)  # This should be the only place a Response() is added to a SCMail() !
+            scm_f = self.spamalyse(scmail)  # Do the actual Spam Analysis
             reg_out.insert(scm_f)
         return reg_out
 

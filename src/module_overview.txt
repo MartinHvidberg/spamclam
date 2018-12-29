@@ -6,13 +6,37 @@ sc.py - The CLI module
 
 sc_register.py - The Register module
 
-	class Salmail(object):
+	(C) SCMail
+		keys()
+		has_key(key)
+		get(key)
+		add_filter_response(response)
+		add_vote(filter_name, vote, fmin, fmax, reason)
+		set_spam_level_fromfilterres()
 
-	class Register(object):
-
-
-sc_get.py
-
+	(C) Register
+		count()
+		list_all()
+		list_match(field=value)
+		list_spam(above=6, below=10)
+		insert(scmail)
+		get(id)
+		read_from_file()
+		write_to_file()
 
 sc_filter.py - The Top Filter module (formerly class Spamalyser())
 
+	(C) Filter
+		filter(register)
+		spamalyse(scmail)
+
+	(C) Response
+		vote(vote, fmin, fmax, reason)
+		merge(response)
+
+filter_karma/karma.py
+
+	(C) Karma(Filter)
+		spamalyse(scmail)
+
+sc_get.py

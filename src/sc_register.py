@@ -143,21 +143,21 @@ class SCMail(object):
             return None
 
     def add_filter_response(self, ftr_in):
-        """ Create a new filter Response on the _filterres list. """
+        """ Create a new filter Response on the _filterres list.
+        If the filter-response exists, it's overwritten """
         self._filterres[ftr_in['name']] = ftr_in
 
-    def add_vote(self, filter_name, vote, fmin, fmax, note):
-        if not filter_name in self._filterres.keys():
-            self.add_filter_response(filter_name)
+    def add_vote(self, filter_name, vote, fmin, fmax, reason):
+        """ Adds a vote to the relevant response in _filterres
+        filter_name must point to existing response
+        vote, fmin, fmax must be integer [0..9]
+        reason must be string """
         rsp_obj = self._filterres[filter_name]
-        if isinstance(fmin, int):
-            rsp_obj.update_fmin(fmin)
-        if isinstance(fmax, int):
-            rsp_obj.update_fmax(fmax)
-        if isinstance(vote, int):
-            rsp_obj.vote(vote)
-        if isinstance(note, str):
-            rsp_obj.add_note(note)
+        #rsp_obj._update_fmin(fmin)
+        #rsp_obj._update_fmax(fmax)
+        rsp_obj.vote(vote, fmin, fmax, reason)
+        #rsp_obj._add_reason(reason)
+        self._filterres[filter_name] = rsp_obj  # Is this really necessary? XXX
 
     # End of class SCMail()
 
@@ -189,8 +189,32 @@ class Register(object):
 
     def list_match(self, lst_criteria):
         """ returns a list of id's for the SCMails in the register
-        that matches all the criteria in lst_criteria """
-        pass
+        that matches all the criteria in lst_criteria.
+         Each criteria is string, of form "<field>=<value>" - may be extended later """
+        if not isinstance(lst_criteria, list):
+            print("lst_criteria not type == list, but type == {}".format(str(type(lst_criteria))))
+            return []
+        lst_ret = list()
+        for crit in lst_criteria:
+            lst_crit = crit.split("=")
+            if all([len(lst_crit) == 2, all([isinstance(tok, str) for tok in lst_crit])]):
+                str_fld = lst_crit[0]
+                str_val = lst_crit[1]
+                for scmailid in self.list_all():
+                    scmail = self.get(scmailid)
+                    if scmail.has_key(str_fld):
+                        if scmail.get(str_fld) == str_val:
+                            lst_ret.append(scmailid)
+        return list(set(lst_ret))
+
+    def list_spam(self, above=6, below=10):
+        """ Returns a list of id's for the SCMails in the register
+        that matches the limits of spam risk.
+        General:
+            0: Super clean, usually unfiltered
+            1..3: Still quite clean, no serious spam suspicions
+            4..6: Grey zone, my be dodgy
+            7..9: Dirty and considered Spam... """
 
     def get(self, id):
         """ return the SCMail with the given id
@@ -209,6 +233,7 @@ class Register(object):
 
     def read_from_file(self, str_fn=""):
         """ fills the Register with the info from a disc file """
+        # XXX Make sure ../register exist as a directory ...
 
         def find_newest_register():
             """ Find the newest .ecscreg file in ../register """
@@ -225,12 +250,13 @@ class Register(object):
                 print("No valid files found...")
                 return None
 
-        if str_fn == "":  # User didn't specify filename, find newest default file
-            # XXX Make sure ../register exist as a directory ...
+        if str_fn == "":  # User didn't specify filename, get newest default file
             str_fn = find_newest_register()
-            with open(str_fn, 'rb') as fil_in:
-                obj_reg = pickle.load(fil_in)
-            self._data = obj_reg
+        else:
+            str_fn = r"../register" + os.sep + str_fn
+        with open(str_fn, 'rb') as fil_in:  # XXX introduce error handle here, if file not exist
+            obj_reg = pickle.load(fil_in)
+        self._data = obj_reg
 
     # End of class Register()
 

@@ -109,8 +109,7 @@ if __name__ == '__main__':
             # Load Filter
             ftr_karma = karma.Karma()
             # Parse Register through Filter
-            ftr_karma.filter(reg_sc)
-
+            reg_sc = ftr_karma.filter(reg_sc)
             print("SpamClam filter : Done...")
 
     elif arg_in.command == 'view':
