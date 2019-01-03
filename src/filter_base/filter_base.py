@@ -74,6 +74,10 @@ class Response(dict):
             self._add_reason(reason)
 
 
+    def get_vote(self):
+        return self['vote']
+
+
     def _secure_value(self):
         """ Pushes value inside the Min Max limits """
         if self['vote'] > self['fmax']:  # Obay the Max limit

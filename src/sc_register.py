@@ -34,6 +34,7 @@ class SCMail(object):
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._filterres = dict()  # Dict of Filter Response objects.
         self._spamlevel = None  # 0..9, None if un-set
+        self._spamlevel_is_updated = True  # boolean
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         if isinstance(eml_in, email.message.EmailMessage):
             self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
@@ -43,7 +44,15 @@ class SCMail(object):
 
     def set_spamlevel_from_filterres(self):
         """ Read through the filter results, and determines the final spam-level """
-        pass
+        for frs_i in self._filterres:
+            num_spamlevel = max(self._spamlevel, frs_i.get_vote())
+        self._spamlevel_is_updated = True
+
+    def spamlevel(self):
+        """ Returns the SpamLevel of the SCMail """
+        if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
+            self.set_spamlevel_from_filterres()
+        return self._spamlevel
 
     def show(self):
         print("------ SCMail:")
@@ -127,6 +136,8 @@ class SCMail(object):
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
 
+        self._spamlevel_is_updated = False  # Maybe a little excessive here, but in rare cases...
+
     def keys(self):
         """ Return a list of available keys """
         return self._data.keys()
@@ -146,6 +157,7 @@ class SCMail(object):
         """ Create a new filter Response on the _filterres list.
         If the filter-response exists, it's overwritten """
         self._filterres[ftr_in['name']] = ftr_in
+        self._spamlevel_is_updated = False
 
     def add_vote(self, filter_name, vote, fmin, fmax, reason):
         """ Adds a vote to the relevant response in _filterres
@@ -158,6 +170,7 @@ class SCMail(object):
         rsp_obj.vote(vote, fmin, fmax, reason)
         #rsp_obj._add_reason(reason)
         self._filterres[filter_name] = rsp_obj  # Is this really necessary? XXX
+        self._spamlevel_is_updated = False
 
     # End of class SCMail()
 
@@ -207,7 +220,7 @@ class Register(object):
                             lst_ret.append(scmailid)
         return list(set(lst_ret))
 
-    def list_spam(self, above=6, below=10):
+    def list_spam(self, minimum=7, maximum=None):
         """ Returns a list of id's for the SCMails in the register
         that matches the limits of spam risk.
         General:
@@ -215,6 +228,21 @@ class Register(object):
             1..3: Still quite clean, no serious spam suspicions
             4..6: Grey zone, my be dodgy
             7..9: Dirty and considered Spam... """
+        if not isinstance(minimum, int):
+            print("minimum not type == integer, but type == {}".format(str(type(minimum))))
+            return []
+        if maximum and not isinstance(maximum, int):
+            print("maximum not type == integer, but type == {}".format(str(type(maximum))))
+            return []
+        lst_ret = list()
+        for scmailid in self.list_all():
+            scmail = self.get(scmailid)
+            scmail.set_spamlevel_from_filterres()  # Update the spam level
+            num_spmlvl = scmail.spamlevel()
+            if num_spmlvl >= minimum:
+                if num_spmlvl <= maximum or maximum == None:
+                    lst_ret.append(scmailid)
+        return lst_ret
 
     def get(self, id):
         """ return the SCMail with the given id
