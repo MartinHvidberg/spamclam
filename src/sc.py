@@ -111,6 +111,9 @@ if __name__ == '__main__':
             # Parse Register through Filter
             reg_sc = ftr_karma.filter(reg_sc)
             print("SpamClam filter : Done...")
+            # Only for bebug XXX
+            for scmail in reg_sc.list_all():
+                reg_sc.get(scmail).show_spam_status()
 
     elif arg_in.command == 'view':
         if bol_okay:

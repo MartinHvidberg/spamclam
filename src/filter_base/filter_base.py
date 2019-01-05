@@ -71,12 +71,14 @@ class Response(dict):
             self._update_fmax(fmax)
             self['vote'] += vote
             self._secure_value()
-            self._add_reason(reason)
+            self._add_reason(reason + " ({})".format(vote))
 
 
     def get_vote(self):
         return self['vote']
 
+    def get_reasons(self):
+        return self['reasons']
 
     def _secure_value(self):
         """ Pushes value inside the Min Max limits """
@@ -105,34 +107,6 @@ class Response(dict):
             self['reasons'].extend(another_responce['reasons'])
             self._secure_limits()
             self._secure_value()
-
-
-    def xxxset_name(self, name):
-        self['name'] = name
-
-
-    def xxxset_fmin(self, valu):
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                self['fmin'] = valu
-                self._secure_limits()
-
-
-    def xxxset_fmax(self, valu):
-        if isinstance(valu, int):
-            if valu >= 0 and valu <= 9:
-                self['fmax'] = valu
-                self._secure_limits()
-
-
-    def xxxset_vote(self, vote):
-        """ Set Vote to a defined value
-        Limits Min and Max applies """
-        if isinstance(vote, int):
-            self['vote'] = vote
-            self._secure_value()
-
-
 
 
 class Filter(object):

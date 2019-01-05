@@ -57,7 +57,7 @@ class Karma(filter_base.Filter):
         """ Checks the scmail's Messag-ID """
         if scm_i.get('id').endswith('@ECsoftware.net'):
             scm_i.add_vote(self.str_filter_name, 1, None, None, 'No Message-ID')
-        print("MsgID: {}".format(scm_i.get('id')))
+        ##print("MsgID: {}".format(scm_i.get('id')))
         return scm_i
 
 

@@ -33,7 +33,7 @@ class SCMail(object):
         logger.debug("class init. SCMail")
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._filterres = dict()  # Dict of Filter Response objects.
-        self._spamlevel = None  # 0..9, None if un-set
+        self._spamlevel = -1  # 0..9, -1 if un-set
         self._spamlevel_is_updated = True  # boolean
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         if isinstance(eml_in, email.message.EmailMessage):
@@ -44,8 +44,10 @@ class SCMail(object):
 
     def set_spamlevel_from_filterres(self):
         """ Read through the filter results, and determines the final spam-level """
-        for frs_i in self._filterres:
-            num_spamlevel = max(self._spamlevel, frs_i.get_vote())
+        if self._spamlevel == None: self._spamlevel = -1  # XXX Should never be necessary
+        for frs_i in self._filterres.values():
+            vote_l = frs_i.get_vote()
+            self._spamlevel = max(self._spamlevel, vote_l)
         self._spamlevel_is_updated = True
 
     def spamlevel(self):
@@ -71,6 +73,16 @@ class SCMail(object):
                     print((" {}: {}".format(key.ljust(16), self.get(key))))
                 else:
                     print((" {}: {}".format(key.ljust(16), "Body type/size: {} / {}".format(len(self.get(key)), type(self.get(key))))))
+
+    def show_spam_status(self, minimum=1):
+        """ Show the scmail id and the spam info
+        if the scmail's spam-level is at least 'minimum' """
+        if self.spamlevel() >= minimum:
+            print("SCMailid: {}".format(self.get('id')))
+            print(" spamlev: {}".format(self.spamlevel()))
+            for id_frsi in self._filterres:
+                frs_i = self._filterres[id_frsi]
+                print(" reasons: {}={}".format(id_frsi, frs_i.get_reasons()))
 
     def _msg2data(self):
         """ This function tries to set all the entries, from the org. message.
@@ -165,10 +177,7 @@ class SCMail(object):
         vote, fmin, fmax must be integer [0..9]
         reason must be string """
         rsp_obj = self._filterres[filter_name]
-        #rsp_obj._update_fmin(fmin)
-        #rsp_obj._update_fmax(fmax)
         rsp_obj.vote(vote, fmin, fmax, reason)
-        #rsp_obj._add_reason(reason)
         self._filterres[filter_name] = rsp_obj  # Is this really necessary? XXX
         self._spamlevel_is_updated = False
 
