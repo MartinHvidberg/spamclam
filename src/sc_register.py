@@ -8,8 +8,6 @@ The 'SCMail' object represents the SpamClam object equivalent to one e-mail.
 The 'Register' object, essentially an archive of SCMails, is the central data object in all e-mail handling.
 """
 
-__version__ = '0.4.3'
-
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
@@ -24,8 +22,7 @@ import logging
 
 # Initialize logging
 log = logging.getLogger(__name__)
-log.info("Initialize: {} version: {}".format(__file__, __version__))
-
+log.info("Initialize: {}".format(__file__))
 
 
 class SCMail(object):

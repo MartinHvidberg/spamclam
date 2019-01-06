@@ -5,8 +5,6 @@
 The Spam Clam Command Line Interface
 """
 
-__version__ = '0.4.3'
-
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
@@ -23,7 +21,7 @@ logging.basicConfig(filename='SpamClam.log',
                     format='%(asctime)s %(levelname)7s %(funcName)s >> %(message)s')
                     # %(funcName)s
 log = logging.getLogger(__name__)
-log.info("Initialize: {} version: {}".format(__file__, __version__))
+log.info("Initialize: {}".format(__file__))
 
 import sc_register
 import sc_get

@@ -6,8 +6,6 @@ The Spam Clam Get module
 Get e-mails from the e-mail server, and fill the Register with information.
 """
 
-__version__ = '0.4.3'
-
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
@@ -24,8 +22,7 @@ import sc_debug
 
 # Initialize logging
 log = logging.getLogger(__name__)
-log.info("Initialize: {} version: {}".format(__file__, __version__))
-
+log.info("Initialize: {}".format(__file__))
 
 def get(str_srvr, str_user, str_pass, reg_sc):
 

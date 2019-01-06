@@ -1,6 +1,5 @@
 
 
-__version__ = '0.1.0'
 ### Versions
 # 0.1 - initial version of this module
 
@@ -13,8 +12,7 @@ fh_log.setFormatter(formatter)
 log = logging.getLogger("sc_debug")
 log.setLevel('DEBUG')
 log.addHandler(fh_log)
-log.info("Initialize: {} version: {}".format(__file__, __version__))
-
+log.info("Initialize: {}".format(__file__))
 import email
 
 

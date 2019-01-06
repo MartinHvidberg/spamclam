@@ -20,7 +20,6 @@
 
 """
 
-__version__ = '0.4.3'
 ### Versions
 # 0.1 - initial version of this module
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
@@ -37,8 +36,7 @@ import filter_base
 
 # Initialize logging
 log = logging.getLogger(__name__)
-log.info("Initialize: {} version: {}".format(__file__, __version__))
-
+log.info("Initialize: {}".format(__file__))
 
 
 class Karma(filter_base.Filter):
