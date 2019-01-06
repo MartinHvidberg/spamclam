@@ -51,7 +51,7 @@ class Response(dict):
         """ Set fmin to valu, if stronger than present value. """
         if isinstance(valu, int):
             if valu >= 0 and valu <= 9:
-                if valu < self['fmin']:  # Only change is new values is stronger
+                if valu > self['fmin']:  # Only change is new values is stronger
                     self['fmin'] = valu
                     self._secure_limits()
 
@@ -60,7 +60,7 @@ class Response(dict):
         """ Set fmax to valu, if stronger than present value. """
         if isinstance(valu, int):
             if valu >= 0 and valu <= 9:
-                if valu > self['fmax']:  # Only change is new values is stronger
+                if valu < self['fmax']:  # Only change is new values is stronger
                     self['fmax'] = valu
                     self._secure_limits()
 
@@ -74,9 +74,9 @@ class Response(dict):
         """ Adjust Vote by a defined value, + is up and - is down
         Limits Min and Max applies, and reason is added. """
         if isinstance(vote, int):
+            self['vote'] += vote
             self._update_fmin(fmin)
             self._update_fmax(fmax)
-            self['vote'] += vote
             self._secure_value()
             self._add_reason(reason + " ({})".format(vote))
 

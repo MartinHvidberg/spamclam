@@ -55,6 +55,7 @@ class Karma(filter_base.Filter):
         super().spamalyse(scm_in)  # overload method from Filter()
         scm_in = self._check_message_id(scm_in)
         scm_in = self._check_subject(scm_in)
+        scm_in = self._check_from(scm_in)
         return scm_in
 
 
@@ -66,7 +67,7 @@ class Karma(filter_base.Filter):
     def _check_message_id(self, scm_i):
         """ Checks the scmail's Messag-ID """
         if scm_i.get('id').endswith('@ECsoftware.net'):
-            scm_i.add_vote(self.str_filter_name, 1, None, None, 'No Message-ID')
+            scm_i.add_vote(self.str_filter_name, 1, 4, None, 'No Message-ID')
         ##print("MsgID: {}".format(scm_i.get('id')))
         return scm_i
 
@@ -77,12 +78,24 @@ class Karma(filter_base.Filter):
             scm_i.add_vote(self.str_filter_name, 1, None, None, 'Subject is Empty')
         return scm_i
 
-    def check_from(self, scm_i):
+    def _check_from(self, scm_i):
         """ Check from-name and from-email are not too different """
-        str_fnam = scm_i.get("from_nam")
-        str_fadr = scm_i.get("from_adr")
-        if str_fnam != str_fadr:
-            pass#log.
+        num_cnt_sim = 0  # No similarities, yet
+        str_fnam = scm_i.get("from_nam", nodata="").lower()  # all comparison as lower
+        str_fadr = scm_i.get("from_adr", nodata="").lower()  # all comparison as lower
+        if str_fnam != "":  # Empty from-name is handled by other Karma rule
+            # Count Name-tokens in Address
+            lst_fnam = str_fnam.split()  # tokenise name by split on wide-spaces
+            for tok_fnam in lst_fnam:
+                if tok_fnam in str_fadr:
+                    num_cnt_sim += 1
+            # Count Address-tokens in Name
+            lst_fadr = str_fadr.replace("@",".").split(".")
+            for tok_fadr in lst_fadr:
+                if tok_fadr in str_fnam:
+                    num_cnt_sim += 1
+            if num_cnt_sim < 1:
+                scm_i.add_vote(self.str_filter_name, 1, 4, None, 'from-name and from-addr mismatch')
         return scm_i
 
 

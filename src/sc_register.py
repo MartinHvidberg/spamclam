@@ -164,12 +164,12 @@ class SCMail(object):
         """ return true if a key exists, otherwise false """
         return key_in in self._data.keys()
 
-    def get(self, mkey):
+    def get(self, mkey, nodata=None):
         """ Get one field's value """
         if self.has_key(mkey):
             return self._data[mkey]
         else:
-            return None
+            return nodata
 
     def add_filter_response(self, ftr_in):
         """ Create a new filter Response on the _filterres list.
