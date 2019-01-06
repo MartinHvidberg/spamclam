@@ -5,11 +5,12 @@
 The Spam Clam Command Line Interface
 """
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
+# 0.4.3 : Quite more .log, similar less print()
 
 import sys, os
 import argparse

@@ -13,6 +13,7 @@ __version__ = '0.4.2'
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
+# 0.4.3 : Quite more .log, similar less print()
 
 import os
 import datetime
