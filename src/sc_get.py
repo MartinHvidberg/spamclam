@@ -6,20 +6,13 @@ The Spam Clam Get module
 Get e-mails from the e-mail server, and fill the Register with information.
 """
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
+# 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 
 import logging
-logging.basicConfig(filename='sc_get.log',
-                    filemode='w',
-                    level=logging.INFO, # DEBUG
-                    format='%(asctime)s %(levelname)7s %(funcName)s : %(message)s')
-                    # %(funcName)s
-logger = logging.getLogger(__name__)
-str_start = "Start: {} version: {}".format(__file__, __version__)
-logger.info(str_start)
 
 import poplib, email
 from email import policy
@@ -27,6 +20,10 @@ from email import parser
 
 import sc_register
 import sc_debug
+
+# Initialize logging
+log = logging.getLogger(__name__)
+log.info("Initialize: {} version: {}".format(__file__, __version__))
 
 
 def get(str_srvr, str_user, str_pass, reg_sc):
@@ -63,12 +60,12 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         con_pop = poplib.POP3_SSL(str_srvr)  # SSL is cool
         con_pop.user(str_user)
         con_pop.pass_(str_pass)
-        logger.info(str(con_pop))
-        logger.info("Server says:  {}".format(con_pop.getwelcome()))
+        log.info(str(con_pop))
+        log.info("Server says:  {}".format(con_pop.getwelcome()))
         num_tot_msgs, num_tot_bytes = con_pop.stat()
-        logger.info("Mailbox holds: {} messages, {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes)))
+        log.info("Mailbox holds: {} messages, {} bytes total".format(str(num_tot_msgs),str(num_tot_bytes)))
     except:
-        logger.error("\nSeems to be unable to access the e-mail server...")
+        log.error("\nSeems to be unable to access the e-mail server...")
         print("Error - Look in the log file...")
         return
 

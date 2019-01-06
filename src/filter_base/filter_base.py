@@ -7,8 +7,10 @@
     this class should never be instantiated directly.
 """
 
-### Versions  <-- Out of sync with the overall SpamClam versioning...
+__version__ = '0.4.2'
+### Versions
 # 0.1 - initial version of this module
+# 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 
 ### ToDo
 # ...
@@ -19,6 +21,10 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import sc_register
+
+# Initialize logging
+log = logging.getLogger(__name__)
+log.info("Initialize: {} version: {}".format(__file__, __version__))
 
 
 class Response(dict):
@@ -119,6 +125,7 @@ class Filter(object):
     def __init__(self):
         logging.debug("class init. Filter")
         self.str_filter_name = "Base filter"
+        log.debug("class init. {}".format(self.say_hi()))
 
     def spamalyse(self, scmail):
         """ Checks a single SCMail against the filter, i.e. it self.

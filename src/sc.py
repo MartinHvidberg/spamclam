@@ -5,19 +5,29 @@
 The Spam Clam Command Line Interface
 """
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
+# 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 
 import sys, os
 import argparse
+import logging
+
+# Initialize logging
+logging.basicConfig(filename='SpamClam.log',
+                    filemode='w',
+                    level=logging.INFO, # DEBUG
+                    format='%(asctime)s %(levelname)7s %(funcName)s >> %(message)s')
+                    # %(funcName)s
+log = logging.getLogger(__name__)
+log.info("Initialize: {} version: {}".format(__file__, __version__))
 
 import sc_register
 import sc_get
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
 import karma
-
 
 def get_args():
     """ Getting and handling command line arguments. """
@@ -74,7 +84,6 @@ def get_args():
     elif arg_comm.command == 'version':  # ------ version ---------------------
         pass  # XXX consider changing to flag --version
     args = parser.parse_args()
-    ##print("CLI args: {}".format(args))
     return args
 
 
@@ -82,27 +91,28 @@ if __name__ == '__main__':
 
     arg_in = get_args()
     print("CLI arg: {}".format(arg_in))
+    # log.info("CLI args: {}".format(args))  # This may store passwords in .log !!!
 
     bol_okay = True  # Assume that everything is Okay, until proven wrong
 
     if arg_in.command == 'get':
         # Check parameters arg_in.server ,arg_in.user ,arg_in.password
         if not "@" in arg_in.user:
-            print(" ! argument for 'user' is expected to contain an '@'")
+            log.warning(" ! argument for 'user' is expected to contain an '@'")
+            print("! Warning in .log")
             bol_okay = False
         if bol_okay:
-            print("SpamClam get : {} {} ****** ...running...".format(arg_in.server, arg_in.user))
-            # deal with --logmode
+            log.info("{} {} {} ****** ...running...".format(arg_in.command, arg_in.server, arg_in.user))
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc = sc_get.get(arg_in.server ,arg_in.user ,arg_in.password, reg_sc)  # Fill register with e-mail info from server
             reg_sc.write_to_file()  # Write the new register to default filename
-            print("SpamClam get : {} e-mails. Done...".format(reg_sc.count()))
+            log.info("{} {} e-mails. Done...".format(arg_in.command, reg_sc.count()))
 
     elif arg_in.command == 'filter':
         str_filter_do = arg_in.fdo[0]
         str_filter_name = arg_in.fname[0]
         if bol_okay:
-            print("SpamClam filter : {} {} {} ...running...".format(str_filter_do, str_filter_name, arg_in.fdetails))
+            log.info("{} {} {} {} ...running...".format(arg_in.command, str_filter_do, str_filter_name, arg_in.fdetails))
             # Load Register
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc.read_from_file()
@@ -110,22 +120,24 @@ if __name__ == '__main__':
             ftr_karma = karma.Karma()
             # Parse Register through Filter
             reg_sc = ftr_karma.filter(reg_sc)
-            print("SpamClam filter : Done...")
+            log.info("{} Done...".format(arg_in.command))
             # Only for bebug XXX
             for scmail in reg_sc.list_all():
                 reg_sc.get(scmail).show_spam_status()
 
     elif arg_in.command == 'view':
         if bol_okay:
-            print("SpamClam view : ...running...")
+            log.info("{} ...running...".format(arg_in.command))
             # Load Register
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc.read_from_file()
             # View Register
             for scmail_id in reg_sc.list_all():
                 reg_sc.get(scmail_id).showmini()
-            print("... e-mails now available: {}".format(reg_sc.count()))
-            print("SpamClam view : Done...".format(reg_sc.count()))
+            str_msg = "... e-mails now available: {}".format(reg_sc.count())
+            log.info(str_msg)
+            print(str_msg)
+            log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
 
     elif arg_in.command == 'set':
         if bol_okay:

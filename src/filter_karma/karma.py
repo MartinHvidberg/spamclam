@@ -6,7 +6,9 @@
 
     Not (fully) implemented yet
     Karma are small signs in or around the email, e.g.
-        email have no 'Message-ID'
+        Email have no 'Message-ID' +implemented
+        Subject is empty +implemented
+        From name and from email have little in common.
         'authentication-results' leave bad impression
         'dkim-signature' leave bad impression
         'received' trail looks wired
@@ -18,8 +20,10 @@
 
 """
 
-### Versions  <-- Out of sync with the overall SpamClam versioning...
+__version__ = '0.4.2'
+### Versions
 # 0.1 - initial version of this module
+# 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 
 ### ToDo
 # implement more karma
@@ -30,6 +34,11 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'filter_base'))
 import filter_base
 
+# Initialize logging
+log = logging.getLogger(__name__)
+log.info("Initialize: {} version: {}".format(__file__, __version__))
+
+
 
 class Karma(filter_base.Filter):
 
@@ -38,7 +47,7 @@ class Karma(filter_base.Filter):
     def __init__(self):
         super().__init__()
         self.str_filter_name = 'Karma'
-        logging.debug("class init. {}".format(self.say_hi()))
+        log.info("{}".format(self.say_hi()))
 
 
     def spamalyse(self, scm_in):
@@ -48,7 +57,7 @@ class Karma(filter_base.Filter):
         return scm_in
 
 
-    def _debug(self, param):
+    def _debug_xxx(self, param):  # Should be deleted... ToDo
         self._data['debug'] = param
         return self._data['debug']
 
@@ -65,6 +74,14 @@ class Karma(filter_base.Filter):
         """ Check the scmail's Subject """
         if scm_i.get('subject') == "":
             scm_i.add_vote(self.str_filter_name, 1, None, None, 'Subject is Empty')
+        return scm_i
+
+    def check_from(self, scm_i):
+        """ Check from-name and from-email are not too different """
+        str_fnam = scm_i.get("from_nam")
+        str_fadr = scm_i.get("from_adr")
+        if str_fnam != str_fadr:
+            pass#log.
         return scm_i
 
 

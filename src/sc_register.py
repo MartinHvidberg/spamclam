@@ -8,10 +8,11 @@ The 'SCMail' object represents the SpamClam object equivalent to one e-mail.
 The 'Register' object, essentially an archive of SCMails, is the central data object in all e-mail handling.
 """
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)
+# 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 
 import os
 import datetime
@@ -19,7 +20,11 @@ import pickle
 import uuid
 import email
 import logging
-logger = logging.getLogger('spamclam')
+
+# Initialize logging
+log = logging.getLogger(__name__)
+log.info("Initialize: {} version: {}".format(__file__, __version__))
+
 
 
 class SCMail(object):
@@ -30,7 +35,7 @@ class SCMail(object):
     This object is designed to be the 'e-mail massage' to use with SpamClam. """
 
     def __init__(self, eml_in):
-        logger.debug("class init. SCMail")
+        log.debug("class init. SCMail")
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._filterres = dict()  # Dict of Filter Response objects.
         self._spamlevel = -1  # 0..9, -1 if un-set
@@ -97,14 +102,14 @@ class SCMail(object):
             self._data['id'] = msg['Message-ID'].strip('<>')
         except AttributeError:
             # Try to construct a Message-ID form other headers
-            logger.warning("email.message seems to have no 'Message-ID'...")
+            log.warning("email.message seems to have no 'Message-ID'...")
             str_d = msg['date']
             str_f = msg['from']
             if str_d or str_f:
                 self._data['id'] = str_d+"__"+str_f+"@ECsoftware.net"
             else:
                 self._data['id'] = str(uuid.uuid4())+"@ECsoftware.net"  # random unique id
-            logger.info("Assigning internal EC 'Message-ID': {}".format(self._data['id']))
+            log.info("Assigning internal EC 'Message-ID': {}".format(self._data['id']))
         self._data['id_dom'] = self._data['id'].rsplit("@", 1)[1]
         # * date
         self._data['date'] = self._mesg['date']
