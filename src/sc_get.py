@@ -6,7 +6,7 @@ The Spam Clam Get module
 Get e-mails from the e-mail server, and fill the Register with information.
 """
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 ### History
 # 0.4.1 : A new start with argparse, aiming for a modularised MVP CLI product. (replaces sccli)

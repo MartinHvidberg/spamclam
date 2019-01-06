@@ -20,7 +20,7 @@
 
 """
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 ### Versions
 # 0.1 - initial version of this module
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
