@@ -63,9 +63,15 @@ class Response(dict):
                     self._secure_limits()
 
 
-    def _add_reason(self, str_reson):
-        """ Adds a reason (string) to the reasons list """
-        self['reasons'].append(str_reson)  # XXX make it a tuple w. vote, min, max & reason
+    def _add_reason(self, vote, fmin, fmax, reason):
+        """ Adds a reason (string) to the reasons list
+        reason-strin contains reason & (min\\vote/max) """
+        if vote >= 0:
+            sign = '+'
+        else:
+            sign = '-'
+        str_reason = "{r} ({i}/{s}{v}/{a})".format(v=vote, i=fmin, a=fmax, r=reason, s=sign)
+        self['reasons'].append(str_reason)
 
 
     def vote(self, vote, fmin, fmax, reason):
@@ -76,7 +82,7 @@ class Response(dict):
             self._update_fmin(fmin)
             self._update_fmax(fmax)
             self._secure_value()
-            self._add_reason(reason + " ({})".format(vote))
+            self._add_reason(vote, fmin, fmax, reason)
 
 
     def get_vote(self):
