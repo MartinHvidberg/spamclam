@@ -103,7 +103,7 @@ class SCMail(object):
             log.warning("email.message seems to have no 'Message-ID'...")
             str_d = msg['date']
             str_f = msg['from']
-            if str_d or str_f:
+            if str_d and str_f:
                 self._data['id'] = str_d+"__"+str_f+"@ECsoftware.net"
             else:
                 self._data['id'] = str(uuid.uuid4())+"@ECsoftware.net"  # random unique id
