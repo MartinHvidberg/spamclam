@@ -14,6 +14,13 @@ import sys, os
 import argparse
 import logging
 
+import sc_register
+import sc_get
+sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
+import karma
+sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_classic'))
+import classic
+
 # Initialize logging
 logging.basicConfig(filename='SpamClam.log',
                     filemode='w',
@@ -22,11 +29,6 @@ logging.basicConfig(filename='SpamClam.log',
                     # %(funcName)s
 log = logging.getLogger(__name__)
 log.info("Initialize: {}".format(__file__))
-
-import sc_register
-import sc_get
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
-import karma
 
 def get_args():
     """ Getting and handling command line arguments. """
@@ -54,7 +56,7 @@ def get_args():
                             nargs = 1,
                             help = 'What you want to do with the filter, e.g. run')
         parser.add_argument('fname',
-                            choices = ['bw', 'karma'],
+                            choices = ['classic', 'karma'],
                             nargs = 1,
                             help = 'Name of the filter you want to run, e.g. karma')
         parser.add_argument('--fdetails',
@@ -116,7 +118,10 @@ if __name__ == '__main__':
             reg_sc = sc_register.Register()  # Build empty register
             reg_sc.read_from_file()
             # Load Filter
-            ftr_karma = karma.Karma()
+            if str_filter_name == 'karma':
+                ftr_karma = karma.Karma()
+            elif str_filter_name == 'classic':
+                ftr_karma = classic.Classic()
             # Parse Register through Filter
             reg_sc = ftr_karma.filter(reg_sc)
             log.info("{} Done...".format(arg_in.command))

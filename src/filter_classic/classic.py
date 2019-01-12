@@ -23,6 +23,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'filter_base'))
 import filter_base
+import classic_ruleset
 
 # Initialize logging
 log = logging.getLogger(__name__)
@@ -36,26 +37,21 @@ class Classic(filter_base.Filter):
     def __init__(self):
         super().__init__()
         self.str_filter_name = 'Classic'
+        self._load_ruleset()
         log.info("{}".format(self.say_hi()))
 
 
     def spamalyse(self, scm_in):
         super().spamalyse(scm_in)  # overload method from Filter()
-        self._load_classic_rules()
-        scm_in = self._check_classic_rules(scm_in)
+        scm_in = self._rup.chk_scmail(scm_in)
         return scm_in
 
 
-    def _load_classic_rules(self, str_rules_dir):
-        pass
-
-
-    def _check_classic_rules(self, scm_i):
-        """ Checks the scmail's against all Classic Rules """
-        loop over rules:
-            if scm_i.get('id').endswith('@ECsoftware.net'):
-                scm_i.add_vote(self.str_filter_name, 1, 4, None, 'No Message-ID')
-        return scm_i
+    def _load_ruleset(self):
+        """"""
+        str_rule_dir = os.path.dirname(os.path.realpath(__file__))  # i.e. This files dir
+        log.info("Loading ruleset from: {}".format(str_rule_dir))
+        self._rup = classic_ruleset.Ruleset(str_rule_dir)
 
 
 if __name__ == '__main__':
