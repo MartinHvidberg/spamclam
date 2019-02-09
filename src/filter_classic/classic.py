@@ -43,7 +43,7 @@ class Classic(filter_base.Filter):
 
     def spamalyse(self, scm_in):
         super().spamalyse(scm_in)  # overload method from Filter()
-        scm_in = self._rup.chk_scmail(scm_in)
+        scm_in = self._rup.spamalyse(scm_in)  # WTF is _rup?
         return scm_in
 
 

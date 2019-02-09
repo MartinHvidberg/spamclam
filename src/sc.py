@@ -119,11 +119,11 @@ if __name__ == '__main__':
             reg_sc.read_from_file()
             # Load Filter
             if str_filter_name == 'karma':
-                ftr_karma = karma.Karma()
+                ftr_selected = karma.Karma()
             elif str_filter_name == 'classic':
-                ftr_karma = classic.Classic()
+                ftr_selected = classic.Classic()
             # Parse Register through Filter
-            reg_sc = ftr_karma.filter(reg_sc)
+            reg_sc = ftr_selected.filter(reg_sc)
             log.info("{} Done...".format(arg_in.command))
             # Only for bebug XXX
             for scmail in reg_sc.list_all():
