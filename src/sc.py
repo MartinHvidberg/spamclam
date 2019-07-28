@@ -83,7 +83,7 @@ def get_args():
                             default = 'spam',
                             help = 'To what level do you want to kill (0..9) or spam, where spam is synonym with 7. Default is spam')
     elif arg_comm.command == 'version':  # ------ version ---------------------
-        pass  # XXX consider changing to flag --version
+        print("Not implemented, yet...")  # XXX consider changing to flag --version
     args = parser.parse_args()
     return args
 
@@ -123,21 +123,28 @@ if __name__ == '__main__':
             elif str_filter_name == 'classic':
                 ftr_selected = classic.Classic()
             # Parse Register through Filter
-            reg_sc = ftr_selected.filter(reg_sc)
-            log.info("{} Done...".format(arg_in.command))
-            # Only for bebug XXX
-            for scmail in reg_sc.list_all():
-                reg_sc.get(scmail).show_spam_status()
+            if ftr_selected:
+                reg_sc = ftr_selected.filter(reg_sc)
+                log.info("{} Done...".format(arg_in.command))
+                # Only for bebug XXX
+                for scmail in reg_sc.list_all():
+                    reg_sc.get(scmail).show_spam_status()
+            else:
+                log.warning("The filename was not matched by any filer: {}".format(str_filter_name))
 
     elif arg_in.command == 'view':
+        ##print('(view, okay: {})'.format(bol_okay))
         if bol_okay:
             log.info("{} ...running...".format(arg_in.command))
             # Load Register
             reg_sc = sc_register.Register()  # Build empty register
-            reg_sc.read_from_file()
+            reg_sc.read_from_file()  # Load data into register
             # View Register
             for scmail_id in reg_sc.list_all():
-                reg_sc.get(scmail_id).showmini()
+                ##print(" id: {}".format(scmail_id))
+                #reg_sc.get(scmail_id).showmini()
+                reg_sc.get(scmail_id).show()
+                reg_sc.get(scmail_id).show_spam_status(0)
             str_msg = "... e-mails now available: {}".format(reg_sc.count())
             log.info(str_msg)
             print(str_msg)
@@ -152,7 +159,8 @@ if __name__ == '__main__':
             pass
 
     elif arg_in.command == 'version':
-        print("SpamClam - Command Line Interface. Version {}".format(__version__))
+        print("Not implemented, yet...")  # XXX consider changing to flag --version
+        #print("SpamClam - Command Line Interface. Version {}".format(__version__))
 
     else:
         print("You should never see this, because that would mean that get_args() have parsed a command that isn't implemented...")

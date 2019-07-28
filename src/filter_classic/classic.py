@@ -23,7 +23,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'filter_base'))
 import filter_base
-import classic_ruleset
+#import classic_ruleset  --- Does this exist at all? 20180728
 
 # Initialize logging
 log = logging.getLogger(__name__)

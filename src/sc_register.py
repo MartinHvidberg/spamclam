@@ -80,6 +80,7 @@ class SCMail(object):
     def show_spam_status(self, minimum=1):
         """ Show the scmail id and the spam info
         if the scmail's spam-level is at least 'minimum' """
+        ##print(" _ spamlevel: {}".format(self.spamlevel()))
         if self.spamlevel() >= minimum:
             print("SCMailid: {}".format(self.get('id')))
             print(" spamlev: {}".format(self.spamlevel()))
