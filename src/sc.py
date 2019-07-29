@@ -30,9 +30,15 @@ logging.basicConfig(filename='SpamClam.log',
 log = logging.getLogger(__name__)
 log.info("Initialize: {}".format(__file__))
 
+https://docs.python.org/3.7/library/argparse.html#nargs
+Sub-commands¶
+https://docs.python.org/3.7/library/argparse.html#sub-commands
+
+
 def get_args():
     """ Getting and handling command line arguments. """
     parser = argparse.ArgumentParser(
+        prog = "sc",
         description = "SpamClam's Command Line Interface.",
         epilog = "/ ECsoftware",
         allow_abbrev = True
@@ -64,9 +70,16 @@ def get_args():
                             help = 'More options, specific to the selected filter')
     elif arg_comm.command == 'view':  # ------ view ---------------------------
         parser.add_argument('vlevel',
-                            choices = ['spam', 'gray', 'white', 'all'],
-                            nargs = '+',
-                            help = 'What do you want to view, e.g. spam gray')
+                            choices = ['spam', 'gray', 'white', 'all', 'shh'],
+                            nargs = 1,
+                            help = 'What do you want to view, e.g. spam, gray, white, all or shh')
+        arg_comm, arg_rest = parser.parse_known_args()
+        if arg_comm.vlevel == 'shh':
+            parser.add_argument('vshhs',
+                                nargs = '+',
+                                help = "List of short-hand e-mail id's, i.e. 3-letter lables like 'ecs isb est'"
+                            )
+
     elif arg_comm.command == 'set':  # ------ set ----------------------------
         parser.add_argument('sval',
                             choices = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'o', 's', 'p', 'u'],
@@ -75,7 +88,7 @@ def get_args():
         parser.add_argument('smails',
                             metavar = 'mail#',
                             nargs = '+',
-                            help = 'list of e-mail numbers you wat to apply to, e.g. 7 9 13')
+                            help = 'list of e-mail numbers you wat to apply to, e.g. 7 9 13')  # This should be short-hand based XXX
     elif arg_comm.command == 'kill':  # ------ kill ---------------------------
         parser.add_argument('klevel',
                             nargs = '?',
@@ -144,8 +157,8 @@ if __name__ == '__main__':
             for scmail_id in reg_sc.list_all():
                 ##print(" id: {}".format(scmail_id))
                 #reg_sc.get(scmail_id).showmini()
-                reg_sc.get(scmail_id).show()
-                reg_sc.get(scmail_id).show_spam_status(0)
+                reg_sc.get(scmail_id).showall()
+                #reg_sc.get(scmail_id).show_spam_status(0)
             str_msg = "... e-mails now available: {}".format(reg_sc.count())
             log.info(str_msg)
             print(str_msg)

@@ -77,7 +77,7 @@ class SCMail(object):
         print((" {} :: {}".format(self.get('from'), self.get('subject'))))
 
     def showall(self):
-        print("------ SCMail:")
+        print("------ {} ------".format(self.get_shorthand()))
         for key in sorted(self.keys()):
             if self.get(key) != "":
                 if key != 'body':
