@@ -17,6 +17,7 @@ import os
 import datetime
 import pickle
 import uuid
+import random
 import email
 import logging
 
@@ -39,11 +40,18 @@ class SCMail(object):
         self._spamlevel = -1  # 0..9, -1 if un-set
         self._spamlevel_is_updated = True  # boolean
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
+        self._shorthand = None  # Will only be set if SCMail becomes part of a Register
         if isinstance(eml_in, email.message.EmailMessage):
             self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
             self._msg2data()  # fill _data with info from _mesg
         else:
             self._mesg = None
+
+    def set_shorthand(self, str_shh):
+        self._shorthand = str_shh
+
+    def get_shorthand(self):
+        return self._shorthand
 
     def set_spamlevel_from_filterres(self):
         """ Read through the filter results, and determines the final spam-level """
@@ -191,6 +199,8 @@ class SCMail(object):
 class Register(object):
     """ Essentially a dict() of SCMails, with some functions to handle it ... """
 
+    NUM_SHORTHAND_LENGTH = 3
+
     def __init__(self, str_infile=None):
         """ Note: Only _data is pickled """
         self._data = dict()  # dictionary of SCMails
@@ -200,9 +210,16 @@ class Register(object):
     def insert(self, scm_in):
         """ inserts a SCMail into the register """
         id = scm_in.get('id')
-        ##print("id:{}".format(id))
         if id in self.list_all():
             print("Warning: e-mail id all ready exist in register! Overwriting: {}".format(id))
+        # Generate a short-hand
+        str_cand = None
+        while str_cand == None:
+            str_cand = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for x in range(self.NUM_SHORTHAND_LENGTH))
+            if str_cand in [smc.get_shorthand for smc in self._data.values()]:
+                str_cand = None
+        scm_in._shorthand = str_cand
+        ##print("New shorthand: {}".format(scm_in._shorthand))
         self._data[id] = scm_in
 
     def count(self):
@@ -303,6 +320,12 @@ class Register(object):
 
 if __name__ == '__main__':
     print("This unit {} can't be run, but must be called from another unit".format(__file__))
+
+    ## test
+    reg_n = Register
+    lst_u = list()
+    for n in range(6):
+        print(reg_n._uniq_shorthand(lst_u))
 
 # End of Python
 

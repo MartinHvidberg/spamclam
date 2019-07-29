@@ -50,6 +50,7 @@ class Karma(filter_base.Filter):
 
 
     def spamalyse(self, scm_in):
+        log.info("*spamalyse(karma) w.: {}".format(scm_in.get('id')))
         super().spamalyse(scm_in)  # overload method from Filter()
         scm_in = self._check_message_id(scm_in)
         scm_in = self._check_subject(scm_in)
@@ -59,6 +60,7 @@ class Karma(filter_base.Filter):
 
     def _check_message_id(self, scm_i):
         """ Checks the scmail's Messag-ID """
+        log.debug(" chk msgid(karma) w.: {}".format(scm_i.get('id')))
         if scm_i.get('id').endswith('@ECsoftware.net'):
             scm_i.add_vote(self.str_filter_name, 1, 4, None, 'No Message-ID')
         ##print("MsgID: {}".format(scm_i.get('id')))
@@ -67,12 +69,15 @@ class Karma(filter_base.Filter):
 
     def _check_subject(self, scm_i):
         """ Check the scmail's Subject """
+        log.debug(" chk subj(karma) w.: {}".format(scm_i.get('id')))
         if scm_i.get('subject') == "":
             scm_i.add_vote(self.str_filter_name, 1, None, None, 'Subject is Empty')
         return scm_i
 
+
     def _check_from(self, scm_i):
         """ Check various 'from' parameters, and compare them """
+        log.debug(" chk from(karma) w.: {}".format(scm_i.get('id')))
 
         # Check that from-name and from-addr have something in common
         num_cnt_sim = 0  # No similarities, yet
@@ -93,6 +98,7 @@ class Karma(filter_base.Filter):
                 scm_i.add_vote(self.str_filter_name, 1, 4, None, 'from-name and from-addr mismatch')
 
         # Check that 'from', 'reply-to' and 'return-path' have something in common, maybe look at x-sender?
+        print(" * Check from- reply- and return-address integrity")
         los_dom = list()
         los_dom.append(scm_i.get('from_dom'))
         los_dom.append(scm_i.get('return-path_dom'))
@@ -104,7 +110,7 @@ class Karma(filter_base.Filter):
             else:  # in case dom was None
                 dom = list()  # set it to an emply list
             lol_dom.append(dom)
-        ##print("\n{}".format(lol_dom))
+        print("\n{}".format(lol_dom))
         num_max_friends = len(lol_dom) * (len(lol_dom)-1)
         lst_dom_friends = list()
         for i in range(len(lol_dom)):
@@ -113,7 +119,7 @@ class Karma(filter_base.Filter):
                     lst_dom_friends.append([hit for hit in lol_dom[i] if hit in lol_dom[j]])
         num_hit_friends = len([hit for hit in lst_dom_friends if hit != []])
         hit_rate = num_hit_friends * 100.0 / num_max_friends
-        ##print("hits: {} = {}".format(lst_dom_friends, hit_rate))
+        print("hits: {} = {}".format(lst_dom_friends, hit_rate))
         if hit_rate > 0 and hit_rate < 33:
             num_suspicion = 2
         if hit_rate >= 33 and hit_rate < 66:

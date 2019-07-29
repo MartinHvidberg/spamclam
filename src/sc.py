@@ -116,7 +116,7 @@ if __name__ == '__main__':
             log.info("{} {} {} {} ...running...".format(arg_in.command, str_filter_do, str_filter_name, arg_in.fdetails))
             # Load Register
             reg_sc = sc_register.Register()  # Build empty register
-            reg_sc.read_from_file()
+            reg_sc.read_from_file()  # read data from standard filename
             # Load Filter
             if str_filter_name == 'karma':
                 ftr_selected = karma.Karma()
@@ -124,6 +124,7 @@ if __name__ == '__main__':
                 ftr_selected = classic.Classic()
             # Parse Register through Filter
             if ftr_selected:
+                log.info("Found filter: {}".format(ftr_selected.str_filter_name))
                 reg_sc = ftr_selected.filter(reg_sc)
                 log.info("{} Done...".format(arg_in.command))
                 # Only for bebug XXX

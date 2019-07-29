@@ -143,10 +143,12 @@ class Filter(object):
         """ Checks all SCMails in a Register against the filter, i.e. it self """
         reg_out = sc_register.Register()  # The return Register starts empty  XXX BIG TIME try to avoid this...!!! XXX
         for scm_id in reg_in.list_all(): # reg_in.list_match(["id=1545156198.5c193666a9623@w2.doggooi.com"]): # <------ LUS
+            log.info("*filter(base) w.:        {}".format(scm_id))
             scmail = reg_in.get(scm_id)  # Retrieve the SCMail
-            rsp_in = Response(self.str_filter_name)  # Create a filter Response
+            rsp_in = Response(self.str_filter_name)  # Create a filter Response obj.
             scmail.add_filter_response(rsp_in)  # This should be the only place a Response() is added to a SCMail() !
             scm_f = self.spamalyse(scmail)  # Do the actual Spam Analysis
+            log.info("spamalyse returned a: {}".format(str(type(scm_f))))
             reg_out.insert(scm_f)
             # alternative: reg_in.set(scm_id, scm_f)  # to avoid calling sc_register.Register() from this module
         return reg_out  # alternative: return reg_in
