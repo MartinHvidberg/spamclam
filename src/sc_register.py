@@ -67,25 +67,54 @@ class SCMail(object):
             self.set_spamlevel_from_filterres()
         return self._spamlevel
 
-    def show(self):
+    def display(self, num_level=1):
+        """Displays the SCMail as text. num_level detemains the level of information."""
+        str_ret = str()
+        if isinstance(num_level, int):
+            if num_level <= 0:
+                str_ret += "{}".format(self.get_shorthand())
+            elif num_level == 1:
+                str_ret += "{}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('from'), self.get('subject'))
+            elif num_level == 2:
+                str_ret += "{}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('id'))
+            elif num_level == 3:
+                str_ret += "{}, {}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('id'), self.get('from'), self.get('subject'))
+            if num_level in [4,5,6]:
+                str_ret +=  "------ {}  {}   -------------\n".format(self.get_shorthand(), self.spamlevel())
+                if num_level == 4:
+                    lst_fields = ['date', 'from', 'subject']
+                if num_level == 5:
+                    lst_fields = ['date', 'from', 'cc', 'bcc', 'subject']
+                if num_level == 6:
+                    lst_fields = [key for key in self._data.keys() if (key != "" and key != 'body')]
+                for key in lst_fields:
+                    if self.get(key) != "":
+                        str_ret +=  (" {}: {}\n".format(key.ljust(16), self.get(key)))
+            else:
+                log.error("Value parsed to SCMail.display() was not in legal range [0..9]")
+        else:
+            log.error("Value parsed to SCMail.display() was not integer")
+        return str_ret
+
+    def old_show(self):
         print("------ SCMail:")
         for key in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject']:
             if self.get(key) != "":
                 print((" {}: {}".format(key.ljust(16), self.get(key))))
 
-    def showmini(self):
-        print((" {} :: {}".format(self.get('from'), self.get('subject'))))
+    def old_showmini(self):
+        print(("{}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('from'), self.get('subject'))))
 
-    def showall(self):
-        print("------ {} ------".format(self.get_shorthand()))
+    def old_showall(self):
+        print("------ {} ------ {}".format(self.get_shorthand(), self.spamlevel()))
         for key in sorted(self.keys()):
             if self.get(key) != "":
                 if key != 'body':
                     print((" {}: {}".format(key.ljust(16), self.get(key))))
                 else:
-                    print((" {}: {}".format(key.ljust(16), "Body type/size: {} / {}".format(len(self.get(key)), type(self.get(key))))))
+                    print((" {}: {}".format(key.ljust(16), "Body type/size: {} / {}".format(type(self.get(key)), len(self.get(key))))))
 
-    def show_spam_status(self, minimum=1):
+    def old_show_spam_status(self, minimum=1):
         """ Show the scmail id and the spam info
         if the scmail's spam-level is at least 'minimum' """
         ##print(" _ spamlevel: {}".format(self.spamlevel()))
