@@ -38,7 +38,8 @@ class SCMail(object):
         self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
         self._filterres = dict()  # Dict of Filter Response objects.
         self._spamlevel = -1  # 0..9, -1 if un-set
-        self._spamlevel_is_updated = True  # boolean
+        self._spamlevel_is_updated = True  # True if synced with all Filter-results, etc. Otherwise False
+        self._spamlevel_is_userlocked = False  # True if user have set level using 'mark'. Otherwise False
         self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
         self._shorthand = None  # Will only be set if SCMail becomes part of a Register
         if isinstance(eml_in, email.message.EmailMessage):
@@ -53,15 +54,38 @@ class SCMail(object):
     def get_shorthand(self):
         return self._shorthand
 
+    def protect(self):
+        self._protected = True
+
+    def unprotect(self):
+        self._protected = False
+
+    def set_spamlevel(self, num_val):
+        if isinstance(num_val, int):
+            if num_val < 0: num_val = 0
+            if num_val > 9: num_val = 9
+            self._spamlevel = num_val
+            self._spamlevel_is_updated = True
+            self._spamlevel_is_userlocked = True
+        else:
+            log.warning("Non-integer value send to SCMail.set_spamlevel(): {}".format(num_val))
+
     def set_spamlevel_from_filterres(self):
         """ Read through the filter results, and determines the final spam-level """
         if self._spamlevel == None: self._spamlevel = -1  # XXX Should never be necessary
-        for frs_i in self._filterres.values():
-            vote_l = frs_i.get_vote()
-            self._spamlevel = max(self._spamlevel, vote_l)
+        if not self._spamlevel_is_userlocked:  # Filter-results can't overwrite user-set spam-level
+            for frs_i in self._filterres.values():
+                vote_l = frs_i.get_vote()
+                self._spamlevel = max(self._spamlevel, vote_l)
         self._spamlevel_is_updated = True
 
-    def spamlevel(self):
+    def get_spamlevel(self):
+        """ Returns the SpamLevel of the SCMail """
+        if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
+            self.set_spamlevel_from_filterres()
+        return self._spamlevel
+
+    def spamlevel_old(self):
         """ Returns the SpamLevel of the SCMail """
         if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
             self.set_spamlevel_from_filterres()
@@ -74,13 +98,13 @@ class SCMail(object):
             if num_level <= 0:
                 str_ret += "{}".format(self.get_shorthand())
             elif num_level == 1:
-                str_ret += "{}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('from'), self.get('subject'))
+                str_ret += "{}, {}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('from'), self.get('subject'))
             elif num_level == 2:
-                str_ret += "{}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('id'))
+                str_ret += "{}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('id'))
             elif num_level == 3:
-                str_ret += "{}, {}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('id'), self.get('from'), self.get('subject'))
+                str_ret += "{}, {}, {}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('id'), self.get('from'), self.get('subject'))
             if num_level in [4,5,6]:
-                str_ret +=  "------ {}  {}   -------------\n".format(self.get_shorthand(), self.spamlevel())
+                str_ret +=  "------ {}  {}   -------------\n".format(self.get_shorthand(), self.get_spamlevel())
                 if num_level == 4:
                     lst_fields = ['date', 'from', 'subject']
                 if num_level == 5:
@@ -95,35 +119,6 @@ class SCMail(object):
         else:
             log.error("Value parsed to SCMail.display() was not integer")
         return str_ret
-
-    def old_show(self):
-        print("------ SCMail:")
-        for key in ['id', 'date', 'from', 'to', 'cc', 'bcc', 'subject']:
-            if self.get(key) != "":
-                print((" {}: {}".format(key.ljust(16), self.get(key))))
-
-    def old_showmini(self):
-        print(("{}, {}, {}, {}".format(self.get_shorthand(), self.spamlevel(), self.get('from'), self.get('subject'))))
-
-    def old_showall(self):
-        print("------ {} ------ {}".format(self.get_shorthand(), self.spamlevel()))
-        for key in sorted(self.keys()):
-            if self.get(key) != "":
-                if key != 'body':
-                    print((" {}: {}".format(key.ljust(16), self.get(key))))
-                else:
-                    print((" {}: {}".format(key.ljust(16), "Body type/size: {} / {}".format(type(self.get(key)), len(self.get(key))))))
-
-    def old_show_spam_status(self, minimum=1):
-        """ Show the scmail id and the spam info
-        if the scmail's spam-level is at least 'minimum' """
-        ##print(" _ spamlevel: {}".format(self.spamlevel()))
-        if self.spamlevel() >= minimum:
-            print("SCMailid: {}".format(self.get('id')))
-            print(" spamlev: {}".format(self.spamlevel()))
-            for id_frsi in self._filterres:
-                frs_i = self._filterres[id_frsi]
-                print(" reasons: {}={}".format(id_frsi, frs_i.get_reasons()))
 
     def _msg2data(self):
         """ This function tries to set all the entries, from the org. message.
@@ -308,6 +303,10 @@ class Register(object):
         if not found, then returns None """
         return self._data[id]
 
+    def set(self, id, scmail):  # Not redundant with insert. This is for returning a modified scmail to Register
+        """ set the SCmail in position id in the register """
+        self._data[id] = scmail
+
     def write_to_file(self, str_fn=""):
         """ writes the entire Register to a disc file """
         if str_fn == "":  # User didn't specify filename, use default
@@ -350,15 +349,11 @@ class Register(object):
 if __name__ == '__main__':
     print("This unit {} can't be run, but must be called from another unit".format(__file__))
 
-    ## test
-    reg_n = Register
-    lst_u = list()
-    for n in range(6):
-        print(reg_n._uniq_shorthand(lst_u))
 
 # End of Python
 
 # Music that accompanied the coding of this script:
-#    Queen - Greatest hits III
-#    TV2 - Sæler, Hvaler og Solskin
-#    Pink Floyd - Dark side of the Moon
+#   Queen - Greatest hits III
+#   TV2 - Sæler, Hvaler og Solskin
+#   Pink Floyd - Dark side of the Moon
+#   Dvorak - Aus der neuen Welt

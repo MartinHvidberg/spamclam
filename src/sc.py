@@ -74,6 +74,15 @@ def get_args():
                              # 7: Very much info  (shh, +all param +orig. e-mail)
                              # 8: VERY much info  (shh, +all param +orig. e-mail +all attacments)
                              # 9: VERY MUCH INFO  (shh, +all param +orig. e-mail +all attacments +all else)""")
+
+    parser_get = subparsers.add_parser('mark', help='mark a mail with the given value')
+    parser_get.add_argument('shh',
+                            type=str,
+                            help = 'ssh is the mails short-hand (3-letter id)')
+    parser_get.add_argument('value',
+                            type=str,
+                             choices=['0','1','2','3','4','5','6','7','8','9','s','o','p','u'],
+                            help = "spam-value, spam, okay, protect or un-protect")
     # parse argument list
     args = parser.parse_args()
     return args
@@ -139,9 +148,49 @@ if __name__ == '__main__':
                 print(str_msg)
                 log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
 
-        elif arg_in.command == 'set':
+        elif arg_in.command == 'mark':
             if bol_okay:
-                pass
+                log.info("{} ...running...".format(arg_in.command))
+                # Load Register
+                reg_sc = sc_register.Register()  # Build empty register
+                reg_sc.read_from_file()  # Load data into register
+                bol_hit = False
+                for scmid in reg_sc.list_all():
+                    scm = reg_sc.get(scmid)
+                    if scm.get_shorthand() == arg_in.shh:
+                        scmid_hit = scmid
+                        scm_hit = scm
+                        bol_hit = True
+                        ##log.info("hit {} != {}".format(scm.get_shorthand(), arg_in.shh))
+                        break
+                if bol_hit:
+                    # 1'st check spam-level options
+                    num_val = None
+                    if arg_in.value in ['0','1','2','3','4','5','6','7','8','9']:
+                        try:
+                            num_val = int(arg_in.value)
+                        except ValueError:
+                            log.warning("Strange conversion error ... arg_in.value = {}".format(arg_in.value))
+                    elif arg_in.value == 's':  # Spam
+                        num_val = 7  # Default. All spam-level >= 7 is considered Spam!
+                    elif arg_in.value == 'o':  # Okay
+                        num_val = 0
+                    if num_val:
+                        scm_hit.set_spamlevel(num_val)  # This is setting the new spamlevel in the lecal copy
+                        log.info("set: '{}' spamlevel = {}".format(scm_hit.get_shorthand(), num_val))
+                    # 2'nd check protection-options
+                    if arg_in.value == 'p':
+                        scm_hit.protect()
+                    elif arg_in.value == 'u':
+                        scm_hit.unprotect()
+                    # return the local SCM to the Register
+                    log.info("local: '{}' spamlevel = {}".format(scm_hit.get_shorthand(), scm_hit.get_spamlevel()))
+                    reg_sc.set(scmid_hit, scm_hit)
+                    reg_sc.write_to_file()
+                else:
+                    str_msg = "Found no hit for: {}. No SCMails were marked!"
+                    log.warning(str_msg)
+                    print(str_msg)
 
         elif arg_in.command == 'kill':
             if bol_okay:
