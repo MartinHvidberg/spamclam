@@ -95,6 +95,11 @@ class SCMail(object):
         """Displays the SCMail as text. num_level detemains the level of information."""
         str_ret = str()
         if isinstance(num_level, int):
+            # temporarily copying a few meta-parameters into _data
+            self._data['_spamlevel'] = self._spamlevel
+            self._data['_spamlevel_lock'] = self._spamlevel_is_userlocked
+            self._data['_protected'] = self._protected
+            # go
             if num_level <= 0:
                 str_ret += "{}".format(self.get_shorthand())
             elif num_level == 1:
@@ -103,8 +108,11 @@ class SCMail(object):
                 str_ret += "{}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('id'))
             elif num_level == 3:
                 str_ret += "{}, {}, {}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('id'), self.get('from'), self.get('subject'))
-            if num_level in [4,5,6]:
-                str_ret +=  "------ {}  {}   -------------\n".format(self.get_shorthand(), self.get_spamlevel())
+            elif num_level in [4,5,6]:
+                str_ret +=  "------ {}  {} ".format(self.get_shorthand(), self.get_spamlevel())
+                if self._spamlevel_is_userlocked: str_ret += "UserLocked "
+                if self._protected: str_ret += "Protected "
+                str_ret +=  "  -------------\n"
                 if num_level == 4:
                     lst_fields = ['date', 'from', 'subject']
                 if num_level == 5:
@@ -114,8 +122,10 @@ class SCMail(object):
                 for key in lst_fields:
                     if self.get(key) != "":
                         str_ret +=  (" {}: {}\n".format(key.ljust(16), self.get(key)))
+            elif num_level in [7,8,9]:
+                str_ret += "{} SCMail.dislplay(num_level={}) not implemented, yet".format(self.get_shorthand(), num_level)
             else:
-                log.error("Value parsed to SCMail.display() was not in legal range [0..9]")
+                log.error("Value parsed to SCMail.display() was not in legal range [0..9]: {}".format(num_level))
         else:
             log.error("Value parsed to SCMail.display() was not integer")
         return str_ret

@@ -209,4 +209,5 @@ if __name__ == '__main__':
 
 # Music that accompanied the coding of this script:
 #   Queen - Greatest hits I
+#   Dire Straits - on shuffle
 
