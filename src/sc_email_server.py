@@ -12,6 +12,7 @@ Get e-mails from the e-mail server, and fill the Register with information.
 # 0.4.3 : Quite more .log, similar less print()
 
 import logging
+import json
 
 import poplib, email
 from email import policy
@@ -24,6 +25,20 @@ import sc_register
 log = logging.getLogger(__name__)
 log.info("Initialize: {}".format(__file__))
 
+
+def save_credentials(gserver ,guser ,gpassword):
+    """ Saves the e-mail server credentials in a file.
+    ToDo XXX This needs way more encryption ... """
+    dic_cred = {'server':gserver, 'user':guser, 'passw':gpassword}
+    with open('cred.json', 'w') as filj:
+        filj.write(json.dumps(dic_cred))  # use `json.loads` to do the reverse
+
+def get_credentials():
+    """ Reads the e-mail server credentials from a file """
+    with open('cred.json', 'r') as filj:
+        dic_cred = json.load(filj)
+    return dic_cred
+
 def connect_pop3(str_srvr, str_user, str_pass):
     """ Connect to a POP3 server
     :param str_srvr: server
@@ -31,7 +46,6 @@ def connect_pop3(str_srvr, str_user, str_pass):
     :param str_pass: user password
     :return: pop3 connection obj.
     """
-
     try:
         con_pop = poplib.POP3_SSL(str_srvr)  # SSL is cool
         con_pop.user(str_user)
@@ -94,19 +108,21 @@ def del_this_email(str_srvr, str_user, str_pass, scm_kill):
     if num_tot_msgs:
         logging.info("Start reading {} messages from server".format(num_tot_msgs))
         for num_email in range(1,num_tot_msgs+1):  # pop3 server count from 1 (not from 0)
+            log.info("email # {}".format(num_email))
             if num_email >= 9999: continue  # short-hand have 26^3 = 17576 kombinations. We stop a bit before that
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
+            log.info("email r {}".format(email_retr))
             email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)
             scm_cand = sc_register.SCMail(email_parsed)
             # Match on datetime, from and subject. ID may be empty for many spam e-mails
-            if scm_cand['date'] == scm_kill.get('date'):
-                if scm_cand['from'] == scm_kill.get('from'):
-                    if scm_cand['subject'] == scm_kill.get('subject'):
+            if scm_cand.get('date') == scm_kill.get('date'):
+                if scm_cand.get('from') == scm_kill.get('from'):
+                    if scm_cand.get('subject') == scm_kill.get('subject'):
                         # We assume this is the right email to delete
                         log.info("Killing email: {}, with date: {} from: {} subj.: {}".format(num_email,
-                                    scm_kill.get('date'), scm_kill.get('from'), scm_kill.get('date')))
-                        return num_email
-    return -999
+                                    scm_kill.get('date'), scm_kill.get('from'), scm_kill.get('subject')))
+                        con_pop.dele(num_email)
+    con_pop.quit()
 
 
 ###------ Obsolete code ------------------------------------------------------------------------------------------------

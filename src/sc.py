@@ -58,6 +58,10 @@ def get_args():
     parser_get.add_argument('gpassword',
                             type=str,
                             help = 'Your secret e-mail pasword, e.g. Fu6hx!2Z')
+    parser_get.add_argument('--dont_save_credentials',
+                            action='store_false',
+                            dest='save_cred',
+                            help = "If included, the mail server credentials will not be stored.")
 
     # create the parser for the "view" command
     parser_view = subparsers.add_parser('view', help='view shows the e-mails that was collected by last get')
@@ -112,13 +116,14 @@ if __name__ == '__main__':
             # Check parameters arg_in.server ,arg_in.user ,arg_in.password
             if not "@" in arg_in.guser:
                 log.warning(" ! argument for 'user' is expected to contain an '@'")
-                print("! Warning in .log")
                 bol_okay = False
             if bol_okay:
                 log.info("{} {} {} ****** ...running...".format(arg_in.command, arg_in.gserver, arg_in.guser))
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc = sc_email_server.get(arg_in.gserver ,arg_in.guser ,arg_in.gpassword, reg_sc)  # Fill register with e-mail info from server
                 reg_sc.write_to_file()  # Write the new register to default filename
+                if arg_in.save_cred:
+                    sc_email_server.save_credentials(arg_in.gserver ,arg_in.guser ,arg_in.gpassword)
                 log.info("{} {} e-mails. Done...".format(arg_in.command, reg_sc.count()))
 
         elif arg_in.command == 'filter':
@@ -208,13 +213,16 @@ if __name__ == '__main__':
         elif arg_in.command == 'kill':
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))
+                # Load credentials
+                dic_cred = sc_email_server.get_credentials()
                 # Load Register
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # Load data into register
                 for scmail in reg_sc.list_doomed():
                     scm_doomed = reg_sc.get(scmail)
                     print("KILL: {}".format(scm_doomed.display(1)))
-                    sc_email_server.del_this_email(scm_doomed)
+                    sc_email_server.del_this_email(dic_cred['server'], dic_cred['user'], dic_cred['passw'], scm_doomed)
+                    Remove it from Register
 
         elif arg_in.command == 'version':
             print("Not implemented, yet...")  # XXX consider changing to flag --version
