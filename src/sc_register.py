@@ -242,18 +242,17 @@ class Register(object):
             self.read_from_file(str_infile)
 
     def insert(self, scm_in):
-        """ inserts a SCMail into the register """
+        """ inserts a SCMail into the register. Updates if all ready existing, otherwise create shh and all... """
         id = scm_in.get('id')
-        if id in self.list_all():
-            print("Warning: e-mail id all ready exist in register! Overwriting: {}".format(id))
-        # Generate a short-hand
-        str_cand = None
-        while str_cand == None:
-            str_cand = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for x in range(self.NUM_SHORTHAND_LENGTH))
-            if str_cand in [smc.get_shorthand for smc in self._data.values()]:
-                str_cand = None
-        scm_in._shorthand = str_cand
-        ##print("New shorthand: {}".format(scm_in._shorthand))
+        if not id in self.list_all():  # This is a new SCMail
+            # Generate a short-hand
+            str_cand = None
+            while str_cand == None:
+                str_cand = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for x in range(self.NUM_SHORTHAND_LENGTH))
+                if str_cand in [smc.get_shorthand for smc in self._data.values()]:
+                    str_cand = None
+            scm_in._shorthand = str_cand
+        # insert in Register
         self._data[id] = scm_in
 
     def count(self):

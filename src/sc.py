@@ -40,6 +40,13 @@ def get_args():
     # ToDo XXX Consider an exclude command that removes one SCMail fra Register (but not from server) to reduse view-clutter
     # ToDo XXX config command must go, so 'c' means only 'clean'
 
+
+    # nargs=
+    # N (an integer). N arguments from the command line will be gathered together into a list.
+    # '?'. One argument will be consumed from the command line if possible, and produced as a single item. If no command-line argument is present, the value from default will be produced.
+    # '*'. All command-line arguments present are gathered into a list.
+    # '+'. Just like '*', all command-line args present are gathered into a list. Additionally, an error message will be generated if there wasn’t at least one command-line argument present.
+
     # create the parser for the "get" command
     parser_get = subparsers.add_parser('get', help='get collects a list of e-mails available on the server')
     parser_get.add_argument('gserver',
@@ -76,13 +83,15 @@ def get_args():
                              # 9: VERY MUCH INFO  (shh, +all param +orig. e-mail +all attacments +all else)""")
 
     parser_get = subparsers.add_parser('mark', help='mark a mail with the given value')
-    parser_get.add_argument('shh',
-                            type=str,
-                            help = 'ssh is the mails short-hand (3-letter id)')
     parser_get.add_argument('value',
+                            nargs='?',
                             type=str,
                              choices=['0','1','2','3','4','5','6','7','8','9','s','o','p','u'],
                             help = "spam-value, spam, okay, protect or un-protect")
+    parser_get.add_argument('shh',
+                            nargs='+',
+                            type=str,
+                            help = 'one (or several) mail short-hand(s) (3-letter id)')
     # parse argument list
     args = parser.parse_args()
     return args
@@ -154,47 +163,51 @@ if __name__ == '__main__':
                 # Load Register
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # Load data into register
-                bol_hit = False
+                lst_mails = list()
                 for scmid in reg_sc.list_all():
                     scm = reg_sc.get(scmid)
-                    if scm.get_shorthand() == arg_in.shh:
-                        scmid_hit = scmid
-                        scm_hit = scm
-                        bol_hit = True
-                        ##log.info("hit {} != {}".format(scm.get_shorthand(), arg_in.shh))
-                        break
-                if bol_hit:
-                    # 1'st check spam-level options
-                    num_val = None
-                    if arg_in.value in ['0','1','2','3','4','5','6','7','8','9']:
-                        try:
-                            num_val = int(arg_in.value)
-                        except ValueError:
-                            log.warning("Strange conversion error ... arg_in.value = {}".format(arg_in.value))
-                    elif arg_in.value == 's':  # Spam
-                        num_val = 7  # Default. All spam-level >= 7 is considered Spam!
-                    elif arg_in.value == 'o':  # Okay
-                        num_val = 0
-                    if num_val:
-                        scm_hit.set_spamlevel(num_val)  # This is setting the new spamlevel in the lecal copy
-                        log.info("set: '{}' spamlevel = {}".format(scm_hit.get_shorthand(), num_val))
-                    # 2'nd check protection-options
-                    if arg_in.value == 'p':
-                        scm_hit.protect()
-                    elif arg_in.value == 'u':
-                        scm_hit.unprotect()
-                    # return the local SCM to the Register
-                    log.info("local: '{}' spamlevel = {}".format(scm_hit.get_shorthand(), scm_hit.get_spamlevel()))
-                    reg_sc.set(scmid_hit, scm_hit)
-                    reg_sc.write_to_file()
+                    if scm.get_shorthand() in arg_in.shh:
+                        lst_mails.append(scm)
+                if len(lst_mails) > 0:
+                    for scmail in lst_mails:
+                        # 1'st check spam-level options
+                        num_val = None
+                        if isinstance(arg_in.value, int):
+                            num_val = arg_in.value
+                        else:
+                            if arg_in.value in ['0','1','2','3','4','5','6','7','8','9']:
+                                try:
+                                    num_val = int(arg_in.value)
+                                except ValueError:
+                                    log.warning("Strange conversion error ... arg_in.value = {}".format(arg_in.value))
+                            elif arg_in.value == 's':  # Spam
+                                num_val = 7  # Default. All spam-level >= 7 is considered Spam!
+                            elif arg_in.value == 'o':  # Okay
+                                num_val = 0
+                            log.info("set: '{}' num_val = {}".format(scmail.get_shorthand(), num_val))
+                        if num_val != None:  # Note: integer 0 is a legal value!
+                            scmail.set_spamlevel(num_val)  # This is setting the new spamlevel in the lecal copy
+                            log.info("set: '{}' spamlevel = {}".format(scmail.get_shorthand(), scmail.get_spamlevel()))
+                        # 2'nd check protection-options
+                        if arg_in.value == 'p':
+                            scmail.protect()
+                        elif arg_in.value == 'u':
+                            scmail.unprotect()
+                        # return the local SCMail to the Register
+                        log.info("local: '{}' spamlevel = {} protected = {}".format(scmail.get_shorthand(), scmail.get_spamlevel(), scmail._protected))
+                        reg_sc.insert(scmail)
+                        reg_sc.write_to_file()
                 else:
-                    str_msg = "Found no hit for: {}. No SCMails were marked!"
+                    str_msg = "Found no hit for: {}. No SCMails were marked!".format()
                     log.warning(str_msg)
                     print(str_msg)
 
         elif arg_in.command == 'kill':
             if bol_okay:
-                pass
+                log.info("{} ...running...".format(arg_in.command))
+                # Load Register
+                reg_sc = sc_register.Register()  # Build empty register
+                reg_sc.read_from_file()  # Load data into register
 
         elif arg_in.command == 'version':
             print("Not implemented, yet...")  # XXX consider changing to flag --version
