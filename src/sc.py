@@ -15,7 +15,7 @@ import argparse
 import logging
 
 import sc_register
-import sc_get
+import sc_email_server
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
 import karma
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_classic'))
@@ -92,6 +92,9 @@ def get_args():
                             nargs='+',
                             type=str,
                             help = 'one (or several) mail short-hand(s) (3-letter id)')
+
+    parser_kill = subparsers.add_parser('kill', help='KILL (delte from server) all mails marked as spam, and not protected')
+
     # parse argument list
     args = parser.parse_args()
     return args
@@ -114,7 +117,7 @@ if __name__ == '__main__':
             if bol_okay:
                 log.info("{} {} {} ****** ...running...".format(arg_in.command, arg_in.gserver, arg_in.guser))
                 reg_sc = sc_register.Register()  # Build empty register
-                reg_sc = sc_get.get(arg_in.gserver ,arg_in.guser ,arg_in.gpassword, reg_sc)  # Fill register with e-mail info from server
+                reg_sc = sc_email_server.get(arg_in.gserver ,arg_in.guser ,arg_in.gpassword, reg_sc)  # Fill register with e-mail info from server
                 reg_sc.write_to_file()  # Write the new register to default filename
                 log.info("{} {} e-mails. Done...".format(arg_in.command, reg_sc.count()))
 
@@ -208,6 +211,10 @@ if __name__ == '__main__':
                 # Load Register
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # Load data into register
+                for scmail in reg_sc.list_doomed():
+                    scm_doomed = reg_sc.get(scmail)
+                    print("KILL: {}".format(scm_doomed.display(1)))
+                    sc_email_server.del_this_email(scm_doomed)
 
         elif arg_in.command == 'version':
             print("Not implemented, yet...")  # XXX consider changing to flag --version

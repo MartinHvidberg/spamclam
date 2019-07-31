@@ -134,10 +134,6 @@ class SCMail(object):
         """ This function tries to set all the entries, from the org. message.
          Apparently msg.get('<lable>') and msg['<lable>'] is interchangeable. Try using shorter form. """
         msg = self._mesg
-        try:
-            pass#print("======\n{}\n------".format(str(msg)))
-        except:
-            pass
         # * Message-ID:
         try:
             self._data['id'] = msg['Message-ID'].strip('<>')
@@ -301,11 +297,20 @@ class Register(object):
         for scmailid in self.list_all():
             scmail = self.get(scmailid)
             scmail.set_spamlevel_from_filterres()  # Update the spam level
-            num_spmlvl = scmail.spamlevel()
+            num_spmlvl = scmail.get_spamlevel()
             if num_spmlvl >= minimum:
-                if num_spmlvl <= maximum or maximum == None:
+                if maximum == None or num_spmlvl <= maximum:
                     lst_ret.append(scmailid)
         return lst_ret
+
+    def list_doomed(self):
+        lst_doom = list()
+        for scm_cand_id in self.list_spam():
+            scm_cand = self.get(scm_cand_id)
+            # Check that it's not protected
+            if not scm_cand._protected:
+                lst_doom.append(scm_cand_id)  # only list the id, not the mail obj.
+        return lst_doom
 
     def get(self, id):
         """ return the SCMail with the given id
