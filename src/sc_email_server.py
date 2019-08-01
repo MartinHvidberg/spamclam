@@ -16,22 +16,19 @@ import json
 
 import poplib, email
 from email import policy
-##from email import parser
 
 import sc_register
-##import sc_debug
 
 # Initialize logging
 log = logging.getLogger(__name__)
 log.info("Initialize: {}".format(__file__))
-
 
 def save_credentials(gserver ,guser ,gpassword):
     """ Saves the e-mail server credentials in a file.
     ToDo XXX This needs way more encryption ... """
     dic_cred = {'server':gserver, 'user':guser, 'passw':gpassword}
     with open('cred.json', 'w') as filj:
-        filj.write(json.dumps(dic_cred))  # use `json.loads` to do the reverse
+        filj.write(json.dumps(dic_cred))
 
 def get_credentials():
     """ Reads the e-mail server credentials from a file """
@@ -61,7 +58,6 @@ def connect_pop3(str_srvr, str_user, str_pass):
     return con_pop
 
 def get(str_srvr, str_user, str_pass, reg_sc):
-
     con_pop = connect_pop3(str_srvr, str_user, str_pass)
     if con_pop:
         num_tot_msgs, num_tot_bytes = con_pop.stat()
@@ -78,23 +74,14 @@ def get(str_srvr, str_user, str_pass, reg_sc):
             # Retreive the e-mail from the server
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
             email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)
-            # # Turn the email.massage into a SCMail
-            # #if num_email == -1: sc_debug.analyse_parsed_email(email_parsed)  # look at one email
-            # if 'passagen' in email_parsed['from']:
-            #     sc_debug.analyse_retreived_email(email_retr)  # look at one email
-            #     #sc_debug.analyse_parsed_email(email_parsed)  # look at one email
             scm_in = sc_register.SCMail(email_parsed)
             # Add the SCMail to the register
             reg_sc.insert(scm_in)
-
         # Close connection to email server
         con_pop.quit()
-
         # Clean major objects
         del con_pop
         del str_srvr, str_user, str_pass
-
-        ##print("inside count {}".format(reg_sc.count()))
         return reg_sc
 
 def del_this_email(str_srvr, str_user, str_pass, scm_kill):
@@ -123,35 +110,6 @@ def del_this_email(str_srvr, str_user, str_pass, scm_kill):
                                     scm_kill.get('date'), scm_kill.get('from'), scm_kill.get('subject')))
                         con_pop.dele(num_email)
     con_pop.quit()
-
-
-###------ Obsolete code ------------------------------------------------------------------------------------------------
-
-    def decode_header(header):
-        decoded_bytes, charset = email.header.decode_header(header)[0]
-        if charset is None:
-            return str(decoded_bytes)
-        else:
-            return decoded_bytes.decode(charset)
-
-    def cool_msg_walker_old(email_parsed):  # from https://gist.github.com/strayge/f619cacb972d956ddbe1472d882821fe
-        """ Taks a walk inside a email_parsed """
-        for part in email_parsed.walk():
-            if part.is_multipart():
-                # maybe need also parse all subparts
-                continue
-            elif part.get_content_maintype() == 'text':
-                text = part.get_payload(decode=True).decode(
-                    part.get_content_charset())
-                print('Text:\n', text)
-            elif part.get_content_maintype() == 'application' and part.get_content_disposition() == 'attachment':
-                name = decode_header(part.get_filename())
-                body = part.get_payload(decode=True)
-                size = len(body)
-                print('Attachment: "{}", size: {} bytes, starts with: "{}"'.format(name, size, body[:50]))
-            else:
-                print('Unknown part:', part.get_content_type())
-
 
 # End of Python
 

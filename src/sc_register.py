@@ -179,13 +179,10 @@ class SCMail(object):
         # * bcc
         self._data['bcc'] = msg['bcc']
         # * subject
-        ##dcd_sub = email.header.decode_header(msg['Subject'])
-        ##self._data['subject'] = ''.join([tup[0] for tup in dcd_sub]) # It's legal to use several encodings in same header
         self._data['subject'] = msg['subject']
         # * body
         self._data['body'] = msg.get_body()
         # * size
-
         for key_check in self._data.keys():
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
@@ -372,7 +369,6 @@ class Register(object):
 
 if __name__ == '__main__':
     print("This unit {} can't be run, but must be called from another unit".format(__file__))
-
 
 # End of Python
 

@@ -33,14 +33,11 @@ log.info("Initialize: {}".format(__file__))
 def get_args():
     # create the top-level parser
     parser = argparse.ArgumentParser(prog='cs')
-    ##parser.add_argument('--foo', action='store_true', help='foo help')  # arguments to general command
     subparsers = parser.add_subparsers(dest='command', help='First argument is always a Command. Available: get, filter, view, mark, exclude, kill, clear, stat, log, config, version')
     # MVE only impliment get, view, filter, mark, kill
     # mark was earlier set, but get/set was unbalanced in function
     # ToDo XXX Consider an exclude command that removes one SCMail fra Register (but not from server) to reduse view-clutter
     # ToDo XXX config command must go, so 'c' means only 'clean'
-
-
     # nargs=
     # N (an integer). N arguments from the command line will be gathered together into a list.
     # '?'. One argument will be consumed from the command line if possible, and produced as a single item. If no command-line argument is present, the value from default will be produced.
@@ -90,7 +87,7 @@ def get_args():
     parser_get.add_argument('value',
                             nargs='?',
                             type=str,
-                             choices=['0','1','2','3','4','5','6','7','8','9','s','o','p','u'],
+                            choices=['0','1','2','3','4','5','6','7','8','9','s','o','p','u'],
                             help = "spam-value, spam, okay, protect or un-protect")
     parser_get.add_argument('shh',
                             nargs='+',
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     if arg_in:
         bol_okay = True  # Assume that everything is Okay, until proven wrong
 
-        if arg_in.command == 'get':
+        if arg_in.command == 'get':  # ------------------------ get -----------
             # Check parameters arg_in.server ,arg_in.user ,arg_in.password
             if not "@" in arg_in.guser:
                 log.warning(" ! argument for 'user' is expected to contain an '@'")
@@ -125,8 +122,7 @@ if __name__ == '__main__':
                 if arg_in.save_cred:
                     sc_email_server.save_credentials(arg_in.gserver ,arg_in.guser ,arg_in.gpassword)
                 log.info("{} {} e-mails. Done...".format(arg_in.command, reg_sc.count()))
-
-        elif arg_in.command == 'filter':
+        elif arg_in.command == 'filter':  # ------------------- filter --------
             str_filter_do = arg_in.fdo[0]
             str_filter_name = arg_in.fname[0]
             if bol_okay:
@@ -149,9 +145,7 @@ if __name__ == '__main__':
                         reg_sc.get(scmail).show_spam_status()
                 else:
                     log.warning("The filename was not matched by any filer: {}".format(str_filter_name))
-
-        elif arg_in.command == 'view':
-            ##print('(view, okay: {})'.format(bol_okay))
+        elif arg_in.command == 'view':  # --------------------- view ----------
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))
                 # Load Register
@@ -164,8 +158,7 @@ if __name__ == '__main__':
                 log.info(str_msg)
                 print(str_msg)
                 log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
-
-        elif arg_in.command == 'mark':
+        elif arg_in.command == 'mark':  # --------------------- mark ----------
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))
                 # Load Register
@@ -209,8 +202,7 @@ if __name__ == '__main__':
                     str_msg = "Found no hit for: {}. No SCMails were marked!".format()
                     log.warning(str_msg)
                     print(str_msg)
-
-        elif arg_in.command == 'kill':
+        elif arg_in.command == 'kill':  # --------------------- kill ----------
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))
                 # Load credentials
@@ -229,11 +221,9 @@ if __name__ == '__main__':
                     else:
                         log.warning("Couldn't remove from Register the doomed SCMail with id: {}".format(scm_doomed.get('id')))
                 reg_sc.write_to_file()
-
-        elif arg_in.command == 'version':
+        elif arg_in.command == 'version':  # ------------------ version -------
             print("Not implemented, yet...")  # XXX consider changing to flag --version
             #print("SpamClam - Command Line Interface. Version {}".format(__version__))
-
         else:
             print("You should never see this, because that would mean that get_args() have parsed a command that isn't implemented...")
     else:
