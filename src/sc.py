@@ -221,8 +221,14 @@ if __name__ == '__main__':
                 for scmail in reg_sc.list_doomed():
                     scm_doomed = reg_sc.get(scmail)
                     print("KILL: {}".format(scm_doomed.display(1)))
+                    # Kill on server
                     sc_email_server.del_this_email(dic_cred['server'], dic_cred['user'], dic_cred['passw'], scm_doomed)
-                    Remove it from Register
+                    #Remove it from Register
+                    if reg_sc.remove(scm_doomed.get('id')):
+                        pass
+                    else:
+                        log.warning("Couldn't remove from Register the doomed SCMail with id: {}".format(scm_doomed.get('id')))
+                reg_sc.write_to_file()
 
         elif arg_in.command == 'version':
             print("Not implemented, yet...")  # XXX consider changing to flag --version

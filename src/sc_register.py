@@ -251,6 +251,16 @@ class Register(object):
         # insert in Register
         self._data[id] = scm_in
 
+    def remove(self, id):
+        if id in self._data.keys():
+            try:
+                del self._data[id]
+                return id
+            except:
+                return None
+        else:
+            return None
+
     def count(self):
         """ Return number of e-mails in the register """
         return len(self._data.keys())

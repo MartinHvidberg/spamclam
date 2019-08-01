@@ -108,10 +108,10 @@ def del_this_email(str_srvr, str_user, str_pass, scm_kill):
     if num_tot_msgs:
         logging.info("Start reading {} messages from server".format(num_tot_msgs))
         for num_email in range(1,num_tot_msgs+1):  # pop3 server count from 1 (not from 0)
-            log.info("email # {}".format(num_email))
+            ##log.info("email # {}".format(num_email))
             if num_email >= 9999: continue  # short-hand have 26^3 = 17576 kombinations. We stop a bit before that
             email_retr = con_pop.retr(num_email)[1]  # .retr() result is in form (response, ['line', ...], octets).
-            log.info("email r {}".format(email_retr))
+            ##log.info("email r {}".format(email_retr))
             email_parsed = email.message_from_bytes(b"\n".join(email_retr), policy=email.policy.default)
             scm_cand = sc_register.SCMail(email_parsed)
             # Match on datetime, from and subject. ID may be empty for many spam e-mails
