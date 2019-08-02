@@ -13,6 +13,7 @@ The Spam Clam Command Line Interface
 import sys, os
 import argparse
 import logging
+import json
 
 import sc_register
 import sc_email_server
@@ -115,6 +116,11 @@ def get_args():
     # create the parser for the "kill" command
     parser_kill = subparsers.add_parser('kill', help='KILL (delte from server) all mails marked as spam, and not protected')
 
+    # create the parser for the "dumpasjson" command
+    parser_kill = subparsers.add_parser('dumpasjson', help='only for debug ...')
+
+
+
     # parse argument list
     args = parser.parse_args()
     return args
@@ -167,18 +173,6 @@ if __name__ == '__main__':
                     log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
                 else:
                     log.warning("The filename was not matched by any filer: {}".format(str_filter_name))
-        # elif arg_in.command == 'filter':  # --------------------- filter ----------
-        #     if bol_okay:
-        #         log.info("{} ...running...".format(arg_in.command))
-        #         # Load Register
-        #         reg_sc = sc_register.Register()  # Build empty register
-        #         reg_sc.read_from_file()  # Load data into register
-        #         # Filter Register
-        #         reg_sc = karma.filter(reg_sc)  # testing with Karma ---------------------------------------------- LUS
-        #         # return the local SCMail to the Register
-        #         # ... more?
-        #         reg_sc.write_to_file()
-        #         log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
         elif arg_in.command == 'view':  # --------------------- view ----------
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))

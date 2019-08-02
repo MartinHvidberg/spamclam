@@ -16,6 +16,7 @@ The 'Register' object, essentially an archive of SCMails, is the central data ob
 import os
 import datetime
 import pickle
+import json
 import uuid
 import random
 import email
@@ -95,10 +96,6 @@ class SCMail(object):
         """Displays the SCMail as text. num_level detemains the level of information."""
         str_ret = str()
         if isinstance(num_level, int):
-            # temporarily copying a few meta-parameters into _data
-            self._data['_spamlevel'] = self._spamlevel
-            self._data['_spamlevel_lock'] = self._spamlevel_is_userlocked
-            self._data['_protected'] = self._protected
             # go
             if num_level <= 0:
                 str_ret += "{}".format(self.get_shorthand())
@@ -109,6 +106,7 @@ class SCMail(object):
             elif num_level == 3:
                 str_ret += "{}, {}, {}, {}, {}".format(self.get_shorthand(), self.get_spamlevel(), self.get('id'), self.get('from'), self.get('subject'))
             elif num_level in [4,5,6]:
+                lst_fields = []
                 str_ret +=  "------ {}  {} ".format(self.get_shorthand(), self.get_spamlevel())
                 if self._spamlevel_is_userlocked: str_ret += "UserLocked "
                 if self._protected: str_ret += "Protected "
@@ -118,6 +116,13 @@ class SCMail(object):
                 if num_level == 5:
                     lst_fields = ['date', 'from', 'cc', 'bcc', 'subject']
                 if num_level == 6:
+                    # temporarily copying a few meta-parameters into _data to be able to show everything
+                    self._data['_spamlevel'] = self._spamlevel
+                    self._data['_spamlevel_lock'] = self._spamlevel_is_userlocked
+                    self._data['_protected'] = self._protected
+                    self._data['_responces'] = ""
+                    for kfr in self._filterres.keys():
+                        self._data['_responces'] += "{} :\n\t{}".format(kfr,self._filterres[kfr])
                     lst_fields = [key for key in self._data.keys() if (key != "" and key != 'body')]
                 for key in lst_fields:
                     if self.get(key) != "":
@@ -334,8 +339,8 @@ class Register(object):
             # XXX Make sure ../register exist as a directory ...
             str_timestamp =  str(datetime.datetime.now()).split(".")[0].replace(":", "").replace("-", "").replace(" ", "_")
             str_fn = r"../register/SCreg_" + str_timestamp + ".ecscreg"
+        # Pickle the 'data' dictionary using the highest protocol available.
         with open(str_fn, 'wb') as fil_out:
-            # Pickle the 'data' dictionary using the highest protocol available.
             pickle.dump(self._data, fil_out, pickle.HIGHEST_PROTOCOL)
 
     def read_from_file(self, str_fn=""):
