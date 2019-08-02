@@ -65,7 +65,7 @@ class Response(dict):
 
     def _add_reason(self, vote, fmin, fmax, reason):
         """ Adds a reason (string) to the reasons list
-        reason-strin contains reason & (min\\vote/max) """
+        reason-strin contains reason & (min,vote,max) """
         if vote >= 0:
             sign = '+'
         else:
@@ -123,8 +123,8 @@ class Response(dict):
 class Filter(object):
     """ This is a basic Filter.
     A Filter applies one, or more, filter actions to an e-mail
-    A filter adds (or updates) a filter response in the scmail's filterres list.
-    This filter doesn't actually filter anything, but acts as the parent class for other filters.
+    A filter adds (or updates) it's filter-response in the scmail's filterres list.
+    This basic filter doesn't actually filter anything, but acts as the parent class for other filters.
     """
 
     def __init__(self):
@@ -132,18 +132,18 @@ class Filter(object):
         self.str_filter_name = "Base filter"
         log.debug("class init. {}".format(self.say_hi()))
 
-    def spamalyse(self, scmail):
+    def spamalyse(self, scmail):  # method is supposed to be overloaded
         """ Checks a single SCMail against the filter, i.e. it self.
          Always receive one scmail and return one scmail
          Always updates one Response entry in the scmail's _filterres list
          """
-        return scmail  # method is supposed to be overloaded
+        return scmail
 
     def filter(self, reg_in):
         """ Checks all SCMails in a Register against the filter, i.e. it self """
         reg_out = sc_register.Register()  # The return Register starts empty  XXX BIG TIME try to avoid this...!!! XXX
         for scm_id in reg_in.list_all(): # reg_in.list_match(["id=1545156198.5c193666a9623@w2.doggooi.com"]): # <------ LUS
-            log.info("*filter(base) w.:        {}".format(scm_id))
+            log.info("*filter w.:        {}".format(scm_id))
             scmail = reg_in.get(scm_id)  # Retrieve the SCMail
             rsp_in = Response(self.str_filter_name)  # Create a filter Response obj.
             scmail.add_filter_response(rsp_in)  # This should be the only place a Response() is added to a SCMail() !

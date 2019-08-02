@@ -51,7 +51,7 @@ class Karma(filter_base.Filter):
 
     def spamalyse(self, scm_in):
         log.info("*spamalyse(karma) w.: {}".format(scm_in.get('id')))
-        super().spamalyse(scm_in)  # overload method from Filter()
+        scm_in = super().spamalyse(scm_in)  # run through super.ditto(), though likely an empty method.
         scm_in = self._check_message_id(scm_in)
         scm_in = self._check_subject(scm_in)
         scm_in = self._check_from(scm_in)

@@ -60,6 +60,23 @@ def get_args():
                             dest='save_cred',
                             help = "If included, the mail server credentials will not be stored.")
 
+    # create the parser for the "filter" command
+    parser_filter = subparsers.add_parser('filter', help='filter ... of e-mails available on the server')
+    parser_filter.add_argument('fdo',
+                            type=str,
+                            nargs='?',
+                            choices=['run'],  # XXX later extend the list ...
+                            help = 'help filter_do xxx')
+    parser_filter.add_argument('fname',
+                            type=str,
+                            nargs='?',
+                            choices=['karma', 'classic'],  # XXX later extend the list ...
+                            help = 'help filter_name xxx')
+    parser_filter.add_argument('fdetails',
+                            type=str,
+                            nargs='*',
+                            help = 'help filter details xxx')
+
     # create the parser for the "view" command
     parser_view = subparsers.add_parser('view', help='view shows the e-mails that was collected by last get')
     parser_view.add_argument('vwhat',
@@ -83,6 +100,7 @@ def get_args():
                              # 8: VERY much info  (shh, +all param +orig. e-mail +all attacments)
                              # 9: VERY MUCH INFO  (shh, +all param +orig. e-mail +all attacments +all else)""")
 
+    # create the parser for the "mark" command
     parser_get = subparsers.add_parser('mark', help='mark a mail with the given value')
     parser_get.add_argument('value',
                             nargs='?',
@@ -94,6 +112,7 @@ def get_args():
                             type=str,
                             help = 'one (or several) mail short-hand(s) (3-letter id)')
 
+    # create the parser for the "kill" command
     parser_kill = subparsers.add_parser('kill', help='KILL (delte from server) all mails marked as spam, and not protected')
 
     # parse argument list
@@ -123,14 +142,15 @@ if __name__ == '__main__':
                     sc_email_server.save_credentials(arg_in.gserver ,arg_in.guser ,arg_in.gpassword)
                 log.info("{} {} e-mails. Done...".format(arg_in.command, reg_sc.count()))
         elif arg_in.command == 'filter':  # ------------------- filter --------
-            str_filter_do = arg_in.fdo[0]
-            str_filter_name = arg_in.fname[0]
+            str_filter_do = arg_in.fdo  # Should his always be a good idea, for all commands?
+            str_filter_name = arg_in.fname
             if bol_okay:
                 log.info("{} {} {} {} ...running...".format(arg_in.command, str_filter_do, str_filter_name, arg_in.fdetails))
                 # Load Register
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # read data from standard filename
                 # Load Filter
+                ftr_selected = None
                 if str_filter_name == 'karma':
                     ftr_selected = karma.Karma()
                 elif str_filter_name == 'classic':
@@ -142,9 +162,23 @@ if __name__ == '__main__':
                     log.info("{} Done...".format(arg_in.command))
                     # Only for bebug XXX
                     for scmail in reg_sc.list_all():
-                        reg_sc.get(scmail).show_spam_status()
+                        print("{} : {}".format(reg_sc.get(scmail).get_shorthand(), reg_sc.get(scmail).get_spamlevel()))
+                    reg_sc.write_to_file()
+                    log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
                 else:
                     log.warning("The filename was not matched by any filer: {}".format(str_filter_name))
+        # elif arg_in.command == 'filter':  # --------------------- filter ----------
+        #     if bol_okay:
+        #         log.info("{} ...running...".format(arg_in.command))
+        #         # Load Register
+        #         reg_sc = sc_register.Register()  # Build empty register
+        #         reg_sc.read_from_file()  # Load data into register
+        #         # Filter Register
+        #         reg_sc = karma.filter(reg_sc)  # testing with Karma ---------------------------------------------- LUS
+        #         # return the local SCMail to the Register
+        #         # ... more?
+        #         reg_sc.write_to_file()
+        #         log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
         elif arg_in.command == 'view':  # --------------------- view ----------
             if bol_okay:
                 log.info("{} ...running...".format(arg_in.command))
