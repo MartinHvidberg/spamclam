@@ -45,7 +45,7 @@ class Karma(filter_base.Filter):
 
     def __init__(self):
         super().__init__()
-        self.str_filter_name = 'Karma'
+        self.filter_name = 'Karma'
         log.info("{}".format(self.say_hi()))
 
 
@@ -62,7 +62,7 @@ class Karma(filter_base.Filter):
         """ Checks the scmail's Messag-ID """
         log.debug(" chk msgid(karma) w.: {}".format(scm_i.get('id')))
         if scm_i.get('id').endswith('@ECsoftware.net'):
-            scm_i.add_vote(self.str_filter_name, 1, 4, None, 'No Message-ID')
+            scm_i.add_vote(self.filter_name, 1, 4, None, 'No Message-ID')
         ##print("MsgID: {}".format(scm_i.get('id')))
         return scm_i
 
@@ -71,7 +71,7 @@ class Karma(filter_base.Filter):
         """ Check the scmail's Subject """
         log.debug(" chk subj(karma) w.: {}".format(scm_i.get('id')))
         if scm_i.get('subject') == "":
-            scm_i.add_vote(self.str_filter_name, 1, None, None, 'Subject is Empty')
+            scm_i.add_vote(self.filter_name, 1, None, None, 'Subject is Empty')
         return scm_i
 
 
@@ -80,6 +80,7 @@ class Karma(filter_base.Filter):
         log.debug(" chk from(karma) w.: {}".format(scm_i.get('id')))
 
         # Check that from-name and from-addr have something in common
+        cname = 'from-name/from-addr'
         num_cnt_sim = 0  # No similarities, yet
         str_fnam = scm_i.get("from_nam", nodata="").lower()  # all comparison as lower
         str_fadr = scm_i.get("from_adr", nodata="").lower()  # all comparison as lower
@@ -95,38 +96,52 @@ class Karma(filter_base.Filter):
                 if tok_fadr in str_fnam:
                     num_cnt_sim += 1
             if num_cnt_sim < 1:
-                scm_i.add_vote(self.str_filter_name, 1, 4, None, 'from-name and from-addr mismatch')
+                scm_i.vote(self.filter_name, cname, 1, 3, 1, 9, 'from-name and from-addr mismatch')
 
         # Check that 'from', 'reply-to' and 'return-path' have something in common, maybe look at x-sender?
-        print(" * Check from- reply- and return-address integrity")
+        cname = 'from/reply/return'
+        ##print(" * Check from- reply- and return-address integrity")
         los_dom = list()
         los_dom.append(scm_i.get('from_dom'))
         los_dom.append(scm_i.get('return-path_dom'))
         los_dom.append(scm_i.get('reply-to_dom'))
-        lol_dom = list()
-        for dom in los_dom:
-            if dom:
-                dom = dom.split(".")[:-1]  # tokenize and loose TLD
-            else:  # in case dom was None
-                dom = list()  # set it to an emply list
-            lol_dom.append(dom)
-        print("\n{}".format(lol_dom))
-        num_max_friends = len(lol_dom) * (len(lol_dom)-1)
-        lst_dom_friends = list()
-        for i in range(len(lol_dom)):
-            for j in range(len(lol_dom)):
-                if i != j:  # Don't compare to self
-                    lst_dom_friends.append([hit for hit in lol_dom[i] if hit in lol_dom[j]])
-        num_hit_friends = len([hit for hit in lst_dom_friends if hit != []])
-        hit_rate = num_hit_friends * 100.0 / num_max_friends
-        print("hits: {} = {}".format(lst_dom_friends, hit_rate))
-        if hit_rate > 0 and hit_rate < 33:
-            num_suspicion = 2
-        if hit_rate >= 33 and hit_rate < 66:
-            num_suspicion = 1
-        else:
-            num_suspicion = 0
-        scm_i.add_vote(self.str_filter_name, num_suspicion, 4, None, 'from-, return- and reply-domain mismatch')
+        los_dom = [itm for itm in los_dom if itm]  # Remove the None's
+        #log.info(" *** lol_dom: {}".format(los_dom))
+        if len(los_dom) > 0:  # Nothing to check if all is none
+            lol_dom = list()
+            for dom in los_dom:
+                if dom:
+                    dom = dom.split(".")[:-1]  # tokenize and loose TLD
+                else:  # in case dom was None
+                    dom = list()  # set it to an emply list xxx make this pass
+                lol_dom.append(dom)
+            #print("\n{}".format(lol_dom))
+            num_max_friends = len(lol_dom) * (len(lol_dom)-1)
+            lst_dom_friends = list()
+            for i in range(len(lol_dom)):
+                for j in range(len(lol_dom)):
+                    if i != j:  # Don't compare to self
+                        lst_dom_friends.append([hit for hit in lol_dom[i] if hit in lol_dom[j]])
+            ##log.info(" *** lst_dom_friends: {}".format(lst_dom_friends))
+            num_hit_friends = len([hit for hit in lst_dom_friends if hit != []])
+            ##log.info(" *** num_hit_friends: {}".format(num_hit_friends))
+            hit_rate = num_hit_friends * 100.0 / num_max_friends
+            ##log.info(" *** hit_rate: {}".format(hit_rate))
+            ##print("hits: {} = {}".format(lst_dom_friends, hit_rate))
+            if hit_rate == 0:
+                num_suspicion = 3
+                num_confi = 2
+            elif hit_rate > 0 and hit_rate < 33:
+                num_suspicion = 2
+                num_confi = 2
+            elif hit_rate >= 33 and hit_rate < 66:
+                num_suspicion = 1
+                num_confi = 2
+            else:
+                num_suspicion = 0
+                num_confi = 0
+            if num_suspicion > 0:
+                scm_i.vote(self.filter_name, cname, num_suspicion, num_confi, 1, 9, 'from-, return- and reply-domain mismatch')
 
         return scm_i
 

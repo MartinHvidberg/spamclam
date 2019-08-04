@@ -61,7 +61,7 @@ class SCMail(object):
     def unprotect(self):
         self._protected = False
 
-    def set_spamlevel(self, num_val):
+    def set_spamlevel(self, num_val):  # For manuel (user initiated) setting of spam-level
         if isinstance(num_val, int):
             if num_val < 0: num_val = 0
             if num_val > 9: num_val = 9
@@ -86,14 +86,16 @@ class SCMail(object):
             self.set_spamlevel_from_filterres()
         return self._spamlevel
 
-    def spamlevel_old(self):
-        """ Returns the SpamLevel of the SCMail """
-        if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
-            self.set_spamlevel_from_filterres()
-        return self._spamlevel
+    def has_filter_response(self, fname):
+        if fname in self._filterres.keys():
+            return True
+        else:
+            return False
 
     def display(self, num_level=1):
         """Displays the SCMail as text. num_level detemains the level of information."""
+        if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
+            self.set_spamlevel_from_filterres()
         str_ret = str()
         if isinstance(num_level, int):
             # go
@@ -215,14 +217,16 @@ class SCMail(object):
         self._filterres[ftr_in['name']] = ftr_in
         self._spamlevel_is_updated = False
 
-    def add_vote(self, filter_name, vote, fmin, fmax, reason):
-        """ Adds a vote to the relevant response in _filterres
+    def vote(self, filter_name, cname, vote, confi, fmin, fmax, reason):
+        """ Adds a vote to the relevant filer-response in _filterres
         filter_name must point to existing response
+        name must be the vote/check/rule name
         vote, fmin, fmax must be integer [0..9]
         reason must be string """
-        rsp_obj = self._filterres[filter_name]
-        rsp_obj.vote(vote, fmin, fmax, reason)
-        self._filterres[filter_name] = rsp_obj  # Is this really necessary? XXX
+        # rsp_obj = self._filterres[filter_name]
+        # rsp_obj.vote(cname, vote, confi, fmin, fmax, reason)
+        # self._filterres[filter_name] = rsp_obj  # Is this really necessary? XXX
+        self._filterres[filter_name].vote(cname, vote, confi, fmin, fmax, reason)
         self._spamlevel_is_updated = False
 
     # End of class SCMail()

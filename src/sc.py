@@ -163,7 +163,7 @@ if __name__ == '__main__':
                     ftr_selected = classic.Classic()
                 # Parse Register through Filter
                 if ftr_selected:
-                    log.info("Found filter: {}".format(ftr_selected.str_filter_name))
+                    log.info("Found filter: {}".format(ftr_selected.filter_name))
                     reg_sc = ftr_selected.filter(reg_sc)
                     log.info("{} Done...".format(arg_in.command))
                     # Only for bebug XXX

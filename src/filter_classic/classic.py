@@ -36,7 +36,7 @@ class Classic(filter_base.Filter):
 
     def __init__(self):
         super().__init__()
-        self.str_filter_name = 'Classic'
+        self.filter_name = 'Classic'
         self._load_ruleset()
         log.info("{}".format(self.say_hi()))
 
