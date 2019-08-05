@@ -21,6 +21,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
 import karma
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_classic'))
 import classic
+sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_demo'))
+import demo
 
 # Initialize logging
 logging.basicConfig(filename='SpamClam.log',
@@ -71,7 +73,7 @@ def get_args():
     parser_filter.add_argument('fname',
                             type=str,
                             nargs='?',
-                            choices=['karma', 'classic'],  # XXX later extend the list ...
+                            choices=['karma', 'classic', 'demo'],  # XXX later extend the list ...
                             help = 'help filter_name xxx')
     parser_filter.add_argument('fdetails',
                             type=str,
@@ -161,6 +163,8 @@ if __name__ == '__main__':
                     ftr_selected = karma.Karma()
                 elif str_filter_name == 'classic':
                     ftr_selected = classic.Classic()
+                elif str_filter_name == 'demo':
+                    ftr_selected = demo.Demo()
                 # Parse Register through Filter
                 if ftr_selected:
                     log.info("Found filter: {}".format(ftr_selected.filter_name))
