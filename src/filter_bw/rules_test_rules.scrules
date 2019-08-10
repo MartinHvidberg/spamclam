@@ -1,0 +1,52 @@
+# """ Any mail meeting any Rule in the file will receive the Reaction of the Rule
+#
+#     Spam mail status is detected by combining the Reactions from all Rules """
+#
+# Anything after a hash (#) are considered a comment and ignored.
+# All empty lines are ignored.
+#
+# Anything else should be Rules
+# Rule  = { <reaction> multicon [multicon] }
+# reaction = (vote, confidence, min_v, max_v, protection, note)\n  <--- N
+# multicon  = <condition> [+ <condition>]
+# condition = <key> [, <key>] <xx> <value> [, <value>]\n  <--- N
+# key       = sub | from | body | to | cc | bcc | size
+# xx        =
+#			&&	contains
+#			!&	do_not_contain
+#			==	is
+#			!=	is_not
+#			[=	begins_with
+#			]=	ends_with
+#			[!	not_begins_with
+#			]!	not_ends_with
+# value     = a text string. if the string contains <space> it should be quoted with ' characters
+# a , separated list of values is always implicit OR
+# a + separated list of condition is AND
+#
+# All values are case-sensitive, but keys are not.
+
+# Example 1. will white-list any mail 'from' any of the sites, or 'to', 'cc', or 'bcc' any of the listed receivers.
+
+(1, 7, 1, 3, True, 'From trusted friend')
+from && nicesite.com, anothernicesite.com
+to, cc, bcc [= mail_list_on_Python
+sub == 'daily letter from your grosser'
+
+# Example 2. will white-list any mail 'from' python.org except if 'subject' contains any of the listed strings.
+
+(2, 7, 1, 3, True, 'From trusted org, sensible subjects')
+from && python.org
++ sub !& python_in_greek, python_on_windows
+from && postgres.org
++ sub && 'SQL tip of the day'
+
+# Example 3. multiple +lines
+
+(3, 7, 1, 3, True, 'From trusted sender, sensible subjects, send to me')
+from && fsf.org
++ subject !& python_in_greek, python_on_windows
++ to ]= @mydomain.org
+from ]& .php.org
++ sub [! microsoft, windows
++ body !& DOS, winNT, winXP, VISTA

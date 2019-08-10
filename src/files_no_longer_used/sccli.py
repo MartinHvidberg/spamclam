@@ -41,11 +41,7 @@ Replaced by sc.py
 
 """
 
-import sys
-
 import argparse
-from . import spamclam
-
 
 if __name__ == "__main__":
 

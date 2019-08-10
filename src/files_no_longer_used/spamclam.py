@@ -33,7 +33,8 @@ logger.info(str_start)
 
 import poplib, email, email.header
 
-from . import spamalyse, spamstat
+from src.files_no_longer_used import spamalyse, spamstat
+
 
 def spamclam_a_pop3_mailbox(str_srvr, str_user, str_pass, str_mode, str_wob, restat='False'):
 
