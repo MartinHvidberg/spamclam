@@ -49,4 +49,4 @@ from && fsf.org
 + to ]= @mydomain.org
 from ]& .php.org
 + sub [! microsoft, windows
-+ body !& DOS, winNT, winXP, VISTA
++ body &! DOS, winNT, winXP, VISTA
