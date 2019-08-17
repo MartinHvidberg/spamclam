@@ -1,7 +1,36 @@
 
 import os
 import logging
-import csv
+
+def magic_parse_string_as_csv(str_in, deli=',', quot='\''):
+    """ Take a string and return a list, split by deli, while respecting quot. """
+    ##print("magic a: deli:{} quot:{} in:{}".format(deli, quot, str_in))
+    lst_1cut = list()
+    if quot in str_in:
+        protected = False
+        str_tmp = str()
+        for char in str_in:
+            if char == quot:
+                if str_tmp != "":
+                    lst_1cut.append([str_tmp, protected])
+                    str_tmp = ""
+                protected = not protected  # Switch protection status
+            else:
+                str_tmp += char
+    else:
+        lst_1cut = [[str_in, False]]
+    ##print("magic b: {}".format(lst_1cut))
+    lst_ret = list()
+    for blox in lst_1cut:
+        if blox[1]:  # It's a protected block
+            lst_ret.append(blox[0])
+        else:
+            lst_sliced = [tok.strip() for tok in blox[0].split(deli) if tok.strip() != '']
+            ##("magic c: - {}".format(lst_sliced))
+            lst_ret.extend(lst_sliced)
+    ##print("magic d: {}".format(lst_ret))
+    return lst_ret
+
 
 class Condition(dict):
     """ A 'condition' is a dictionary. It has entries 'key', 'opr' and 'val'
@@ -22,26 +51,38 @@ class Condition(dict):
         self['opr'] = None
         self['key'] = None
         self['val'] = None
+        self._valid = True
         self.str_to_cond(str_input)
 
-    def str_to_cond(self, str_in):  XXX Triple None Condition sneaked into every Rule XXX
+    def str_to_cond(self, str_in):
+        print("\n » {}".format(str_in))
+        str_in = str_in.lstrip('+').strip()  # Clean + and spaces
         lst_opr = [opr for opr in self.VALID_OPR if opr in str_in]
-        if len(lst_opr) == 1:  # Check exactely 1 opr
+        if len(lst_opr) == 1:  # Check exactly 1 opr
             str_opr = lst_opr[0]
             lst_cnd = str_in.split(" {} ".format(str_opr), 1)
-            lst_cnd = [tok.split(',') for tok in lst_cnd]  # conveniently also turns simple conditions into lists
-            # pack it up in a dic. Leaving any further validation to the validator...
-            if str_opr in self.VALID_OPR_REVERSED:
-                str_opr = str_opr[::-1]
-            self['opr'] = str_opr
-            self['key'] = [tok.strip() for tok in lst_cnd[0]]  XXX '+' not cleaned from key in complex Rule XXX
-            self['val'] = [tok.strip() for tok in lst_cnd[1]]
+            lst_cnd = [magic_parse_string_as_csv(tok, ",", "'") for tok in lst_cnd]
+            if all([tok in self.VALID_EMAIL_HEADERS for tok in lst_cnd[0]]):
+                # fine tuning ...
+                if str_opr in self.VALID_OPR_REVERSED:
+                    str_opr = str_opr[::-1]  # flip reversed operators
+                # pack it up in a dic. Leaving any further validation to the validator...
+                self['opr'] = str_opr
+                self['key'] = [tok.strip() for tok in lst_cnd[0]]
+                self['val'] = [tok.strip() for tok in lst_cnd[1]]
+            else:
+                self._valid = False
+                logging.error("Invalid email header used in condition: {}".format(lst_cnd[0]))
         else:
-            logging.warning("! Condition have either No or Mutiple valid OPR: {}".format(str_in))
+            self._valid
+            logging.error("! Condition do not have exactly 1 valid OPR: {}".format(str_in))
 
     def is_valid(self):
         """ XXX """
-
+        if not self._valid:
+            return False
+        if all([tok == None for tok in [self['opr'], self['key'], self['val']]]):
+            return False
         return True
 
     def statement_check(self, salstmn, salmail):
@@ -98,7 +139,7 @@ class Condition(dict):
         logging.debug("    func. condit. {} {} {} = {}".format(salcond['key'], salcond['opr'], salcond['val'], any(dic_ret['lst_bool'])))
         return (any(dic_ret['lst_bool']), dic_ret['lst_stmn'])
 
-class Rule(list):
+class Rule(object):
     """ A 'rule' is a Reaction + a list of Conditions.
         A 'simple rule' have one condition.
         A 'complex rule' have several conditions.
@@ -110,41 +151,33 @@ class Rule(list):
         self._reaction = None
         self._conditions = list()
         rul_in = self.rule_from_strings(los_in)
-        log.debug("RUL: {}".format(rul_in))
+        if rul_in != []:
+            self._reaction = rul_in[0]
+            self._conditions = rul_in[1:]
+        log.info("RUL: {}".format(rul_in))
+
+    def __repr__(self):
+        return "Rule({}, {})".format(self._reaction, self._conditions)
+
+    def __str__(self):
+        return "r: {}, c: {}".format(self._reaction, self._conditions)
 
     def is_valid(self):
         """ XXX """
-        return True
-
-    def magic_parse_string_as_csv(self, str_in, deli=',', quot='\''):
-        """ Take a string and return a list, split by deli, while respecting quot. """
-        ##print("magic a: deli:{} quot:{} in:{}".format(deli, quot, str_in))
-        lst_1cut = list()
-        if quot in str_in:
-            protected = False
-            str_tmp = str()
-            for char in str_in:
-                if char == quot:
-                    if str_tmp != "":
-                        lst_1cut.append([str_tmp, protected])
-                        protected = not protected  # Switch protection status
-                    str_tmp = ""
+        if isinstance(self._reaction, list):
+            if len(self._reaction) == 6:
+                if isinstance(self._conditions, list):
+                    if len(self._conditions) > 0:
+                        return True
+                    else:
+                        log.warning("Invalid condition, empty _condition")
                 else:
-                    str_tmp += char
-        else:
-            lst_1cut = [[str_in, False]]
-        ##print("magic b: {}".format(lst_1cut))
-        lst_ret = list()
-        for blox in lst_1cut:
-            if blox[1]:  # It's a protected block
-                lst_ret.append(blox[0])
+                    log.warning("Invalid condition, _condition is not a list")
             else:
-                lst_sliced = [tok.strip() for tok in blox[0].split(deli) if tok.strip() != '']
-                ##print("magic d: - {}".format(lst_sliced))
-                lst_ret.extend(lst_sliced)
-        ##print("magic d: {}".format(lst_ret))
-        return lst_ret
-
+                log.warning("Invalid condition, _reaction do not have 6 elements: {}".format(self._reaction))
+        else:
+            log.warning("Invalid condition, _reaction is not a list: {} {}".format(str(type(self._reaction)), self._reaction))
+        return False
 
     def rule_from_strings(self, los_in):
         log.debug("r_f_s({})".format(los_in))
@@ -153,7 +186,7 @@ class Rule(list):
         lst_reaction = list()  # Empty result list
         str_reaction = los_in[0].strip('()')
         if isinstance(str_reaction, str):
-            loi = self.magic_parse_string_as_csv(str_reaction)
+            loi = magic_parse_string_as_csv(str_reaction)
             if len(loi) == 6:
                 for n in range(4):
                     try:
@@ -181,66 +214,6 @@ class Rule(list):
                 lst_ret.append(con_in)
             else:  # Condition failed to build ...
                 return []  # On critical error return empty list
-        print(lst_ret)
-        return lst_ret
-
-
-    def OLD_rule_from_strings(self, los_in):
-        """ ! This is still messy, and I want to nice it up. !
-        Make a list of 'rule's from a list of raw strings, typically the content of a .scrule or .scaddr file
-        Assume all #comments have been removed
-        Assume no blank lines
-        Assume one (packed) condition-string per line
-        Assume some lines starts with +, which indicate it's part of a complex rule, together with the line(s) before.
-        :param los_in list: list of strings
-        :return: list of rules
-        """
-        logging.debug("rules_from_strings() begin")
-        lst_ret = list()  # initialize a return-list
-        if isinstance(los_in, list) and len(los_in) > 0:  # if input is a list
-            if all([isinstance(s, str) for s in los_in]):  # if input is list of strings
-                lst_in = [[str(raw)] for raw in los_in]  # Wrap each line of text in a list
-                if lst_in[0][0][0] != '+':  # if the first line don't start with +
-                    # Handle + lines ... This is still bloody ugly! XXX
-                    lst_tmp = list()
-                    for i in lst_in:
-                        if i[0][0] == '+':  # the first letter in the first string, is '+'
-                            lst_last = lst_tmp[-1]  # get back the last item we put in lst_tmp
-                            lst_tmp = lst_tmp[:-1]  # remove it from the list
-                            lst_last.append(i[0].lstrip('+').strip())  # extend it with the + condition, stripping the +
-                            lst_tmp.append(lst_last)  # put it back...
-                            del lst_last
-                        else:
-                            lst_tmp.append(i)
-                    lst_srules = lst_tmp
-                    del lst_tmp, i
-                    # We now have a list of lists of strings, each string representing a (packed) condition.
-                    for lo_pcon in lst_srules:  # each rule is a list_of_packed-conditions, as strings
-                        ##print ".", lo_pcon  # show for debug
-                        rule = list()  # variable name 'rule' is used for the next step
-                        for pcon in lo_pcon:
-                            lst_opr = [opr for opr in self.VALID_OPR if opr in pcon]
-                            if len(lst_opr) == 1:  # Check exactely 1 opr
-                                str_opr = lst_opr[0]
-                                lst_cnd = pcon.split(" {} ".format(str_opr), 1)
-                                lst_cnd = [tok.split(',') for tok in lst_cnd]  # conveniently also turns simple conditions into lists
-                                # pack it up in a dic. Leaving any further validation to the validator...
-                                dic_cnd = dict()
-                                dic_cnd['opr'] = str_opr
-                                dic_cnd['key'] = [tok.strip() for tok in lst_cnd[0]]
-                                dic_cnd['val'] = [tok.strip() for tok in lst_cnd[1]]
-                                rule.append(dic_cnd)
-                            else:
-                                logging.warning("! Condition have either No or Mutiple valid OPR: {}".format(pcon))
-                        ##print " ^rule:", rule
-                        lst_ret.append(rule)
-                    ##print "^^lor_rules:",lst_ret
-                else:
-                    logging.warning("! The first string should never start with +: {}".format(lst_in[0][0]))
-            else:
-                logging.warning("! received list containing non-string object: {}".format([str(type(o)) for o in los_in]))
-        else:
-            logging.warning("! received empty list, or non-list object: {}".format(str(type(los_in))))
         return lst_ret
 
     def OLD_rules_from_listofaddressers(self, los_adr):
@@ -261,12 +234,8 @@ class Rule(list):
             del str_emladd
         return lor_ret
 
-
     def rule_check(self, salrule, salmail):
-        """ Checks the salmail agains a single rule
-            EBNF: salrule = (salcond, {salcond})
-            e.g.:
-[{'key':['from'],'opr':'&&','val':['python.org']},{'key':['subject'],'opr':'!&','val':['python_in_greek','python_on_windows']}] """
+        """ Checks the SCMail against a single rule """
         dic_ret = {'lst_bool': list(), 'lst_stmn': list()}
         for salcond in salrule:
             lst_cond_res = self.condtion_check(salcond, salmail)
@@ -286,7 +255,13 @@ class Rules(object):
         logging.debug("class init. Rules")
         self._rldr = rule_dir  # Where to look for the rule files
         self._rules = list()
+        self._valid = True
         self.load_all_rule_files()  # Load all rule- and address files
+
+    def is_valid(self):
+        if self._valid:
+            return True
+        return False
 
     def spamalyse(self, scm_in):
         """ Checks an email agains entire rules, i.e. self """
@@ -403,7 +378,11 @@ class Rules(object):
         lor_in = self.los_to_lor(los_in, str_assume)
         for rul in lor_in:
             rul_in = Rule(rul)
-            self.rul_insert(rul_in)
+            log.debug("\n >> {}\n << {}".format(rul, rul_in))
+            if rul_in.is_valid():
+                self.rul_insert(rul_in)
+            else:
+                self._valid = False  # If one Rule() is invalid, entire Rules() become invalid!
         return None
 
     def load_all_rule_files(self):
@@ -418,7 +397,7 @@ class Rules(object):
             if fil_in.endswith(".scrules"): # or fil_in.endswith(".scaddr"):
                 log.debug(".scxxxx file: {}".format(fil_in))
                 self.load_a_rule_file(fil_in)
-                log.info("Loaded rule file: {}".format(fil_in))
+                log.debug("Loaded rule file: {}".format(fil_in))
         return None
 
     ######  helpers ######
@@ -451,36 +430,11 @@ class Rules(object):
         """ Show the rules """
         log.debug(" func. show_rules_backdoor()")
         print("\nPrint the rules, via the back door...")
-        print(self._rules)
-        return None
-
-    def show_rules_pp(self):  # XXX This needs some working on, to be real pretty...
-        """ Show the rules - pretty print """
-        log.debug(" func. show_rules_pp()")
-        ##print "\nPretty Print the rules..."
-        los_pp = list()
-        if self._wob == "white":
-            los_pp.append("*** : White over black")
-        elif self._wob == "black":
-            los_pp.append("*** : Black over white")
+        if self.is_valid():
+            print(self._rules)
         else:
-            los_pp.append("*** : WoB is a mess...: {}".format(self._wob))
-        los_rules = list()
-        for key_colour in ('white', 'black'):
-            for num_col in self.list_rulenumbers_of_colour(key_colour):
-                los_pp.append("*** : {}".format(key_colour))
-                for num_rule in self.list_rulenumbers_of_colour(key_colour):
-                    lst_rulelines_a = self.get_rule_by_number(num_rule)
-                    if len(lst_rulelines_a) > 0:
-                        rul = lst_rulelines_a[0]
-                        los_rules.append("\t[{}] rule: {} {} {}".format(num_rule, rul['key'], rul['opr'], rul['val']))
-                    if len(lst_rulelines_a) > 1:
-                        for rul in lst_rulelines_a[1:]:
-                            los_rules.append("\t[{}]  && : {} {} {}".format(num_rule, rul['key'], rul['opr'], rul['val']))
-                los_pp.extend(los_rules)
-        for str_pp in los_pp:
-            print(str_pp)
-        return None
+            print("Rules are INVALID ...")
+
 
 
     ######  Spalyse ######
@@ -550,8 +504,8 @@ if __name__ == '__main__':
     # Initialize logging
     logging.basicConfig(filename='SpamClam_Rules_test.log',
                         filemode='w',
-                        level=logging.DEBUG, # INFO, # DEBUG,
-                        format='%(asctime)s %(levelname)7s %(funcName)s >> %(message)s')
+                        level=logging.INFO, # INFO, # DEBUG,
+                        format='%(asctime)s %(levelname)7s %(funcName)s | %(message)s')
                         # %(funcName)s
     log = logging.getLogger(__name__)
     log.info("Initialize: {}".format(__file__))

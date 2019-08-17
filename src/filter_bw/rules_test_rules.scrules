@@ -30,14 +30,14 @@
 
 (1, 7, 1, 3, True, 'From trusted friend')
 from && nicesite.com, anothernicesite.com
-to, cc, bcc [= mail_list_on_Python
-sub == 'daily letter from your grosser'
+to, cc, bcc [= 'mail list on Python'
+sub == 'daily letter, from your grosser'
 
 # Example 2. will white-list any mail 'from' python.org except if 'subject' contains any of the listed strings.
 
 (2, 7, 1, 3, True, 'From trusted org, sensible subjects')
 from && python.org
-+ sub !& python_in_greek, python_on_windows
++ sub !& 'python, in greek', 'python on windows'
 from && postgres.org
 + sub && 'SQL tip of the day'
 
@@ -45,8 +45,8 @@ from && postgres.org
 
 (3, 7, 1, 3, True, 'From trusted sender, sensible subjects, send to me')
 from && fsf.org
-+ subject !& python_in_greek, python_on_windows
++ sub !& 'python, in greek', 'python on windows'
 + to ]= @mydomain.org
-from ]& .php.org
+from ]= .php.org
 + sub [! microsoft, windows
 + body &! DOS, winNT, winXP, VISTA
