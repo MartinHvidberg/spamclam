@@ -29,7 +29,7 @@
 # Example 1. will white-list any mail 'from' any of the sites, or 'to', 'cc', or 'bcc' any of the listed receivers.
 
 (1, 7, 1, 3, True, 'From trusted friend')
-from && nicesite.com, anothernicesite.com
+from && nicesite.com, bibliotek.dk
 to, cc, bcc [= 'mail list on Python'
 sub == 'daily letter, from your grosser'
 
@@ -44,9 +44,9 @@ from && postgres.org
 # Example 3. multiple +lines
 
 (3, 7, 1, 3, True, 'From trusted sender, sensible subjects, send to me')
-from && fsf.org
-+ sub !& 'python, in greek', 'python on windows'
-+ to ]= @mydomain.org
+from && @bibliotek.dk
++ sub !& 'Poetry', 'childrens books'
++ to ]= @hvidberg.net
 from ]= .php.org
 + sub [! microsoft, windows
 + body &! DOS, winNT, winXP, VISTA

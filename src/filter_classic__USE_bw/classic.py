@@ -5,10 +5,10 @@
     This module handles: Classic filtering
 
     Not (fully) implemented yet
-    Classic filtering are rule based evaluation og the email, e.g.
-        from = sales@microsoft.com >> +2 in spam level
-        subject contains 'russian girls' >> +5 in spam level
-        best_friend@homebase.net >> -3 in spam level, and Protect email
+    Classic filtering are rule based evaluation of the email, e.g.
+        from = sales@microsoft.com >> 2 in spam level
+        subject contains 'russian girls' >> 5 in spam level
+        best_friend@homebase.net >> 0 in spam level, and Protect email
         many more to come ...
 """
 

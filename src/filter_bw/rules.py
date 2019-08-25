@@ -2,6 +2,13 @@
 import os
 import logging
 
+# Initialize logging
+log = logging.getLogger(__name__)
+log.info("Initialize: {}".format(__file__))
+
+### ToDo
+# Handle rules with "'" in them, e.g. + sub !& 'Poetry', 'children's books'
+
 def magic_parse_string_as_csv(str_in, deli=',', quot='\''):
     """ Take a string and return a list, split by deli, while respecting quot. """
     ##print("magic a: deli:{} quot:{} in:{}".format(deli, quot, str_in))
@@ -48,6 +55,7 @@ class Condition(dict):
 
     def __init__(self, str_input):
         logging.debug("class init. Condition")
+        super(Condition, self).__init__()  # Initialising the super-class
         self['opr'] = None
         self['key'] = None
         self['val'] = None
@@ -74,7 +82,7 @@ class Condition(dict):
                 self._valid = False
                 logging.error("Invalid email header used in condition: {}".format(lst_cnd[0]))
         else:
-            self._valid
+            self._valid = False
             logging.error("! Condition do not have exactly 1 valid OPR: {}".format(str_in))
 
     def is_valid(self):
@@ -85,59 +93,54 @@ class Condition(dict):
             return False
         return True
 
-    def statement_check(self, salstmn, salmail):
+    def statement_check(self, tup_stmnt, scmail):
         """ Used by condition_check()
         Checks the SCMail against a single statement
-        EBNF: salstmn = (key, opr, val) """
-        key, opr, val = salstmn
-        emlval = salmail.get(key)
-        if opr == '&&':  # contains
-            bol_hit = val in emlval
-        elif opr == '!&':  # do_not_contain
-            bol_hit = not val in emlval
-        elif opr == '==':  # is
-            bol_hit = val == emlval
-        elif opr == '!=':  # is_not
-            bol_hit = val != emlval
-        elif opr == '[=':  # begins_with
-            bol_hit = val == emlval[:len(val)]
-        elif opr == ']=':  # ends_with
-            bol_hit = val == emlval[-len(val):]
-        elif opr == '[!':  # not_begins_with
-            bol_hit = not val == emlval[:len(val)]
-        elif opr == ']!':  # not_ends_with
-            bol_hit = not val == emlval[-len(val):]
+        EBNF: tup_stmnt = (key, opr, val)
+        Returns: True|False """
+        log.info("....stmn. check: {}".format(tup_stmnt))
+        key_k, opr_o, val_v = tup_stmnt
+        val_eml = scmail.get(key_k)
+        if opr_o == '&&':  # contains
+            bol_hit = val_v in val_eml
+        elif opr_o == '!&':  # do_not_contain
+            bol_hit = not val_v in val_eml
+        elif opr_o == '==':  # is
+            bol_hit = val_v == val_eml
+        elif opr_o == '!=':  # is_not
+            bol_hit = val_v != val_eml
+        elif opr_o == '[=':  # begins_with
+            bol_hit = val_v == val_eml[:len(val_v)]
+        elif opr_o == ']=':  # ends_with
+            bol_hit = val_v == val_eml[-len(val_v):]
+        elif opr_o == '[!':  # not_begins_with
+            bol_hit = not val_v == val_eml[:len(val_v)]
+        elif opr_o == ']!':  # not_ends_with
+            bol_hit = not val_v == val_eml[-len(val_v):]
         else:
             bol_hit = False
-            print("Error: Unknown operator: " + opr)
-        return  (bol_hit, salstmn)  # EBNF: ( True|False, The_statement )
+            log.error("Error: Unknown operator: {} in statement {}".format(opr_o, tup_stmnt))
+        log.info("....stmn. returns: {}".format(bol_hit))
+        return bol_hit  # EBNF: ( True|False )
 
-    def condtion_check(self, salcond, scm_in):
+    def condtion_check(self, scm_in):
         """ Checks the SCMail against a single condition
-            EBNF: salcond = ((key, {key}), opr, (val, {val}))
-            e.g.: {'key':['to','cc','bcc'],'opr':'[=','val':['mail_list_on_Python','daily_letter_from_your_groser']}
-                  returns ( True|False, ({win_stnm}) ) """
-        # input check
-        # if not isinstance(salcond, dict):
-        #     str_warning = "sal-condition is not a dict())".format(salcond)
-        #     logging.warning(str_warning)
-        #     return (False, (str_warning))
-        # if not all(['key' in salcond.keys(), 'opr' in salcond.keys(), 'val' in salcond.keys()]):
-        #     str_warning = "sal-condition lacks one, or more, entries ('key', 'opr' or 'val'))".format(salcond)
-        #     logging.warning(str_warning)
-        #     return (False, (str_warning))
-        # do check
-        dic_ret = {'lst_bool': list(), 'lst_stmn': list()}
-        for key in salcond['key']:
-            if key in scm_in:
-                for opr in [salcond['opr']]:  # prepared for future list_of_opr
-                    for val in salcond['val']:
-                        bol_spam, tup_stmn = self.statement_check((key, opr, val), scm_in)
-                        if bol_spam:
-                            dic_ret['lst_bool'].append(bol_spam)
-                            dic_ret['lst_stmn'].append(tup_stmn)
-        logging.debug("    func. condit. {} {} {} = {}".format(salcond['key'], salcond['opr'], salcond['val'], any(dic_ret['lst_bool'])))
-        return (any(dic_ret['lst_bool']), dic_ret['lst_stmn'])
+            EBNF: cond = ((key, {key}), opr, (val, {val}))
+            e.g.: {'key':['to','cc','bcc'],'opr':'[=','val':['mail_list_on_Python','daily_letter_from_your_grosser']}
+            :returns: list of true statements, this may be an empty list """
+        log.info("...cond. check: {} {} {}".format(self['key'], self['opr'], self['val']))
+        lst_true_stmn = list()
+        for key_k in self['key']:
+            if key_k == 'sub': key_k = 'subject'  # .scrule use shorthand 'sub', emails uses 'subject'
+            if scm_in.has_key(key_k):
+                for opr_o in [self['opr']]:  # Why do we insist that opr_o is from a list?
+                    for val_v in self['val']:
+                        if self.statement_check((key_k, opr_o, val_v), scm_in):
+                            lst_true_stmn.append((key_k, opr_o, val_v))
+            else:
+                log.info("SCMail did not have an entry: {}".format(key_k))
+        log.info("...cond. returns {}".format(lst_true_stmn))
+        return lst_true_stmn
 
 class Rule(object):
     """ A 'rule' is a Reaction + a list of Conditions.
@@ -178,6 +181,9 @@ class Rule(object):
         else:
             log.warning("Invalid condition, _reaction is not a list: {} {}".format(str(type(self._reaction)), self._reaction))
         return False
+
+    def reaction(self):
+        return self._reaction
 
     def rule_from_strings(self, los_in):
         log.debug("r_f_s({})".format(los_in))
@@ -234,25 +240,33 @@ class Rule(object):
             del str_emladd
         return lor_ret
 
-    def rule_check(self, salrule, salmail):
+    def rule_check(self, scmail):
         """ Checks the SCMail against a single rule """
+        log.info("..rule check: {} if {}".format(self._reaction, self._conditions))
         dic_ret = {'lst_bool': list(), 'lst_stmn': list()}
-        for salcond in salrule:
-            lst_cond_res = self.condtion_check(salcond, salmail)
-            dic_ret['lst_bool'].append(lst_cond_res[0])
-            dic_ret['lst_stmn'].append(lst_cond_res[1])
-        bol_rule = all(dic_ret['lst_bool'])
-        logging.debug("   func. rule. = {}".format(bol_rule))
-        return  [bol_rule, dic_ret['lst_stmn']]  # EBNF: salrule_res = ( True|False, ({win_stnm}))
+        for cond in self._conditions:  # These ALL need to be True, for the Rule to be True
+            lst_cond_res = cond.condtion_check(scmail)
+            dic_ret['lst_bool'].append(len(lst_cond_res) > 0)  # the cond. check True|False any conditions met
+            dic_ret['lst_stmn'].extend(lst_cond_res)  # the true cond. statement(s)
+        bol_rule = len(dic_ret['lst_bool']) > 0 and all(dic_ret['lst_bool'])  # the entire Rule check True|False
+        if bol_rule:
+            log.info("..rule. returns: True because {}".format(dic_ret['lst_stmn']))
+            return self._reaction, dic_ret['lst_stmn']
+        else:
+            log.info("..rule. returns: False")
+            return None, []
 
 
 class Rules(object):
     """ Rules to be used with SpamClam.
-    A rewrite of the older class Ruleset(object) Black & White is now replaced with Reaction.
+    A rewrite of the older class Ruleset(object) Black & White is now replaced with Reaction, and WoB is dead.
     Now divided into three class'es Rules(), Rule(), Condition()"""
 
-    def __init__(self, rule_dir):
-        logging.debug("class init. Rules")
+    def __init__(self, rule_dir=os.path.dirname(os.path.realpath(__file__))):
+        """ Initialises the Rules object.
+        :param rule_dir: Where to find the .scrules files, etc. Default is in the same dir.
+        """
+        logging.info("class init. Rules. loading from: {}".format(rule_dir))
         self._rldr = rule_dir  # Where to look for the rule files
         self._rules = list()
         self._valid = True
@@ -264,9 +278,16 @@ class Rules(object):
         return False
 
     def spamalyse(self, scm_in):
-        """ Checks an email agains entire rules, i.e. self """
+        """ Checks an email against entire rules, i.e. self """
+        log.info(".Rules check")
+        lst_results = list()
         for rule in self._rules:
-            scm_in = rule.spamalyse(scm_in)  # Do this have a chance... How do we collect results?
+            res_of_rule = rule.rule_check(scm_in)
+            log.info("Xtra: {}, {}\n".format(str(type(res_of_rule[0])), res_of_rule))
+            if isinstance(res_of_rule[0], list):  # the rule is met, implement the Reaction
+                log.info(".Rules: hit result: {}\n".format(res_of_rule))
+                lst_results.append(res_of_rule)
+        log.info(".Rules returning: {}".format(lst_results))
         return scm_in
 
     ######  Rule-builder ######
@@ -351,7 +372,7 @@ class Rules(object):
 
     def load_file(self, fil_in):
         """ Opens a single file (rule-, address-, or other) and return it as cleaned list_of_strings """
-        with open(self._rldr + fil_in) as f:
+        with open(self._rldr + os.sep + fil_in) as f:
             lst_lines = f.readlines()
         lst_lines = [conf.split("#")[0].strip() for conf in lst_lines]  # Get rid of comments
         lst_lines = [conf for conf in lst_lines if conf != '']  # Get rid of empty lines
@@ -392,12 +413,13 @@ class Rules(object):
         - send all reasonable files to load_a_rule_file()
         :return: None
         """
-        log.debug(" func. load_all_rule_files in: {}".format(self._rldr))
+        log.info("Start: load_all_rule_files in: {}".format(self._rldr))
         for fil_in in os.listdir(self._rldr):
+            log.debug("candidate file: {}".format(fil_in))
             if fil_in.endswith(".scrules"): # or fil_in.endswith(".scaddr"):
-                log.debug(".scxxxx file: {}".format(fil_in))
+                log.info(".scxxxx file: {}".format(fil_in))
                 self.load_a_rule_file(fil_in)
-                log.debug("Loaded rule file: {}".format(fil_in))
+                log.info("Loaded rule file: {}".format(fil_in))
         return None
 
     ######  helpers ######
@@ -436,68 +458,7 @@ class Rules(object):
             print("Rules are INVALID ...")
 
 
-
-    ######  Spalyse ######
-
-    def spamalyse(self, salmail, wob_in):
-        """ Checks an email agains entire rules, i.e. self
-            EBNF: input: rules = { 'white': [<rule>]; 'black':[<rule>] }
-                  returns: ( True|False, ({win_stnm})) """
-        dic_white_and_black = dict()
-        for str_colour in ('white', 'black'):
-            dic_white_and_black[str_colour] = {'lst_bool': list(), 'lst_stmn': list()}
-            for num_rule in self.list_rulenumbers_of_colour(str_colour):
-                salrule = self.get_rule_by_number(num_rule)
-                rul_ret = self.rule_check(salrule, salmail)  # Check every rule in the rules
-                if rul_ret[0]:
-                    dic_white_and_black[str_colour]['lst_bool'].append(rul_ret[0])
-                    dic_white_and_black[str_colour]['lst_stmn'].append(rul_ret[1])
-                else:
-                    dic_white_and_black[str_colour]['lst_bool'].append(False)
-        # Summerize the results
-        bol_white = any([itm for itm in dic_white_and_black['white']['lst_bool']])
-        bol_black = any([itm for itm in dic_white_and_black['black']['lst_bool']])
-        lst_w_stm = [itm for itm in dic_white_and_black['white']['lst_stmn']]
-        lst_b_stm = [itm for itm in dic_white_and_black['black']['lst_stmn']]
-        # construck sal_res as {'spam': boolean(), 'mode': str(), tone: str(), 'votw'. list(), 'votb': list()}
-        # wob decision tree
-        if wob_in:  # i.e. wob is True
-            if bol_white:  # wob, white hit exists = Not spam
-                bol_spam = False
-                lst_kill = lst_w_stm  # the killer arguments
-                if bol_black:  # there are also black hits
-                    str_tone = 'grey'
-                else:
-                    str_tone = 'white'
-            elif bol_black:  # wob, only black hit exists = Spam
-                bol_spam = True
-                lst_kill = lst_b_stm  # the killer arguments
-                str_tone = 'black'
-            else:  # wob, neither white not black hits = Not spam
-                bol_spam = False
-                lst_kill = []  # the killer arguments
-                str_tone = 'clear'
-        else:  # i.e. wob is False
-            if bol_black:  # not wob, black hit exists = Spam
-                bol_spam = True
-                lst_kill = lst_b_stm  # the killer arguments
-                if bol_white:  # there are also white hits
-                    str_tone = 'grey'
-                else:
-                    str_tone = 'black'
-            elif bol_white:  # not wob, only white hit exists = Not spam
-                bol_spam = False
-                lst_kill = lst_w_stm  # the killer arguments
-                str_tone = 'white'
-            else:  # not wob, neither white not black hits = Not spam
-                bol_spam = False
-                lst_kill = []  # the killer arguments
-                str_tone = 'clear'
-        sal_ret = {'spam': bol_spam, 'mode': 'simple', 'tone': str_tone, 'kill': lst_kill, 'votw': lst_w_stm, 'votb': lst_b_stm}
-        log.debug("  func. spamalyse. wob: {}; white: {}; black: {} = Spam: {}".format(wob_in, bol_white, bol_black, sal_ret['spam']))
-        return sal_ret
-
-# End class - Ruleset
+# End class - Rules
 
 if __name__ == '__main__':
 

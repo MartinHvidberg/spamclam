@@ -28,7 +28,7 @@ log.info("Initialize: {}".format(__file__))
 
 
 class SCMail(object):
-    """ The 'equivalent' or 'extract' of one email.
+    """ The 'equivalent' or 'extract' of one e-mail.
     expects an object of type: email.message.EmailMessage
     But only the relevant parts are kept, and some more info and functions are added
     Instances are initialised with a 'real' email message.

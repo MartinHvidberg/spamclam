@@ -10,6 +10,9 @@ The Spam Clam Command Line Interface
 # 0.4.2 : Loading emails from server works, View works and First minimalistic filter (Karma) works
 # 0.4.3 : Quite more .log, similar less print()
 
+### ToDo XXX
+# Consider only 'get' clears the log file, others just appends ...
+
 import sys, os
 import argparse
 import logging
@@ -19,8 +22,8 @@ import sc_register
 import sc_email_server
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
 import karma
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_classic'))
-import classic
+sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_bw'))
+import bw
 sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_demo'))
 import demo
 
@@ -40,7 +43,7 @@ def get_args():
     # MVE only impliment get, view, filter, mark, kill
     # mark was earlier set, but get/set was unbalanced in function
     # ToDo XXX Consider an exclude command that removes one SCMail fra Register (but not from server) to reduse view-clutter
-    # ToDo XXX config command must go, so 'c' means only 'clean'
+    # ToDo XXX config command must go, so 'c' means only 'clean/clear'
     # nargs=
     # N (an integer). N arguments from the command line will be gathered together into a list.
     # '?'. One argument will be consumed from the command line if possible, and produced as a single item. If no command-line argument is present, the value from default will be produced.
@@ -73,7 +76,7 @@ def get_args():
     parser_filter.add_argument('fname',
                             type=str,
                             nargs='?',
-                            choices=['karma', 'classic', 'demo'],  # XXX later extend the list ...
+                            choices=['karma', 'bw', 'demo'],  # XXX later extend the list ...
                             help = 'help filter_name xxx')
     parser_filter.add_argument('fdetails',
                             type=str,
@@ -125,9 +128,7 @@ def get_args():
                             help = "Kill all e-mails with this spam-value, or higher. Don't kill protected e-mails.")
 
     # create the parser for the "dumpasjson" command
-    parser_kill = subparsers.add_parser('dumpasjson', help='only for debug ...')
-
-
+    parser_json = subparsers.add_parser('dumpasjson', help='only for debug ...')
 
     # parse argument list
     args = parser.parse_args()
@@ -167,8 +168,8 @@ if __name__ == '__main__':
                 ftr_selected = None
                 if str_filter_name == 'karma':
                     ftr_selected = karma.Karma()
-                elif str_filter_name == 'classic':
-                    ftr_selected = classic.Classic()
+                elif str_filter_name == 'bw':
+                    ftr_selected = bw.BW()
                 elif str_filter_name == 'demo':
                     ftr_selected = demo.Demo()
                 # Parse Register through Filter
@@ -237,7 +238,7 @@ if __name__ == '__main__':
                         reg_sc.insert(scmail)
                         reg_sc.write_to_file()
                 else:
-                    str_msg = "Found no hit for: {}. No SCMails were marked!".format()
+                    str_msg = "Found no hit for: {}. No SCMails were marked!".format(arg_in.shh)
                     log.warning(str_msg)
                     print(str_msg)
         elif arg_in.command == 'kill':  # --------------------- kill ----------
