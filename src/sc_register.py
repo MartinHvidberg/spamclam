@@ -319,9 +319,9 @@ class Register(object):
                     lst_ret.append(scmailid)
         return lst_ret
 
-    def list_doomed(self):
+    def list_doomed(self, limit):
         lst_doom = list()
-        for scm_cand_id in self.list_spam():
+        for scm_cand_id in self.list_spam(minimum=limit):
             scm_cand = self.get(scm_cand_id)
             # Check that it's not protected
             if not scm_cand._protected:

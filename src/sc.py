@@ -117,6 +117,12 @@ def get_args():
 
     # create the parser for the "kill" command
     parser_kill = subparsers.add_parser('kill', help='KILL (delte from server) all mails marked as spam, and not protected')
+    parser_kill.add_argument('limit',
+                            nargs='?',
+                            type=int,
+                            default = 7,
+                            choices=[0,1,2,3,4,5,6,7,8,9],
+                            help = "Kill all e-mails with this spam-value, or higher. Don't kill protected e-mails.")
 
     # create the parser for the "dumpasjson" command
     parser_kill = subparsers.add_parser('dumpasjson', help='only for debug ...')
@@ -242,7 +248,7 @@ if __name__ == '__main__':
                 # Load Register
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # Load data into register
-                for scmail in reg_sc.list_doomed():
+                for scmail in reg_sc.list_doomed(arg_in.limit):
                     scm_doomed = reg_sc.get(scmail)
                     print("KILL: {}".format(scm_doomed.display(1)))
                     # Kill on server
