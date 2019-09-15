@@ -16,7 +16,6 @@ The Spam Clam Command Line Interface
 import sys, os
 import argparse
 import logging
-import json
 
 import sc_register
 import sc_email_server
@@ -31,7 +30,7 @@ import demo
 logging.basicConfig(filename='SpamClam.log',
                     filemode='w',
                     level=logging.INFO, # DEBUG
-                    format='%(asctime)s %(levelname)7s %(funcName)s >> %(message)s')
+                    format='%(asctime)s %(levelname)7s %(module)8s %(funcName)16s | %(message)s')
                     # %(funcName)s
 log = logging.getLogger(__name__)
 log.info("Initialize: {}".format(__file__))
@@ -86,8 +85,9 @@ def get_args():
     # create the parser for the "view" command
     parser_view = subparsers.add_parser('view', help='view shows the e-mails that was collected by last get')
     parser_view.add_argument('vwhat',
+                             nargs='?',
                              type=str,
-                             choices=['spam', 'gray', 'white', 'all', 'shh'],
+                             choices=['spam', 'grey', 'white', 'all', 'shh'],
                              help = '')
     parser_view.add_argument('--verbose',
                              nargs='?',
@@ -105,6 +105,10 @@ def get_args():
                              # 7: Very much info  (shh, +all param +orig. e-mail)
                              # 8: VERY much info  (shh, +all param +orig. e-mail +all attacments)
                              # 9: VERY MUCH INFO  (shh, +all param +orig. e-mail +all attacments +all else)""")
+    parser_view.add_argument('shhs',
+                            type=str,
+                            nargs='*',
+                            help = 'a list of shh')
 
     # create the parser for the "mark" command
     parser_get = subparsers.add_parser('mark', help='mark a mail with the given value')
@@ -191,8 +195,19 @@ if __name__ == '__main__':
                 reg_sc = sc_register.Register()  # Build empty register
                 reg_sc.read_from_file()  # Load data into register
                 # View Register
-                for scmail_id in reg_sc.list_all():
-                    print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                if arg_in.vwhat == 'all':  # 'spam', 'grey', 'white', 'all', 'shh'
+                    for scmail_id in reg_sc.list_all():
+                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                elif arg_in.vwhat == 'shh':
+                    for scmail_id in reg_sc.list_shh(arg_in.shhs):
+                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                elif arg_in.vwhat == 'spam':
+                    for scmail_id in reg_sc.list_spam():
+                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                elif arg_in.vwhat == 'white':
+                    pass
+                elif arg_in.vwhat == 'grey':
+                    pass
                 str_msg = "... e-mails now available: {}".format(reg_sc.count())
                 log.info(str_msg)
                 print(str_msg)

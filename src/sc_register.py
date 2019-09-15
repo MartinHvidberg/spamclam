@@ -275,6 +275,16 @@ class Register(object):
         """ return a list of id's for the SCMails in the register"""
         return self._data.keys()
 
+    def list_shh(self, lst_shh):
+        """ return a list of id's for the SCMails in the register, if there shh is in the list"""
+        lst_ret = list()
+        for scmailid in self.list_all():
+            scmail = self.get(scmailid)
+            str_shh = scmail.get_shorthand()
+            if str_shh in lst_shh:
+                lst_ret.append(scmailid)
+        return lst_ret
+
     def list_match(self, lst_criteria):
         """ returns a list of id's for the SCMails in the register
         that matches all the criteria in lst_criteria.

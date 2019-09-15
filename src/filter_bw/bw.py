@@ -38,7 +38,7 @@ class BW(filter_base.Filter):
 
     def spamalyse(self, scm_in):
         """ This is the main function, that every e-mail is parsed through. """
-        if 'E1i1Wpr-0006vU' in scm_in.get('id'):  # <------------------------------------------------------------- LUS
+        if True: #'@softchoiceafrica.com' in scm_in.get('id'):  # <------------------------------------------------------------- LUS
             log.info("\n{}".format(scm_in.display(6)))
             log.info("spamalyse(bw) <- {}".format(scm_in.get('id')))
             scm_in = super().spamalyse(scm_in)  # please keep this, though likely an empty method.

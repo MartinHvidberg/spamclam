@@ -250,7 +250,7 @@ class Rule(object):
             dic_ret['lst_stmn'].extend(lst_cond_res)  # the true cond. statement(s)
         bol_rule = len(dic_ret['lst_bool']) > 0 and all(dic_ret['lst_bool'])  # the entire Rule check True|False
         if bol_rule:
-            log.info("..rule. returns: True because {}".format(dic_ret['lst_stmn']))
+            log.info("..rule. returns: {} because {}".format(self._reaction, dic_ret['lst_stmn']))
             return self._reaction, dic_ret['lst_stmn']
         else:
             log.info("..rule. returns: False")
@@ -258,7 +258,7 @@ class Rule(object):
 
 
 class Rules(object):
-    """ Rules to be used with SpamClam.
+    """ Rules to be used with SpamClam, it's part of BW filter.
     A rewrite of the older class Ruleset(object) Black & White is now replaced with Reaction, and WoB is dead.
     Now divided into three class'es Rules(), Rule(), Condition()"""
 
@@ -283,9 +283,11 @@ class Rules(object):
         lst_results = list()
         for rule in self._rules:
             res_of_rule = rule.rule_check(scm_in)
-            log.info("Xtra: {}, {}\n".format(str(type(res_of_rule[0])), res_of_rule))
+            ##log.info("Xtra: {}, {}\n".format(str(type(res_of_rule[0])), res_of_rule))
             if isinstance(res_of_rule[0], list):  # the rule is met, implement the Reaction
                 log.info(".Rules: hit result: {}\n".format(res_of_rule))
+                # expect res_of_rule[0] as [7, 7, 1, 9, False, 'Bloody xxx']
+                scm_in.vote("BW", res_of_rule[0][5], res_of_rule[0][0], res_of_rule[0][1], res_of_rule[0][2], res_of_rule[0][3], str(res_of_rule[1]))
                 lst_results.append(res_of_rule)
         log.info(".Rules returning: {}".format(lst_results))
         return scm_in

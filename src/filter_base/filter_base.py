@@ -97,7 +97,7 @@ class Response(dict):
                             format(cname, cvote, cconf, cmin, cmax, cnote))
                 return False
         else:
-            str_warn = "Illegal type: add_cres({})".\
+            str_warn = "Illegal type: add_cres(st, int, int, int, int, str) got: {}".\
                 format([str(type(itm)) for itm in [cname, cvote, cconf, cmin, cmax, cnote]])
             log.warning(str_warn)
             return False
