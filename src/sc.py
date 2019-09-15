@@ -182,8 +182,8 @@ if __name__ == '__main__':
                     reg_sc = ftr_selected.filter(reg_sc)
                     log.info("{} Done...".format(arg_in.command))
                     # Only for bebug XXX
-                    for scmail in reg_sc.list_all():
-                        print("{} : {}".format(reg_sc.get(scmail).get_shorthand(), reg_sc.get(scmail).get_spamlevel()))
+                    #for scmail in reg_sc.list_all():
+                    #    print("{} : {}".format(reg_sc.get(scmail).get_shorthand(), reg_sc.get(scmail).get_spamlevel()))
                     reg_sc.write_to_file()
                     log.info("{} {} e-mails Done...".format(arg_in.command, reg_sc.count()))
                 else:
