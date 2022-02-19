@@ -71,7 +71,7 @@ def x_load_files(str_home_dir):
                 for line in fil_in:
                     los_lines.append(line)
             if '.scrule' in str_fn:
-                print(dic_r[str_fn].rules_from_strings(los_lines))
+                print((dic_r[str_fn].rules_from_strings(los_lines)))
         return dic_r
 
     dic_rules = dict()  # The overall archive of rules

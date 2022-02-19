@@ -36,11 +36,11 @@ def analyse_parsed_email(eml_in):
     if isinstance(eml_in, email.message.EmailMessage):
         log.info("Received e-mail type: {}".format(str(type(eml_in))))
         ##log.info("    multipart: {}".format(eml_in.is_multipart()))
-        for hdr in eml_in.items():
+        for hdr in list(eml_in.items()):
             log.info("    headers: {}".format(hdr))
         for part in eml_in.walk():
             log.info("    content: {}".format(part.get_content_type()))
     else:
         log.warning("Expected , but got {}. May be you are using wrong email.policy.".format(str(type(eml_in))))
-    return eml_in.keys()
+    return list(eml_in.keys())
 

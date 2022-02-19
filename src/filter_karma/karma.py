@@ -150,6 +150,6 @@ if __name__ == '__main__':
 
     print("This is just for testing - You shoulden't be running this module directly...")
     flt_k = Karma()
-    print("test: {}".format(flt_k))
-    print("Say: {}".format(flt_k.say_hi()))
-    print("db: {}".format(flt_k._debug('Yoo')))
+    print(("test: {}".format(flt_k)))
+    print(("Say: {}".format(flt_k.say_hi())))
+    print(("db: {}".format(flt_k._debug('Yoo'))))

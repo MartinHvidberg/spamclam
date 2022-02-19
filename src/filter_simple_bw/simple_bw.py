@@ -289,7 +289,7 @@ class Ruleset(object):
         print("\nPrint the rules, via the back door...")
         for key_colour in ('white', 'black'):
             for num_col in self.list_rulenumbers_of_colour(key_colour):
-                print("\t{} # {} = {}".format(key_colour, num_col, self.get_rule_by_number(num_col)))
+                print(("\t{} # {} = {}".format(key_colour, num_col, self.get_rule_by_number(num_col))))
         return None
 
     def show_rules_pp(self):  # XXX This needs some working on, to be real pretty...
@@ -346,7 +346,7 @@ class Ruleset(object):
             bol_hit = not val == emlval[-len(val):]
         else:
             bol_hit = False
-            print("Error: Unknown operator: " + opr)
+            print(("Error: Unknown operator: " + opr))
         return  (bol_hit, salstmn)  # EBNF: ( True|False, The_statement )
 
     def condtion_check(self, salcond, salmail):
@@ -566,7 +566,7 @@ class Ruleset(object):
                     str_colour = "black"
                 else:
                     str_colour = ""
-                    print("!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in))
+                    print(("!!! file name: {} contained neither 'white' nor 'black'... I'm confused.".format(fil_in)))
                     continue
                 self.load_addressbook(str_colour, fil_in)
                 logging.info("Loaded addressbook {}: {}".format(str_colour, fil_in))

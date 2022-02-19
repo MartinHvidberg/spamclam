@@ -63,7 +63,7 @@ class Condition(dict):
         self.str_to_cond(str_input)
 
     def str_to_cond(self, str_in):
-        print("\n » {}".format(str_in))
+        print(("\n » {}".format(str_in)))
         str_in = str_in.lstrip('+').strip()  # Clean + and spaces
         lst_opr = [opr for opr in self.VALID_OPR if opr in str_in]
         if len(lst_opr) == 1:  # Check exactly 1 opr
@@ -132,7 +132,7 @@ class Condition(dict):
         lst_true_stmn = list()
         for key_k in self['key']:
             if key_k == 'sub': key_k = 'subject'  # .scrule use shorthand 'sub', emails uses 'subject'
-            if scm_in.has_key(key_k):
+            if key_k in scm_in:
                 for opr_o in [self['opr']]:  # Why do we insist that opr_o is from a list?
                     for val_v in self['val']:
                         if self.statement_check((key_k, opr_o, val_v), scm_in):
@@ -455,7 +455,7 @@ class Rules(object):
         log.debug(" func. show_rules_backdoor()")
         print("\nPrint the rules, via the back door...")
         if self.is_valid():
-            print(self._rules)
+            print((self._rules))
         else:
             print("Rules are INVALID ...")
 

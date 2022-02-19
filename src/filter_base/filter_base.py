@@ -104,7 +104,7 @@ class Response(dict):
 
     def _update(self):
         """ This is likely the most delicate/controversial process in SpamClam ... """
-        if len(self['_dcre'].keys()) > 0:  # We have at least one check on archive
+        if len(list(self['_dcre'].keys())) > 0:  # We have at least one check on archive
             xvot = 0  # Worst case it remains 0 (un-set)
             xcon = 0  # Worst case it remains 0 (un-set)
             xmin = 10  # Anyting legal should be less than 10

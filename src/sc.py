@@ -17,14 +17,14 @@ import sys, os
 import argparse
 import logging
 
-import sc_register
-import sc_email_server
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
-import karma
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_bw'))
-import bw
-sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_demo'))
-import demo
+from . import sc_register
+from . import sc_email_server
+# sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
+from . import filter_karma.karma as karma
+#sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_bw'))
+from . import filter_bw.bw as bw
+#sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_demo'))
+from . import filter_demo.demo as demo
 
 # Initialize logging
 logging.basicConfig(filename='SpamClam.log',
@@ -141,7 +141,7 @@ def get_args():
 if __name__ == '__main__':
 
     arg_in = get_args()
-    print("CLI arg: {}".format(arg_in))
+    print(("CLI arg: {}".format(arg_in)))
     # log.info("CLI args: {}".format(args))  # This may store passwords in .log !!!
 
     if arg_in:
@@ -197,13 +197,13 @@ if __name__ == '__main__':
                 # View Register
                 if arg_in.vwhat == 'all':  # 'spam', 'grey', 'white', 'all', 'shh'
                     for scmail_id in reg_sc.list_all():
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'shh':
                     for scmail_id in reg_sc.list_shh(arg_in.shhs):
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'spam':
                     for scmail_id in reg_sc.list_spam():
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'white':
                     pass
                 elif arg_in.vwhat == 'grey':
@@ -266,7 +266,7 @@ if __name__ == '__main__':
                 reg_sc.read_from_file()  # Load data into register
                 for scmail in reg_sc.list_doomed(arg_in.limit):
                     scm_doomed = reg_sc.get(scmail)
-                    print("KILL: {}".format(scm_doomed.display(1)))
+                    print(("KILL: {}".format(scm_doomed.display(1))))
                     # Kill on server
                     sc_email_server.del_this_email(dic_cred['server'], dic_cred['user'], dic_cred['passw'], scm_doomed)
                     #Remove it from Register

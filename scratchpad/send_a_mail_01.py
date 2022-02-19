@@ -9,13 +9,13 @@ try:
     str_pass = sys.argv[3]
 except:
     # Not as expected: mail.domain.tld user@domain.tld somepassword simple
-    print "Usage: send_a_mail_01.py <server> <user> <password>"
-    print "e.g.   send_a_mail_01.py mailserver.company.com my_name@company.com qwerty"
+    print("Usage: send_a_mail_01.py <server> <user> <password>")
+    print("e.g.   send_a_mail_01.py mailserver.company.com my_name@company.com qwerty")
     sys.exit(101)
 
-print str_srvr
-print str_user
-print str_pass
+print(str_srvr)
+print(str_user)
+print(str_pass)
 
 server = smtplib.SMTP(str_srvr, 587)
 

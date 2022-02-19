@@ -17,7 +17,7 @@ import json
 import poplib, email
 from email import policy
 
-import sc_register
+from . import sc_register
 
 # Initialize logging
 log = logging.getLogger(__name__)
