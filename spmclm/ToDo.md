@@ -2,7 +2,8 @@
 # accumulate statistics
 	witch rules get hit often, or never?
 
-# send e-mail whith notice of deleted e-mails... Yes it makes sense... "SC just removed e-mail from: x to: y date: d with subject: sub ..."
+# send e-mail whith notice of deleted e-mails... 
+    Yes it makes sense... "SpmClm just removed e-mail from: x to: y date: d with subject: sub ..."
 
 # command line interface
 

@@ -10,7 +10,7 @@ OLD version!
 
 import sys
 
-from src.files_no_longer_used import spamclam
+from spmclm.files_no_longer_used import spamclam
 
 # Read the command line input
 try:

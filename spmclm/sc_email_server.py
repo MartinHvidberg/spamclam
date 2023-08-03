@@ -65,7 +65,7 @@ def get(str_srvr, str_user, str_pass, reg_sc):
         return None
 
     if num_tot_msgs:
-        logging.info("Start reading {} messages from server".format(num_tot_msgs))
+        logging.info(f"Start reading {num_tot_msgs} messages from server")
         # We have a pop3 connection :-)
         num_email = 0  # To avoid problems with counter after this loop, if no mails found.
         dic_keys = dict()  # for key stat only

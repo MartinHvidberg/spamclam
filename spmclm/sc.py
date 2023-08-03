@@ -22,7 +22,7 @@ import sc_email_server
 # sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_karma'))
 import filter_karma.karma as karma
 #sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_bw'))
-import filter_bw.bw as bw
+import spmclm.filter_bw.bw as bw
 #sys.path.append(os.path.join(os.path.dirname(__file__), '.', 'filter_demo'))
 import filter_demo.demo as demo
 
@@ -138,11 +138,7 @@ def get_args():
     args = parser.parse_args()
     return args
 
-if __name__ == '__main__':
-
-    arg_in = get_args()
-    print("CLI arg: {}".format(arg_in))
-    # log.info("CLI args: {}".format(args))  # This may store passwords in .log !!!
+def main(arg_in):
 
     if arg_in:
         bol_okay = True  # Assume that everything is Okay, until proven wrong
@@ -197,13 +193,13 @@ if __name__ == '__main__':
                 # View Register
                 if arg_in.vwhat == 'all':  # 'spam', 'grey', 'white', 'all', 'shh'
                     for scmail_id in reg_sc.list_all():
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'shh':
                     for scmail_id in reg_sc.list_shh(arg_in.shhs):
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'spam':
                     for scmail_id in reg_sc.list_spam():
-                        print("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose)))
+                        print(("{}".format(reg_sc.get(scmail_id).display(arg_in.verbose))))
                 elif arg_in.vwhat == 'white':
                     pass
                 elif arg_in.vwhat == 'grey':
@@ -266,7 +262,7 @@ if __name__ == '__main__':
                 reg_sc.read_from_file()  # Load data into register
                 for scmail in reg_sc.list_doomed(arg_in.limit):
                     scm_doomed = reg_sc.get(scmail)
-                    print("KILL: {}".format(scm_doomed.display(1)))
+                    print(("KILL: {}".format(scm_doomed.display(1))))
                     # Kill on server
                     sc_email_server.del_this_email(dic_cred['server'], dic_cred['user'], dic_cred['passw'], scm_doomed)
                     #Remove it from Register
@@ -282,6 +278,16 @@ if __name__ == '__main__':
             print("You should never see this, because that would mean that get_args() have parsed a command that isn't implemented...")
     else:
         log.error("function get_args() returned None ...")
+
+if __name__ == '__main__':
+
+    print(f"sys_path: {sys.path}")
+    print(f"PYTOPATH: {os.environ['PYTHONPATH']}")
+
+    arg_in = get_args()
+    print(("CLI arg: {}".format(arg_in)))
+    # log.info("CLI args: {}".format(args))  # This may store passwords in .log !!!
+    main(arg_in)
 
 # End of Python
 

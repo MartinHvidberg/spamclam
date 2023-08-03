@@ -15,7 +15,7 @@ import email
 import logging
 logger = logging.getLogger('spamclam')
 
-from src.filter_simple_bw import simple_bw
+from spmclm.filter_simple_bw import simple_bw
 
 
 class Salmail(object):

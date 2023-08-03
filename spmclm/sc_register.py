@@ -30,18 +30,18 @@ log.info("Initialize: {}".format(__file__))
 class SCMail(object):
     """ The 'equivalent' or 'extract' of one e-mail.
     expects an object of type: email.message.EmailMessage
-    But only the relevant parts are kept, and some more info and functions are added
+    Stores only the relevant parts, and some more info and functions are added
     Instances are initialised with a 'real' email message.
     This object is designed to be the 'e-mail massage' to use with SpamClam. """
 
     def __init__(self, eml_in):
         log.debug("class init. SCMail")
-        self._data = dict()  # tha data dictionary that most Spam Clam operations rely on
+        self._data = dict()  # the data dictionary that most Spam Clam operations rely on
         self._filterres = dict()  # Dict of Filter Response objects.
-        self._spamlevel = -1  # 0..9, -1 if un-set
+        self._spamlevel = -1  # 0..9, -1 if un-set  (sort of 0, 1..3, 4..6, 7..9 is gold, white, grey and black)
         self._spamlevel_is_updated = True  # True if synced with all Filter-results, etc. Otherwise False
         self._spamlevel_is_userlocked = False  # True if user have set level using 'mark'. Otherwise False
-        self._protected = False  # If True the SCMail can't be killed, despite a high spamlevel
+        self._protected = False  # If True the SCMail can't be killed, despite a high spam-level
         self._shorthand = None  # Will only be set if SCMail becomes part of a Register
         if isinstance(eml_in, email.message.EmailMessage):
             self._mesg = eml_in  # a clean copy of the email.message.EmailMessage
@@ -62,20 +62,23 @@ class SCMail(object):
         self._protected = False
 
     def set_spamlevel(self, num_val):  # For manuel (user initiated) setting of spam-level
+        """ Sets the spam-level to the given value """
         if isinstance(num_val, int):
             if num_val < 0: num_val = 0
-            if num_val > 9: num_val = 9
-            self._spamlevel = num_val
-            self._spamlevel_is_updated = True
-            self._spamlevel_is_userlocked = True
+            elif num_val > 9: num_val = 9
+            else: self._spamlevel = num_val
+            self._spamlevel_is_updated = True  # ToDo Consider if this belongs here
+            self._spamlevel_is_userlocked = True  # ToDo Consider if this belongs here
         else:
             log.warning("Non-integer value send to SCMail.set_spamlevel(): {}".format(num_val))
 
     def set_spamlevel_from_filterres(self):
-        """ Read through the filter results, and determines the final spam-level """
-        if self._spamlevel == None: self._spamlevel = -1  # XXX Should never be necessary
+        """ Read through the filter results, and determines the final spam-level
+            Final level is highest vote from any filter
+            Filter-results can't overwrite user-set spam-level """
+        if self._spamlevel == None: self._spamlevel = -1  # XXX Should never be necessary  # ToDo remove and re-test
         if not self._spamlevel_is_userlocked:  # Filter-results can't overwrite user-set spam-level
-            for frs_i in self._filterres.values():
+            for frs_i in list(self._filterres.values()):
                 vote_l = frs_i.get_vote()
                 self._spamlevel = max(self._spamlevel, vote_l)
         self._spamlevel_is_updated = True
@@ -86,14 +89,14 @@ class SCMail(object):
             self.set_spamlevel_from_filterres()
         return self._spamlevel
 
-    def has_filter_response(self, fname):
-        if fname in self._filterres.keys():
+    def has_filter_response(self, str_fname):
+        if str_fname in list(self._filterres.keys()):
             return True
         else:
             return False
 
     def display(self, num_level=1):
-        """Displays the SCMail as text. num_level detemains the level of information."""
+        """Displays the SCMail as text. num_level determines the level of information."""
         if not self._spamlevel_is_updated:  # Update the SpamLevel, before answering
             self.set_spamlevel_from_filterres()
         str_ret = str()
@@ -123,9 +126,9 @@ class SCMail(object):
                     self._data['_spamlevel_lock'] = self._spamlevel_is_userlocked
                     self._data['_protected'] = self._protected
                     self._data['_responces'] = ""
-                    for kfr in self._filterres.keys():
-                        self._data['_responces'] += "{} :\n\t{}".format(kfr,self._filterres[kfr])
-                    lst_fields = [key for key in self._data.keys() if (key != "" and key != 'body')]
+                    for kfr in list(self._filterres.keys()):
+                        self._data['_responces'] += f"\n\t{kfr}: {self._filterres[kfr]}"
+                    lst_fields = [key for key in list(self._data.keys()) if (key != "" and key != 'body')]
                 for key in lst_fields:
                     if self.get(key) != "":
                         str_ret +=  (" {}: {}\n".format(key.ljust(16), self.get(key)))
@@ -160,7 +163,7 @@ class SCMail(object):
         try:
             pass # parse the date...
         except ValueError:
-            print("Bad date: {}".format(self._mesg['date']))
+            print(("Bad date: {}".format(self._mesg['date'])))
         # * from
         self._data['from'] = msg['from']
         if "<" in self._data['from']:
@@ -190,23 +193,22 @@ class SCMail(object):
         # * body
         self._data['body'] = msg.get_body()
         # * size
-        for key_check in self._data.keys():
+        for key_check in list(self._data.keys()):
             if self._data[key_check] == None:
                 self._data[key_check] = ""  # Force to "" rather than None, since it gives problems
-
         self._spamlevel_is_updated = False  # Maybe a little excessive here, but in rare cases...
 
     def keys(self):
         """ Return a list of available keys """
-        return self._data.keys()
+        return list(self._data.keys())
 
     def has_key(self, key_in):
         """ return true if a key exists, otherwise false """
-        return key_in in self._data.keys()
+        return key_in in list(self._data.keys())
 
     def get(self, mkey, nodata=None):
         """ Get one field's value """
-        if self.has_key(mkey):
+        if mkey in self._data.keys():
             return self._data[mkey]
         else:
             return nodata
@@ -214,6 +216,7 @@ class SCMail(object):
     def add_filter_response(self, ftr_in):
         """ Create a new filter Response on the _filterres list.
         If the filter-response exists, it's overwritten """
+        # ToDO Check data-type of ftr_in
         self._filterres[ftr_in['name']] = ftr_in
         self._spamlevel_is_updated = False
 
@@ -244,21 +247,21 @@ class Register(object):
             self.read_from_file(str_infile)
 
     def insert(self, scm_in):
-        """ inserts a SCMail into the register. Updates if all ready existing, otherwise create shh and all... """
+        """ inserts a SCMail into the register. Updates if already existing, otherwise create shh and all... """
         id = scm_in.get('id')
         if not id in self.list_all():  # This is a new SCMail
             # Generate a short-hand
             str_cand = None
             while str_cand == None:
                 str_cand = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') for x in range(self.NUM_SHORTHAND_LENGTH))
-                if str_cand in [smc.get_shorthand for smc in self._data.values()]:
+                if str_cand in [smc.get_shorthand for smc in list(self._data.values())]:
                     str_cand = None
             scm_in._shorthand = str_cand
         # insert in Register
         self._data[id] = scm_in
 
     def remove(self, id):
-        if id in self._data.keys():
+        if id in list(self._data.keys()):
             try:
                 del self._data[id]
                 return id
@@ -269,14 +272,14 @@ class Register(object):
 
     def count(self):
         """ Return number of e-mails in the register """
-        return len(self._data.keys())
+        return len(list(self._data.keys()))
 
     def list_all(self):
         """ return a list of id's for the SCMails in the register"""
-        return self._data.keys()
+        return list(self._data.keys())
 
     def list_shh(self, lst_shh):
-        """ return a list of id's for the SCMails in the register, if there shh is in the list"""
+        """ return a list of id's for the SCMails in the register, if their shh is in the list"""
         lst_ret = list()
         for scmailid in self.list_all():
             scmail = self.get(scmailid)
@@ -290,7 +293,7 @@ class Register(object):
         that matches all the criteria in lst_criteria.
          Each criteria is string, of form "<field>=<value>" - may be extended later """
         if not isinstance(lst_criteria, list):
-            print("lst_criteria not type == list, but type == {}".format(str(type(lst_criteria))))
+            print(("lst_criteria not type == list, but type == {}".format(str(type(lst_criteria)))))
             return []
         lst_ret = list()
         for crit in lst_criteria:
@@ -300,7 +303,7 @@ class Register(object):
                 str_val = lst_crit[1]
                 for scmailid in self.list_all():
                     scmail = self.get(scmailid)
-                    if scmail.has_key(str_fld):
+                    if str_fld in scmail:
                         if scmail.get(str_fld) == str_val:
                             lst_ret.append(scmailid)
         return list(set(lst_ret))
@@ -311,13 +314,13 @@ class Register(object):
         General:
             0: Super clean, usually unfiltered
             1..3: Still quite clean, no serious spam suspicions
-            4..6: Grey zone, my be dodgy
+            4..6: Grey zone, may be dodgy
             7..9: Dirty and considered Spam... """
         if not isinstance(minimum, int):
-            print("minimum not type == integer, but type == {}".format(str(type(minimum))))
+            print(("minimum not type == integer, but type == {}".format(str(type(minimum)))))
             return []
         if maximum and not isinstance(maximum, int):
-            print("maximum not type == integer, but type == {}".format(str(type(maximum))))
+            print(("maximum not type == integer, but type == {}".format(str(type(maximum)))))
             return []
         lst_ret = list()
         for scmailid in self.list_all():
@@ -350,20 +353,20 @@ class Register(object):
     def write_to_file(self, str_fn=""):
         """ writes the entire Register to a disc file """
         if str_fn == "":  # User didn't specify filename, use default
-            # XXX Make sure ../register exist as a directory ...
+            # ToDo Make sure ../register exist as a directory ...
             str_timestamp =  str(datetime.datetime.now()).split(".")[0].replace(":", "").replace("-", "").replace(" ", "_")
-            str_fn = r"../register/SCreg_" + str_timestamp + ".ecscreg"
+            str_fn = r"archive/SCreg_" + str_timestamp + ".ecscreg"
         # Pickle the 'data' dictionary using the highest protocol available.
         with open(str_fn, 'wb') as fil_out:
             pickle.dump(self._data, fil_out, pickle.HIGHEST_PROTOCOL)
 
     def read_from_file(self, str_fn=""):
         """ fills the Register with the info from a disc file """
-        # XXX Make sure ../register exist as a directory ...
+        # ToDo Make sure ../register exist as a directory ...
 
         def find_newest_register():
             """ Find the newest .ecscreg file in ../register """
-            str_root_dir = r"../register"
+            str_root_dir = r"archive"
             lst_finds = list()
             for dirName, subdirList, fileList in os.walk(str_root_dir):
                 for str_fn in fileList:
@@ -386,8 +389,9 @@ class Register(object):
 
     # End of class Register()
 
+
 if __name__ == '__main__':
-    print("This unit {} can't be run, but must be called from another unit".format(__file__))
+    print(f"This unit: {__file__} can't be run, but must be called from another unit")
 
 # End of Python
 

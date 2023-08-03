@@ -15,9 +15,9 @@
 import logging
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'filter_base'))
-import filter_base
-import rules
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'filter_base'))
+import spmclm.filter_bw.rules as rules
+import spmclm.filter_base.filter_base as filter_base
 
 # Initialize logging
 log = logging.getLogger(__name__)
